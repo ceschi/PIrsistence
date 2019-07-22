@@ -76,7 +76,9 @@ rolloop <- function(df, window=8, lags=1){
   # lags the time series, names it, cuts out NAs
   df <- df %>% lagger(lag=k, na.cut=T)
   # and creates related formula
-  formulae <- formula.maker(df, df %>%  names(.) %>% first())
+  formulae <- formula.maker(df, 
+                            df %>%  names(.) %>% first(),
+                            intercept = T)
   
   # computes point estimates and 2SD
   # stocks in a dataframe for convenience

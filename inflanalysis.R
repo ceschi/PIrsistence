@@ -19,21 +19,21 @@ source('USdatacoll.R')
 
 
 # exogenous lag
-k=5
+k <- 5
 
 # selector for coefficient
 # AR(r) will be plotted
 # MUST be <k
-r=1
+r <- 1
 
 # select window width for
 # rolling estimates, pick <80
 # to get interesting results
-wind=56 # as Pivetta and Reis, 14y. Alter: 5y
+wind <- 56 # as Pivetta and Reis, 14y. Alter: 5y
 
 
 flag___optilag <- 1
-flag___plot <- 1
+flag___plot <- 0
 
 ##### Data subselection ######
 
@@ -122,7 +122,8 @@ for (i in 1:n){
   inflation[['ark']][[i]] <- lm(data= (pi[,i] %>% lagger(lag=k)),
                                 formula=formula.maker(df=pi[,i] %>% lagger(lag=k),
                                                       y= pi[,i] %>% lagger(lag=k) %>% 
-                                                        names(.) %>% first())
+                                                        names(.) %>% first(),
+                                                      intercept = F)
                                 ) #%>% summary() %>% coef()
   cat('\n')
   print(paste0(inflation$names[[i]],',  ', k, ' exogenously defined lags'))
@@ -235,6 +236,8 @@ for (i in 1:n){
   sink()
 }
 
+
+lapply(inflation[['ark']], FUN = function(x) summary(x) %>% coefficients() %>% sum())
 
 
 ##### Housekeeping ####
