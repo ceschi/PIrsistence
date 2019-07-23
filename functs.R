@@ -65,7 +65,7 @@ rollm <- function(df, formula){
   return(estim)
 }
 
-rolloop <- function(df, window=8, lags=1){
+rolloop <- function(df, window=8, lags=1, interc = T){
   
   # width of the rolling window
   window <- as.integer(window)
@@ -78,7 +78,7 @@ rolloop <- function(df, window=8, lags=1){
   # and creates related formula
   formulae <- formula.maker(df, 
                             df %>%  names(.) %>% first(),
-                            intercept = T)
+                            intercept = interc)
   
   # computes point estimates and 2SD
   # stocks in a dataframe for convenience
@@ -120,48 +120,6 @@ make_stars <- function(x){
   return(signif)
 }
 
-
-repara <- function(x, rho=4){
-  # function to reparametrize once a lm is estimated 
-  # having on the 4th place the persistence parameter for FFR
-  # and SE + p-val
-  
-  
-  # ancillary for stars
-  make_stars <- function(x){
-    
-    # pre-allocate 
-    signif <- NULL
-    
-    if (x < .001) {
-      signif <- as.factor('***')
-    }else if (x < .01 & x >= .001){
-      signif <- as.factor('**')
-    }else if (x < .05 & x >= .01){
-      signif <- as.factor('*')
-    }else if (x < .1 & x >= .05){
-      signif <- as.factor('.')
-    }else if (x>=.1){
-      signif <- as.factor('')
-    }
-    
-    return(signif)
-  }
-  
-  # coefs and SE
-  params <- coef(summary(x))[,1:2]/(1-coef(x)[rho])
-  params[rho,] <- coef(summary(x))[rho, 1:2]
-  
-  # p-val
-  p_val <- coef(summary(x))[,4]
-  params <- cbind(params, p_val)
-  
-  params2 <- data.frame(params,
-                        sig=sapply(X = p_val, FUN = make_stars))
-  
-  
-  return(params2)
-}
 
 
 subfilter <- function(df){
@@ -369,6 +327,24 @@ spf_funct <-  function(filnam, typs, ahead=1) {
 }
 
 
+auto.reg <- function(data, lags = 1, interc = T){
+  
+  # function to estimate AR(lags)
+  
+  transf_data <- lagger(series = data,
+                        lag = lags,
+                        na.cut = F)
+  
+  model_formula <- formula.maker(df = transf_data,
+                                 y = first(names(transf_data)),
+                                 intercept = interc)
+  linear_model <- lm(formula = model_formula,
+                     data = transf_data)
+  
+  return(linear_model)
+}
+
+
 
 ##### TRACKING PERSISTENCE OVER TIME #####
 persistence_ridges <- function(tseries, window = 24, lags = 8){
@@ -450,20 +426,6 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
   
 }
 
-
-standard <- function(x){
-  
-  # handy fct to standardize
-  # a vector x of draws - 
-  # use base::scale
-  
-  
-  x_mean <- mean(na.omit(x))
-  x_sd <- sd(na.omit(x))
-  x_stand <- (x-x_mean)/x_sd
-  
-  return(x_stand)
-}
 
 
 
