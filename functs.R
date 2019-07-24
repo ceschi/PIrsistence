@@ -344,6 +344,47 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
+auto.reg.sum <- function(data, lags = 1, interc = T){
+
+  if (!require(broom)) {install.packages('broom'); library(broom)}
+  if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
+  if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+
+  # function to estimate AR(lags) and sum over parameters
+
+  transf_data <- lagger(series = data,
+                        lag = lags,
+                        na.cut = F)
+
+  model_formula <- formula.maker(df = transf_data,
+                                 y = first(names(transf_data)),
+                                 intercept = interc)
+  
+  linear_model <- lm(formula = model_formula,
+                     data = transf_data)
+
+  output <- broom::tidy(linear_model)
+  
+  coef_sum <- output %>% filter(term != '(Intercept)') %>% select(estimate) %>%  sum()
+
+  return(coef_sum)
+}
+
+rolloop.sum <- function(df, window, lags = 1, interc = T){
+  
+  # computes point estimates
+  # stocks in a dataframe for convenience
+  regs <-rollapply(as.data.frame(df),
+                   width=window,
+                   by.column = F,
+                   FUN = auto.reg.sum,
+                   lags = lags,
+                   interc = interc)
+  
+  # converts and dates the regressions
+  regs <- xts(regs, frequency=4, 
+              order.by=index(df)[window:length(index(df))])
+}
 
 
 ##### TRACKING PERSISTENCE OVER TIME #####
@@ -433,7 +474,7 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
 
 ##### Packages Loader #####
 
-pkgs <- c('vars', 'glue', 'MSwM', 'lazyeval',
+pkgs <- c('vars', 'glue', 'lazyeval',
           'quantreg', 'tidyverse', 'devtools',
           'tseries', 'dynlm', 'stargazer',
           'dyn', 'strucchange', 'xts',
@@ -441,8 +482,7 @@ pkgs <- c('vars', 'glue', 'MSwM', 'lazyeval',
           'mFilter', 'fredr','ggridges',
           'readr', 'quantmod','broom',
           'devtools', 'lubridate', 'ggridges',
-          'readxl', 'VARsignR', 'tbl2xts',
-          'R.matlab', 'matlabr', 'tictoc', 'gmm')
+          'readxl', 'tbl2xts', 'tictoc', 'gmm')
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)

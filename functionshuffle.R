@@ -52,6 +52,8 @@ pi <- merge(# db_US$cpit,
   db_US$rev_pce_fe
 )
 
+n=length(names(pi))
+
 # this preallocated list will
 # collect all results
 inflation <- list(
@@ -65,8 +67,10 @@ inflation <- list(
     'Revised PCE',
     'Revised PCE, no FE'),
   unitroot=list(),
+  
   ark=list(),
   rollark=list(),
+  
   aropti=list(),
   aroptilm=list(),
   plot_aropti=list(),
@@ -95,21 +99,56 @@ inflation[['aropti']] <- lapply(X = inflation[['unitroot']],
 
 #### II - AR(1) ################################################################
 
+# one model on the whole sample
 inflation[['ark']] <- lapply(X = pi,
                              FUN = auto.reg,
                              lags = 1,
-                             interc = F)
+                             interc = T)
 
+# rolling window
 inflation[['rollark']] <- lapply(X = pi,
                                  FUN = rolloop,
                                  window = wind,
                                  lags = 1,
-                                 interc = F)
+                                 interc = T)
 
 
 
 
-#### III - AR(k*) ####
+#### III - AR(k*) ##############################################################
+
+# one fit with optilags
+# on the whole sample
+inflation[['aroptilm']] <- pmap(.l = list(data = lapply(pi, list),
+                                          lags = inflation[['aropti']],
+                                          interc = lapply(rep(T, n), list)
+                                          ),
+                                .f = auto.reg.sum)
+
+mapply(auto.reg.sum, lapply(pi, list), inflation[['aropti']], lapply(rep(T, n), list))
+
+
+
+
+
+
+
+
+
+
+
+#### IV - Plots et al ##########################################################
+
+
+
+
+
+
+
+
+
+
+
 
 
 
