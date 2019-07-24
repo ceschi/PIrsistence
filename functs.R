@@ -40,6 +40,7 @@ instant_pkgs <- function(pkgs) {
 
 
 rollm <- function(df, formula){
+  
   # function to extract and store coefficients 
   # and double SD in a named row tibble
   
@@ -50,10 +51,13 @@ rollm <- function(df, formula){
   # extracts point estimates and 2*SD (+- 95%),
   # put info in named row tibble dropping 
   # intercept info from first column
-  cofs <- as.tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-                                            t() %>% ncol()),1] %>% t())
-  SD2 <- as.tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-                                            t() %>% ncol()),2] %>% t())
+  
+  cofs <- as_tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
+                                            t() %>% ncol()),1] %>% t(),
+                    .name_repair = 'minimal')
+  SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
+                                            t() %>% ncol()),2] %>% t(),
+                   .name_repair = 'minimal')
   
   # adds suffix for bands
   names(SD2) <- paste0(names(SD2), '.SD2')
@@ -74,7 +78,7 @@ rolloop <- function(df, window=8, lags=1, interc = T){
   k <- as.integer(lags)
   
   # lags the time series, names it, cuts out NAs
-  df <- df %>% lagger(lag=k, na.cut=T)
+  df <- df %>% lagger(laag=k, na.cut=T)
   # and creates related formula
   formulae <- formula.maker(df, 
                             df %>%  names(.) %>% first(),
@@ -190,16 +194,16 @@ trendev<-function(mat){
 }
 
 
-lagger <- function(series, lag, na.cut=F){
+lagger <- function(series, laag, na.cut=F){
   # Takes a time series and creates a matrix with given number
   # of lags, also generating appropriate names
   
   
-  matrix <- as.data.frame(matrix(ncol=lag+1, nrow=nrow(series)))
-  for (i in 1:lag+1){
+  matrix <- as.data.frame(matrix(ncol=laag+1, nrow=nrow(series)))
+  for (i in 1:laag+1){
     matrix[,i] <- stats::lag(series, k=(i-1))
   }
-  names(matrix) <- c(names(series), paste(names(series), 1:lag, sep='.'))
+  names(matrix) <- c(names(series), paste(names(series), 1:laag, sep='.'))
   matrix[, 1] <- series
   matrix <- as.xts(matrix, order.by=index(series))
   
@@ -332,7 +336,7 @@ auto.reg <- function(data, lags = 1, interc = T){
   # function to estimate AR(lags)
   
   transf_data <- lagger(series = data,
-                        lag = lags,
+                        laag = lags,
                         na.cut = F)
   
   model_formula <- formula.maker(df = transf_data,
@@ -353,7 +357,7 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   # function to estimate AR(lags) and sum over parameters
 
   transf_data <- lagger(series = data,
-                        lag = lags,
+                        laag = lags,
                         na.cut = F)
 
   model_formula <- formula.maker(df = transf_data,
@@ -372,18 +376,22 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
 
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
+  # remove troublesome NAs
+  df_na <- na.omit(df)
+  
   # computes point estimates
   # stocks in a dataframe for convenience
-  regs <-rollapply(as.data.frame(df),
+  regs <-rollapply(df_na,
+    # as.data.frame(df),
                    width=window,
                    by.column = F,
                    FUN = auto.reg.sum,
                    lags = lags,
                    interc = interc)
   
-  # converts and dates the regressions
-  regs <- xts(regs, frequency=4, 
-              order.by=index(df)[window:length(index(df))])
+  # # converts and dates the regressions
+  # regs <- xts(regs, frequency=4, 
+  #             order.by=index(df_na)[window:length(index(df_na))])
 }
 
 

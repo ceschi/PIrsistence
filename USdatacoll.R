@@ -126,6 +126,7 @@ rev_hist <- merge(
                                             # aggregation_method='eop', 
                                             units='pc1') %>% tbl_xts()
 ) 
+
 # renames variables
 names(rev_hist) <-  c('rev_cpi', 'rev_cpi_fe', 'rev_defl',
                       'rev_pce', 'rev_pce_fe')

@@ -66,18 +66,25 @@ inflation <- list(
     'Revised GDP deflator',
     'Revised PCE',
     'Revised PCE, no FE'),
-  unitroot=list(),
   
-  ark=list(),
-  rollark=list(),
+  # 1
+  unitroot = list(),
+  aropti = list(),
   
-  aropti=list(),
-  aroptilm=list(),
-  plot_aropti=list(),
-  rollm=list(),
-  rollridges=list(),
-  plot_rollm=list(),
-  plot_ridges=list()
+  # 2
+  ark = list(),
+  rollark = list(),
+  
+  # 3
+  aroptilm = list(),
+  aroptirollm = list(),
+  
+  
+  # 4+
+  plot_aropti = list(),
+  rollridges = list(),
+  plot_rollm = list(),
+  plot_ridges = list()
 )
 
 
@@ -114,21 +121,26 @@ inflation[['rollark']] <- lapply(X = pi,
 
 
 
-
 #### III - AR(k*) ##############################################################
 
 # one fit with optilags
 # on the whole sample
-inflation[['aroptilm']] <- pmap(.l = list(data = lapply(pi, list),
+inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
                                           lags = inflation[['aropti']],
-                                          interc = lapply(rep(T, n), list)
+                                          interc = sapply(rep(T, n), list)
                                           ),
                                 .f = auto.reg.sum)
 
-mapply(auto.reg.sum, lapply(pi, list), inflation[['aropti']], lapply(rep(T, n), list))
 
-
-
+# rolling window estimate
+# width is preselected,
+# optilag is computed in step I
+inflation[["aroptirollm "]] <- pmap(.l = list(df = sapply(pi, list),
+                                              window = sapply(rep(wind, n), list),
+                                              lags = inflation[['aropti']],
+                                              interc = sapply(rep(T, n), list)
+                                              ),
+                                    .f = rolloop.sum)
 
 
 
