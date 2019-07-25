@@ -351,8 +351,9 @@ auto.reg <- function(data, lags = 1, interc = T){
 auto.reg.sum <- function(data, lags = 1, interc = T){
 
   if (!require(broom)) {install.packages('broom'); library(broom)}
-  if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
-  if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+  # not necessary as already in tidyverse
+  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
+  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
 
   # function to estimate AR(lags) and sum over parameters
 
@@ -488,14 +489,14 @@ pkgs <- c('vars', 'glue', 'lazyeval',
           'dyn', 'strucchange', 'xts',
           'MASS', 'car', 'rvest', 'viridis',
           'mFilter', 'fredr','ggridges',
-          'readr', 'quantmod','broom',
+          'readr', 'quantmod','broom', 'fredr',
           'devtools', 'lubridate', 'ggridges',
           'readxl', 'tbl2xts', 'tictoc', 'gmm')
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)
 
-devtools::install_github('sboysel/fredr')
+# devtools::install_github('sboysel/fredr')
 devtools::install_github('ceschi/urcabis')
 # devtools::install_version("readxl", version = "1.0.0")
 # library(urcabis) # for when the package will be duly updated (pull request)
