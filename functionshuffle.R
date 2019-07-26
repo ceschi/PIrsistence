@@ -78,6 +78,7 @@ inflation <- list(
   # 3
   aroptilm = list(),
   aroptirollm = list(),
+  aroptiridges = list(),
   
   
   # 4+
@@ -143,6 +144,13 @@ inflation[["aroptirollm "]] <- pmap(.l = list(df = sapply(pi, list),
                                     .f = rolloop.sum)
 
 
+# ridges plot material
+
+inflation[['aroptiridges']] <- pmap(.l = list(tseries = sapply(pi, list),
+                                              window = sapply(rep(wind, n), list),
+                                              lags = inflation[['aropti']]),
+                                    .f = persistence_ridges)
+
 
 
 
@@ -150,6 +158,10 @@ inflation[["aroptirollm "]] <- pmap(.l = list(df = sapply(pi, list),
 
 
 #### IV - Plots et al ##########################################################
+
+
+
+
 
 
 
