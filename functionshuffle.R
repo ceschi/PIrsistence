@@ -3,6 +3,8 @@
 # each step is run in vectorised way
 # on each series.
 
+
+
 #### 0 - Setup, data, flags ####
 
 # horizon for now/forecast
@@ -11,8 +13,6 @@ ahead <- 1
 # exogenous lags
 k <- 1
 
-# coefficient selector
-r <- 1
 
 # rolling window width
 wind <- 14*4
@@ -82,9 +82,8 @@ inflation <- list(
   
   
   # 4+
-  plot_aropti = list(),
-  rollridges = list(),
   plot_rollm = list(),
+  plot_aropti = list(),
   plot_ridges = list()
 )
 
@@ -159,20 +158,117 @@ inflation[['aroptiridges']] <- pmap(.l = list(tseries = sapply(pi, list),
 
 #### IV - Plots et al ##########################################################
 
+# AR(1) rolling
+
+inflation[['plot_rollm']] <- pmap(.l = list(df = inflation[['rollark']],
+                                            names = inflation[['names']],
+                                            path = sapply(rep(graphs_dir, n), list)),
+                                  .f = function(df, names, path){
+                                    po <- ggplot(data=df,
+                                           aes(x=index(df),
+                                               y=df$Var.1))+
+                                      # plot the above with line geom, in black
+                                      geom_line(colour='black', size=1)+
+                                      # adds upper confidence band in red
+                                      geom_line(aes(y=(df$Var.1 + df$.SD2)),
+                                                colour='red')+
+                                      # adds lower confidence band in red
+                                      geom_line(aes(y=(df$Var.1 - df$.SD2)),
+                                                colour='red')+
+                                      # adds unit root line
+                                      geom_line(aes(y=1), colour='black', size=.8)+
+                                      # plot makeup
+                                      geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q', n=20)+theme_bw()+
+                                      scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
+                                      ggtitle(paste0(names, ' - 1 exogenous lag'))
+                                    
+                                    
+                                    
+                                    # saves the plots in given path
+                                    ggsave(paste0(names, ' - AR(1) coeff. estimates.pdf'),
+                                           plot = po,
+                                           device='pdf',
+                                           path = path,
+                                           height=8, width=14.16, units='in')
+                                    
+                                    
+                                    return(po)
+                                    
+                                  }
+                                  )
 
 
+# AR(k*) plots
 
+inflation[['plot_aropti']] <- pmap(.l = list(df = inflation[['rollark']],
+                                             names = inflation[['names']],
+                                             laags = inflation[['aropti']],
+                                             path = sapply(rep(graphs_dir, n), list)),
+                                   .f = function(df, names, path, laags){
+                                     po <- ggplot(data=df,
+                                                  aes(x=index(df),
+                                                      y=df[,1]))+
+                                       # plot the above with line geom, in black
+                                       geom_line(colour='black', size=1)+
+                                       # adds unit root line
+                                       geom_line(aes(y=1), colour='black', size=.8)+
+                                       # plot makeup
+                                       geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q', n=20)+theme_bw()+
+                                       scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
+                                       ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients'))
+                                     
+                                     
+                                     # save plot
+                                     
+                                     ggsave(paste0(names, ' - AR(',laags,') coeff. estimates sum.pdf'),
+                                            plot = po,
+                                            device='pdf',
+                                            path = path,
+                                            height=8, width=14.16, units='in')
+                                     
+                                     return(po)
+                                     
+                                   }
+                                   )
 
+# plotting ridges
 
-
-
-
-
-
-
-
-
-
+inflation[["plot_ridges"]] <- pmap(.l = list(df = inflation[['aroptiridges']],
+                                             nam = inflation[['names']],
+                                             laags = inflation[['aropti']],
+                                             path = sapply(rep(graphs_dir, n), list)),
+                                    
+                                   .f = function(df, nam, laags, path){
+                                      out <- ggplot(data = df)+
+                                        geom_ridgeline_gradient(aes(x = term,
+                                                                    y = as.factor(last.date),
+                                                                    height = estimate,
+                                                                    group = as.factor(last.date),
+                                                                    fill = p.value),
+                                                                min_height = -2) +
+                                        scale_fill_viridis(name = 'P-values',option = "C", direction = 1) +
+                                        ggtitle(paste0('Evolving persistence - ',
+                                                       nam,
+                                                       ' ',
+                                                       laags,
+                                                       ' end. lags')) +
+                                        xlab('Lag order') + ylab(' ')
+                                      
+                                      
+                                      ggsave(paste0(nam, ' - AR(',laags,') acf.pdf'),
+                                             plot = out,
+                                             device = 'pdf',
+                                             path = path,
+                                             # extra height needed for full display
+                                             height = 100,
+                                             width = 14.16,
+                                             units = 'in',
+                                             limitsize = FALSE
+                                      )
+                                      
+                                      return(out)
+                                    }
+                                   )
 
 
 
