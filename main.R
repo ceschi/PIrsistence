@@ -13,6 +13,9 @@ ahead <- 1
 # exogenous lags
 k <- 1
 
+# intercept
+intercep <- T
+
 
 # rolling window width
 wind <- 14*4
@@ -45,11 +48,16 @@ pi <- merge(# db_US$cpit,
   # db_US$coret,
   # db_US$deflt,
   # db_US$deflt1,
-  db_US$rev_cpi,
-  db_US$rev_cpi_fe,
-  db_US$rev_defl,
-  db_US$rev_pce,
-  db_US$rev_pce_fe
+  db_US$rev_cpi_pch,
+  db_US$rev_cpi_fe_pch,
+  db_US$rev_defl_pch,
+  db_US$rev_pce_pch,
+  db_US$rev_pce_fe_pch,
+  db_US$rev_cpi_yoy,
+  db_US$rev_cpi_fe_yoy,
+  db_US$rev_defl_yoy,
+  db_US$rev_pce_yoy,
+  db_US$rev_pce_fe_yoy
 )
 
 n=length(names(pi))
@@ -61,11 +69,17 @@ inflation <- list(
     # 'PCE nowcast',
     # 'GDP deflator nowcast',
     # 'GDP deflator forecast',
-    'Revised CPI',
-    'Revised CPI, no FE',
-    'Revised GDP deflator',
-    'Revised PCE',
-    'Revised PCE, no FE'),
+    'Revised CPI pch',
+    'Revised CPI, no FE pch',
+    'Revised GDP deflator pch',
+    'Revised PCE pch',
+    'Revised PCE, no FE pch',
+    'Revised CPI yoy',
+    'Revised CPI, no FE yoy',
+    'Revised GDP deflator yoy',
+    'Revised PCE yoy',
+    'Revised PCE, no FE yoy'
+    ),
   
   # 1
   unitroot = list(),
@@ -110,14 +124,14 @@ inflation[['aropti']] <- lapply(X = inflation[['unitroot']],
 inflation[['ark']] <- lapply(X = pi,
                              FUN = auto.reg,
                              lags = 1,
-                             interc = T)
+                             interc = intercep)
 
 # rolling window
 inflation[['rollark']] <- lapply(X = pi,
                                  FUN = rolloop,
                                  window = wind,
                                  lags = 1,
-                                 interc = T)
+                                 interc = intercep)
 
 
 
@@ -127,7 +141,7 @@ inflation[['rollark']] <- lapply(X = pi,
 # on the whole sample
 inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
                                           lags = inflation[['aropti']],
-                                          interc = sapply(rep(T, n), list)
+                                          interc = sapply(rep(intercep, n), list)
                                           ),
                                 .f = auto.reg.sum)
 
@@ -138,7 +152,7 @@ inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
 inflation[["aroptirollm "]] <- pmap(.l = list(df = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']],
-                                              interc = sapply(rep(T, n), list)
+                                              interc = sapply(rep(intercep, n), list)
                                               ),
                                     .f = rolloop.sum)
 
@@ -185,7 +199,7 @@ inflation[['plot_rollm']] <- pmap(.l = list(df = inflation[['rollark']],
                                     
                                     
                                     # saves the plots in given path
-                                    ggsave(paste0(names, ' - AR(1) coeff. estimates.pdf'),
+                                    ggsave(paste0(names, ' - AR(1) coeff estimates.pdf'),
                                            plot = po,
                                            device='pdf',
                                            path = path,
@@ -220,7 +234,7 @@ inflation[['plot_aropti']] <- pmap(.l = list(df = inflation[['rollark']],
                                      
                                      # save plot
                                      
-                                     ggsave(paste0(names, ' - AR(',laags,') coeff. estimates sum.pdf'),
+                                     ggsave(paste0(names, ' - AR(',laags,') coeff estimates sum.pdf'),
                                             plot = po,
                                             device='pdf',
                                             path = path,
