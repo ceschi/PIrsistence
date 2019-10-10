@@ -149,7 +149,7 @@ inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
 # rolling window estimate
 # width is preselected,
 # optilag is computed in step I
-inflation[["aroptirollm "]] <- pmap(.l = list(df = sapply(pi, list),
+inflation[['aroptirollm']] <- pmap(.l = list(df = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']],
                                               interc = sapply(rep(intercep, n), list)
