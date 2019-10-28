@@ -495,50 +495,50 @@ shffr <- merge(shffr_ext, lag(shffr_ext, 1))
 names(shffr) <- c('shffr', 'shffrb')
 
 
-##### Un. of Michigan Surveys of Consumers #######
-
-# Glossary:
-# perch is PERcentage CHange; 
-# SOC(M) is Survey Of Consumers (Michigan);
-# g is for Growth rate
-# ind is for INDex
-# diff is for DIFFerence, levels when not otherwise stated
-# download and read data from site
-socm_inflation <- read_csv('http://www.sca.isr.umich.edu/files/tbqpx1px5.csv',
-                           col_types = cols(QUARTER = col_character(),
-                                            YYYY = col_integer(),
-                                            PX_MD = col_double(),
-                                            PX5_MD = col_double()
-                                            ))
-
-# massage them into TS format, skipping 2 initial rows (dates are 1968)
-socm_inflation_ts <- as.xts(ts(socm_inflation$PX_MD[3:nrow(socm_inflation)], 
-                               start=c(1978,1), frequency=4))
-
-colnames(socm_inflation_ts) <- 'socm_e_cpi_1y_ahead'
-
-# importing the actual and expected consumers sentiments indexes
-socm_indexes <- read_csv('http://www.sca.isr.umich.edu/files/tbqiccice.csv', 
-                         col_types = cols(QUARTER = col_character(),
-                                          YYYY = col_integer(),
-                                          ICC = col_double(),
-                                          ICE = col_double()
-                                          ))
-
-# creating three series, adding the difference btw actual and expected
-indexes <- cbind(socm_indexes$ICC, socm_indexes$ICE, (socm_indexes$ICC - socm_indexes$ICE))
-
-socm_indexes_ts <- as.xts(ts(indexes, start=c(1960, 1), frequency=4,
-                             names=c('soc_actual_ind', 'soc_expected_ind','soc_diff_ind')))
-
-# creates the percentage variations from SOC levels, period over period
-
-g_indexes_rates <- diff(log(socm_indexes_ts[,1:2]))*100
-colnames(g_indexes_rates) <- c('soc_perch_actual_ind', 'soc_perch_expected_ind')
-
-SOC_Michigan <- merge(socm_inflation_ts,
-                      socm_indexes_ts,
-                      g_indexes_rates)
+# ##### Un. of Michigan Surveys of Consumers #######
+# 
+# # Glossary:
+# # perch is PERcentage CHange; 
+# # SOC(M) is Survey Of Consumers (Michigan);
+# # g is for Growth rate
+# # ind is for INDex
+# # diff is for DIFFerence, levels when not otherwise stated
+# # download and read data from site
+# socm_inflation <- read_csv('http://www.sca.isr.umich.edu/files/tbqpx1px5.csv',
+#                            col_types = cols(QUARTER = col_character(),
+#                                             YYYY = col_integer(),
+#                                             PX_MD = col_double(),
+#                                             PX5_MD = col_double()
+#                                             ))
+# 
+# # massage them into TS format, skipping 2 initial rows (dates are 1968)
+# socm_inflation_ts <- as.xts(ts(socm_inflation$PX_MD[3:nrow(socm_inflation)], 
+#                                start=c(1978,1), frequency=4))
+# 
+# colnames(socm_inflation_ts) <- 'socm_e_cpi_1y_ahead'
+# 
+# # importing the actual and expected consumers sentiments indexes
+# socm_indexes <- read_csv('http://www.sca.isr.umich.edu/files/tbqiccice.csv', 
+#                          col_types = cols(QUARTER = col_character(),
+#                                           YYYY = col_integer(),
+#                                           ICC = col_double(),
+#                                           ICE = col_double()
+#                                           ))
+# 
+# # creating three series, adding the difference btw actual and expected
+# indexes <- cbind(socm_indexes$ICC, socm_indexes$ICE, (socm_indexes$ICC - socm_indexes$ICE))
+# 
+# socm_indexes_ts <- as.xts(ts(indexes, start=c(1960, 1), frequency=4,
+#                              names=c('soc_actual_ind', 'soc_expected_ind','soc_diff_ind')))
+# 
+# # creates the percentage variations from SOC levels, period over period
+# 
+# g_indexes_rates <- diff(log(socm_indexes_ts[,1:2]))*100
+# colnames(g_indexes_rates) <- c('soc_perch_actual_ind', 'soc_perch_expected_ind')
+# 
+# SOC_Michigan <- merge(socm_inflation_ts,
+#                       socm_indexes_ts,
+#                       g_indexes_rates)
 
 
 ##### EPU indexes #####
@@ -641,7 +641,7 @@ db_US <- merge(rates,
                fiscal,
                spf,
                shffr,
-               SOC_Michigan,
+               # SOC_Michigan,
                epu)
 
 dums <- xts(x = data.frame(q1 = rep(c(1,0,0,0), floor(length(index(db_US)))/4),
@@ -706,8 +706,9 @@ surplus_gdp, surplus_season, spf, spf_corecpi,
 spf_corepce, spf_cpi, spf_pce, rev_hist_yoy, rev_hist_pch,
 tbill3_ffr, shffr,
 
-socm_inflation, socm_indexes, indexes, socm_indexes_ts,
-socm_inflation_ts, g_indexes_rates, SOC_Michigan,
+# socm_inflation, socm_indexes, indexes, socm_indexes_ts,
+# socm_inflation_ts, 
+# g_indexes_rates, SOC_Michigan,
 short_long_diff, epu_aggregate, epu_aggregate_comp,
 epu_aggregate_comp_ts, epu_aggregate_ts,
 epu_cat, epu_cat_ts, epu,
