@@ -338,19 +338,18 @@ inflation[['plot_aropti_ms']] <- pmap(.l = list(ms_model = inflation[['aropti_ms
                                         par(mar = c(1,1,2.85,1), cex.main = .70)
                                         
                                         # store actual plot
+                                        # it's automatically printed
                                         plot_out <- plotProb(ms_model, which = 2)
-                                        
-                                        
-                                        
-                                        # print to device
-                                        print(plot_out)
                                         
                                         # fix title
                                         title(paste0(flag___ms, '-state MS regimes for ', nam, ' with ', laags, ' lags'), line = 2.3)
+                                        
                                         # copy dev output to file (pdf)
                                         dev.copy(pdf, height=8/1.5, width=14.6/1.5,
                                                  file.path(path,
-                                                           paste0(nam, ' ', flag___ms, '-state MSM.pdf')))
+                                                           paste0(nam, ' ', flag___ms, '-state MSM.pdf')
+                                                           )
+                                                 ) %>% invisible() # just to remove annoying output
                                         
                                         # shut down device, comment for keeping the plot
                                         invisible(dev.off())
