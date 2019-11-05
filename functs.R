@@ -485,7 +485,7 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
 pkgs <- c('vars', 'glue', 'lazyeval',
           'quantreg', 'tidyverse', 'devtools',
           'tseries', 'dynlm', 'stargazer',
-          'dyn', 'strucchange', 'xts',
+          'dyn', 'strucchange', 'xts', 'httr',
           'MASS', 'car', 'rvest', 'viridis',
           'mFilter', 'fredr','ggridges', 'MSwM',
           'readr', 'quantmod','broom', 'fredr',
