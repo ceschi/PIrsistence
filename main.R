@@ -35,6 +35,10 @@ if (flag___optilag == 1) llags <- 18
 # 0 for skipping
 flag___plot <- 0
 
+# flag on the MarkovS states,
+# default 2
+flag___ms <- 2
+
 
 # directories, functions and data
 
@@ -44,7 +48,8 @@ source('USdatacoll.R')
 
 
 # subselect data
-pi <- merge(# db_US$cpit,
+pi <- merge(
+  # db_US$cpit,
   # db_US$coret,
   # db_US$deflt,
   # db_US$deflt1,
@@ -94,11 +99,15 @@ inflation <- list(
   aroptirollm = list(),
   aroptiridges = list(),
   
+  # 3bis
+  aropti_ms = list(),
+  
   
   # 4+
   plot_rollm = list(),
   plot_aropti = list(),
-  plot_ridges = list()
+  plot_ridges = list(),
+  plot_aropti_ms = list()
 )
 
 
@@ -155,6 +164,34 @@ inflation[['aroptirollm']] <- pmap(.l = list(df = sapply(pi, list),
                                               interc = sapply(rep(intercep, n), list)
                                               ),
                                     .f = rolloop.sum)
+
+
+# Markov Switching model on the k* lags
+# on the whole sample
+
+inflation[['aropti_ms']] <- pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
+                                           lags = inflation[['aropti']],
+                                           states = flag___ms
+                                           ),
+                                 .f = function(df, lags, states){
+                                   # adapt the dataset creating lags
+                                   data <-  lagger_bis(series = df, 
+                                                       lag = lags)
+                                   
+                                   # estimate a linear model
+                                   l_model <- lm(data = data)
+                                   
+                                   # run the MS
+                                   estimate <- msmFit(#data = data,
+                                                      object = l_model,
+                                                      k = states,
+                                                      sw = rep(T, 1+1+lags),)
+                                   # output results
+                                   return(estimate)
+                                   
+                                 })
+
+
 
 
 # ridges plot material
@@ -284,5 +321,43 @@ inflation[["plot_ridges"]] <- pmap(.l = list(df = inflation[['aroptiridges']],
                                     }
                                    )
 
+
+# plotting msm
+
+inflation[['plot_aropti_ms']] <- pmap(.l = list(ms_model = inflation[['aropti_ms']],
+                                                nam = inflation[['names']],
+                                                laags = inflation[['aropti']],
+                                                path = sapply(rep(graphs_dir, n), list)
+                                                ),
+                                                
+                                      .f = function(ms_model, nam, laags, path){
+                                        
+                                        # setting device size
+                                        # mar sets margings
+                                        # cex.main scales title to 70%
+                                        par(mar = c(1,1,2.85,1), cex.main = .70)
+                                        
+                                        # store actual plot
+                                        plot_out <- plotProb(ms_model, which = 2)
+                                        
+                                        
+                                        
+                                        # print to device
+                                        print(plot_out)
+                                        
+                                        # fix title
+                                        title(paste0(flag___ms, '-state MS regimes for ', nam, ' with ', laags, ' lags'), line = 2.3)
+                                        # copy dev output to file (pdf)
+                                        dev.copy(pdf, height=8/1.5, width=14.6/1.5,
+                                                 file.path(path,
+                                                           paste0(nam, ' ', flag___ms, '-state MSM.pdf')))
+                                        
+                                        # shut down device, comment for keeping the plot
+                                        invisible(dev.off())
+                                        
+                                        # output
+                                        return(plot_out)
+                                      }
+                                        )
 
 
