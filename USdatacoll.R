@@ -505,6 +505,7 @@ names(shffr) <- c('shffr', 'shffrb')
 # # diff is for DIFFerence, levels when not otherwise stated
 # create list with requests to send
 # to the UoM website
+
 req_fields <- list(#'User-Agent' = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Mobile Safari/537.36',
   table = '32',
   year = '1960',
@@ -515,17 +516,17 @@ req_fields <- list(#'User-Agent' = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Bui
 # consumers' expected inflation, 1 year ahead
 socm_1y_inflation <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/mine.php',
                           body = req_fields,
-                          encode = 'form', verbose()
-) %>% 
-  content('parsed') %>%
-  rvest::html_table() %>% 
-  .[[2]] %>% 
-  select(X13, X15) %>% 
-  .[-1,] %>% 
-  ts(start = c(1960, 1), frequency = 4) %>%
-  xts(order.by = time(.) %>% as.Date()) %>% 
-  rename(X13 = socm_1y_inflation_mean,
-         X14 = socm_1y_inflation_sd)
+                          encode = 'form', verbose()) %>% 
+                          content('parsed', encoding = 'UTF-8') %>%
+                          rvest::html_table() %>% 
+                          .[[2]] %>% 
+                          select(X13, X15) %>% 
+                          .[-1,] %>%   
+                          rename(socm_1y_inflation_mean = X13,
+                                 socm_1y_inflation_sd = X15) %>% 
+                          ts(start = c(1960, 1), frequency = 4) %>%
+                          xts(order.by = time(.) %>% as.Date())
+
 
 
 # consumers' expected inflation, 5 years ahead
@@ -534,16 +535,17 @@ req_fields[['table']] <- '33'
 socm_5y_inflation <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/mine.php',
                           body = req_fields,
                           encode = 'form', verbose()
-) %>% 
-  content('parsed') %>%
-  rvest::html_table() %>% 
-  .[[2]] %>% 
-  select(X13, X15) %>% 
-  .[-1,] %>% 
-  ts(start = c(1960, 1), frequency = 4) %>%
-  xts(order.by = time(.) %>% as.Date()) %>% 
-  rename(X13 = socm_5y_inflation_mean,
-         X14 = socm_5y_inflation_var)
+                          ) %>% 
+                            content('parsed', encoding = 'UTF-8') %>%
+                            rvest::html_table() %>% 
+                            .[[2]] %>% 
+                            select(X13, X15) %>% 
+                            .[-1,] %>% 
+                            rename(socm_5y_inflation_mean = X13,
+                                   socm_5y_inflation_sd = X15) %>% 
+                            ts(start = c(1960, 1), frequency = 4) %>%
+                            xts(order.by = time(.) %>% as.Date())
+                            
 
 
 # consumer confidence indexes + transformations
@@ -552,23 +554,25 @@ req_fields[['table']] <- '5'
 socm_indexes <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/mine.php',
                      body = req_fields,
                      encode = 'form', verbose()
-) %>% 
-  content('parsed') %>%
-  rvest::html_table() %>% 
-  .[[2]] %>% 
-  select(X8, X9) %>% 
-  .[-1,] %>% 
-  ts(start = c(1960, 1), frequency = 4) %>%
-  xts(order.by = time(.) %>% as.Date()) %>% 
-  rename(X13 = socm_actual_ind,
-         X14 = socm_expected_ind) %>% 
-  
-  # create deviations from expected index
-  # percentage deviations from previous level
-  # of the indexes, actual and expected
-  mutate(soc_diff_ind = socm_actual_ind - socm_expected_ind,
-         socm_perch_actual_ind = 100*diff(log(socm_actual_ind)),
-         socm_perch_expected_ind = 100*diff(log(socm_expected_ind)))
+                      ) %>% 
+                        content('parsed', encoding = 'UTF-8') %>%
+                        rvest::html_table() %>% 
+                        .[[2]] %>% 
+                        select(X8, X9) %>% 
+                        .[-1,] %>%
+                        rename(socm_actual_ind = X8,
+                               socm_expected_ind = X9) %>% 
+                        
+                        apply(2, as.numeric) %>% as.data.frame() %>% 
+                        
+                        # create deviations from expected index
+                        # percentage deviations from previous level
+                        # of the indexes, actual and expected
+                        mutate(soc_diff_ind = socm_actual_ind - socm_expected_ind,
+                               socm_perch_actual_ind = 100*diff(log(socm_actual_ind) %>% rbind(NA)),
+                               socm_perch_expected_ind = 100*diff(log(socm_expected_ind)%>% rbind(NA))) %>% 
+                        ts(start = c(1960, 1), frequency = 4) %>%
+                        xts(order.by = time(.) %>% as.Date())
 
 
 # merge all datafiles together
