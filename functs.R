@@ -533,7 +533,7 @@ plot_roller <- function(df, names, path){
 }
 
 # plots summed coefficients of optimal AR
-plot_autoregsumfunction(df, names, path, laags){
+plot_autoregsum <- function(df, names, path, laags){
   po <- ggplot(data=df,
                aes(x=index(df),
                    y=df[,1]))+
