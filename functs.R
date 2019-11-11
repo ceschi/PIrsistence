@@ -330,6 +330,9 @@ spf_funct <-  function(filnam, typs, ahead=1) {
 }
 
 
+
+############ PIRSISTENCE FUNCTIONS #############################################
+
 auto.reg <- function(data, lags = 1, interc = T){
   
   # function to estimate AR(lags)
@@ -348,29 +351,29 @@ auto.reg <- function(data, lags = 1, interc = T){
 }
 
 auto.reg.sum <- function(data, lags = 1, interc = T){
-
+  
   if (!require(broom)) {install.packages('broom'); library(broom)}
   # not necessary as already in tidyverse
   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
-
+  
   # function to estimate AR(lags) and sum over parameters
-
+  
   transf_data <- lagger(series = data,
                         laag = lags,
                         na.cut = F)
-
+  
   model_formula <- formula.maker(df = transf_data,
                                  y = first(names(transf_data)),
                                  intercept = interc)
   
   linear_model <- lm(formula = model_formula,
                      data = transf_data)
-
+  
   output <- broom::tidy(linear_model)
   
   coef_sum <- output %>% filter(term != '(Intercept)') %>% select(estimate) %>%  sum()
-
+  
   return(coef_sum)
 }
 
@@ -382,7 +385,7 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
   # computes point estimates
   # stocks in a dataframe for convenience
   regs <-rollapply(df_na,
-    # as.data.frame(df),
+                   # as.data.frame(df),
                    width=window,
                    by.column = F,
                    FUN = auto.reg.sum,
@@ -395,7 +398,7 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 }
 
 
-##### TRACKING PERSISTENCE OVER TIME #####
+# TRACKING PERSISTENCE OVER TIME #
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
   if (!require(zoo))    {install.packages('zoo');   library(zoo)}
@@ -466,17 +469,157 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
   }
   
   out_fin$term <- as.numeric(
-                  gsub(pattern = '[V]',
-                       x = out_fin$term,
-                       replacement = '')
-                            ) - 1
+    gsub(pattern = '[V]',
+         x = out_fin$term,
+         replacement = '')
+  ) - 1
   
   return(out_fin)
   
 }
 
 
+# Markov Switching model with optimal lags
+ms_aropti <- function(df, lags, states){
+  # adapt the dataset creating lags
+  data <-  lagger_bis(series = df, 
+                      lag = lags)
+  
+  # estimate a linear model
+  l_model <- lm(data = data)
+  
+  # run the MS
+  estimate <- msmFit(#data = data,
+    object = l_model,
+    k = states,
+    sw = rep(T, 1+1+lags),)
+  # output results
+  return(estimate)
+  
+}
 
+
+# plot rolling estimates for AR1
+plot_roller <- function(df, names, path){
+  po <- ggplot(data=df,
+               aes(x=index(df),
+                   y=df$Var.1))+
+    # plot the above with line geom, in black
+    geom_line(colour='black', size=1)+
+    # adds upper confidence band in red
+    geom_line(aes(y=(df$Var.1 + df$.SD2)),
+              colour='red')+
+    # adds lower confidence band in red
+    geom_line(aes(y=(df$Var.1 - df$.SD2)),
+              colour='red')+
+    # adds unit root line
+    geom_line(aes(y=1), colour='black', size=.8)+
+    # plot makeup
+    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q', n=20)+theme_bw()+
+    scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
+    ggtitle(paste0(names, ' - 1 exogenous lag'))
+  
+  
+  
+  # saves the plots in given path
+  ggsave(paste0(names, ' - AR(1) coeff estimates.pdf'),
+         plot = po,
+         device='pdf',
+         path = path,
+         height=8, width=14.16, units='in')
+  
+  
+  return(po)
+}
+
+# plots summed coefficients of optimal AR
+plot_autoregsumfunction(df, names, path, laags){
+  po <- ggplot(data=df,
+               aes(x=index(df),
+                   y=df[,1]))+
+    # plot the above with line geom, in black
+    geom_line(colour='black', size=1)+
+    # adds unit root line
+    geom_line(aes(y=1), colour='black', size=.8)+
+    # plot makeup
+    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q', n=20)+theme_bw()+
+    scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
+    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients'))
+  
+  
+  # save plot
+  
+  ggsave(paste0(names, ' - AR(',laags,') coeff estimates sum.pdf'),
+         plot = po,
+         device='pdf',
+         path = path,
+         height=8, width=14.16, units='in')
+  
+  return(po)
+  
+}
+
+# plots ridges for AR
+plot_ridges <- function(df, nam, laags, path){
+  out <- ggplot(data = df)+
+    geom_ridgeline_gradient(aes(x = term,
+                                y = as.factor(last.date),
+                                height = estimate,
+                                group = as.factor(last.date),
+                                fill = p.value),
+                            min_height = -2) +
+    scale_fill_viridis(name = 'P-values',option = "C", direction = 1) +
+    ggtitle(paste0('Evolving persistence - ',
+                   nam,
+                   ' ',
+                   laags,
+                   ' end. lags')) +
+    xlab('Lag order') + ylab(' ')
+  
+  
+  ggsave(paste0(nam, ' - AR(',laags,') acf.pdf'),
+         plot = out,
+         device = 'pdf',
+         path = path,
+         # extra height needed for full display
+         height = 100,
+         width = 14.16,
+         units = 'in',
+         limitsize = FALSE
+  )
+  
+  return(out)
+}
+
+
+# plot Markov Switching results
+plot_msm <- function(ms_model, nam, laags, path){
+  
+  # setting device size
+  # mar sets margings
+  # cex.main scales title to 70%
+  par(mar = c(1,1,2.85,1), cex.main = .70)
+  
+  # store actual plot
+  # it's automatically printed
+  plot_out <- plotProb(ms_model, which = 2)
+  
+  # fix title
+  title(paste0(flag___ms, '-state MS regimes for ', nam, ' with ', laags, ' lags'), line = 2.3)
+  
+  # copy dev output to file (pdf)
+  dev.copy(pdf, height=8/1.5, width=14.6/1.5,
+           file.path(path,
+                     paste0(nam, ' ', flag___ms, '-state MSM.pdf')
+           )
+  ) %>% invisible() # just to remove annoying output
+  
+  # shut down device, comment for keeping the plot
+  invisible(dev.off())
+  
+  # output
+  return(plot_out)
+}
 
 
 
