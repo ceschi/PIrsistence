@@ -46,6 +46,7 @@ source('directories.R')
 source('functs.R')
 source('USdatacoll.R')
 
+plan(multiprocess)
 
 # subselect data
 pi <- merge(
@@ -70,7 +71,8 @@ n=length(names(pi))
 # this preallocated list will
 # collect all results
 inflation <- list(
-  names=list(# 'CPI nowcast',
+  names=list(
+    # 'CPI nowcast',
     # 'PCE nowcast',
     # 'GDP deflator nowcast',
     # 'GDP deflator forecast',
@@ -148,7 +150,7 @@ inflation[['rollark']] <- lapply(X = pi,
 
 # one fit with optilags
 # on the whole sample
-inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
+inflation[['aroptilm']] <- future_pmap(.l = list(data = sapply(pi, list),
                                           lags = inflation[['aropti']],
                                           interc = sapply(rep(intercep, n), list)
                                           ),
@@ -158,7 +160,7 @@ inflation[['aroptilm']] <- pmap(.l = list(data = sapply(pi, list),
 # rolling window estimate
 # width is preselected,
 # optilag is computed in step I
-inflation[['aroptirollm']] <- pmap(.l = list(df = sapply(pi, list),
+inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']],
                                               interc = sapply(rep(intercep, n), list)
@@ -166,10 +168,13 @@ inflation[['aroptirollm']] <- pmap(.l = list(df = sapply(pi, list),
                                     .f = rolloop.sum)
 
 
+# inflation[['aroptirollm_var']]
+
+
 # Markov Switching model on the k* lags
 # on the whole sample
 
-inflation[['aropti_ms']] <- pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
+inflation[['aropti_ms']] <- future_pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
                                            lags = inflation[['aropti']],
                                            states = flag___ms
                                            ),
@@ -180,7 +185,7 @@ inflation[['aropti_ms']] <- pmap(.l = list(df = sapply(pi,FUN = function(x) list
 
 # ridges plot material
 
-inflation[['aroptiridges']] <- pmap(.l = list(tseries = sapply(pi, list),
+inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']]),
                                     .f = persistence_ridges)
@@ -195,7 +200,7 @@ inflation[['aroptiridges']] <- pmap(.l = list(tseries = sapply(pi, list),
 
 # AR(1) rolling
 
-inflation[['plot_rollm']] <- pmap(.l = list(df = inflation[['rollark']],
+inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                             names = inflation[['names']],
                                             path = sapply(rep(graphs_dir, n), list)),
                                   .f = plot_roller
@@ -204,7 +209,7 @@ inflation[['plot_rollm']] <- pmap(.l = list(df = inflation[['rollark']],
 
 # AR(k*) plots
 
-inflation[['plot_aropti']] <- pmap(.l = list(df = inflation[['rollark']],
+inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                              names = inflation[['names']],
                                              laags = inflation[['aropti']],
                                              path = sapply(rep(graphs_dir, n), list)),
@@ -213,7 +218,7 @@ inflation[['plot_aropti']] <- pmap(.l = list(df = inflation[['rollark']],
 
 # plotting ridges
 
-inflation[["plot_ridges"]] <- pmap(.l = list(df = inflation[['aroptiridges']],
+inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
                                              nam = inflation[['names']],
                                              laags = inflation[['aropti']],
                                              path = sapply(rep(graphs_dir, n), list)),
@@ -224,7 +229,7 @@ inflation[["plot_ridges"]] <- pmap(.l = list(df = inflation[['aroptiridges']],
 
 # plotting msm
 
-inflation[['plot_aropti_ms']] <- pmap(.l = list(ms_model = inflation[['aropti_ms']],
+inflation[['plot_aropti_ms']] <- future_pmap(.l = list(ms_model = inflation[['aropti_ms']],
                                                 nam = inflation[['names']],
                                                 laags = inflation[['aropti']],
                                                 path = sapply(rep(graphs_dir, n), list)

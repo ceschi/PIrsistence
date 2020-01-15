@@ -358,10 +358,46 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
   
   # function to estimate AR(lags) and sum over parameters
+
+  transf_data <- lagger(series = data,
+                        laag = lags,
+                        na.cut = F)
+  
+
+  
+  model_formula <- formula.maker(df = transf_data,
+                                 y = first(names(transf_data)),
+                                 intercept = interc)
+  
+  linear_model <- lm(formula = model_formula,
+                     data = transf_data)
+  
+  output <- broom::tidy(linear_model)
+  
+  coef_sum <- output %>% filter(term != '(Intercept)') %>% select(estimate) %>%  sum()
+  
+  return(coef_sum)
+}
+
+
+auto.reg.sum.var <- function(data, interc = T){
+  
+  if (!require(broom)) {install.packages('broom'); library(broom)}
+  # not necessary as already in tidyverse
+  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
+  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+  
+  # function to estimate AR(lags) and sum over parameters
+  
+  
+  urcaa <- urca::ur.df(na.omit(data), lags = 18, selectlags = "BIC")
+  olags <- urcaa@optilags
   
   transf_data <- lagger(series = data,
                         laag = lags,
                         na.cut = F)
+  
+  
   
   model_formula <- formula.maker(df = transf_data,
                                  y = first(names(transf_data)),
@@ -389,6 +425,29 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
                    width=window,
                    by.column = F,
                    FUN = auto.reg.sum,
+                   lags = lags,
+                   interc = interc)
+  
+  # # converts and dates the regressions
+  # regs <- xts(regs, frequency=4, 
+  #             order.by=index(df_na)[window:length(index(df_na))])
+}
+
+
+rolloop.sum.var <- function(df, window, interc = T){
+  
+  # remove troublesome NAs
+  df_na <- na.omit(df)
+  
+  lags
+  
+  # computes point estimates
+  # stocks in a dataframe for convenience
+  regs <-rollapply(df_na,
+                   # as.data.frame(df),
+                   width=window,
+                   by.column = F,
+                   FUN = auto.reg.sum.var,
                    lags = lags,
                    interc = interc)
   
@@ -553,7 +612,7 @@ plot_autoregsum <- function(df, names, path, laags){
          plot = po,
          device='pdf',
          path = path,
-         height=8, width=14.16, units='in')
+         height=8/3, width=14.16/3, units='in')
   
   return(po)
   
@@ -633,7 +692,8 @@ pkgs <- c('vars', 'glue', 'lazyeval',
           'mFilter', 'fredr','ggridges', 'MSwM',
           'readr', 'quantmod','broom', 'fredr',
           'devtools', 'lubridate', 'ggridges',
-          'readxl', 'tbl2xts', 'tictoc', 'gmm')
+          'readxl', 'tbl2xts', 'tictoc', 'gmm',
+          'future', 'furrr')
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)
