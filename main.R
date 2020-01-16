@@ -239,3 +239,14 @@ inflation[['plot_aropti_ms']] <- future_pmap(.l = list(ms_model = inflation[['ar
                                         )
 
 
+p <- ggplot(na.omit(pi)) + 
+  # geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_pch, colour = '0')) + 
+  # geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_pch, colour = '1')) + 
+  # geom_line(aes(x = index(na.omit(pi)), y = rev_defl_pch, colour = '2')) + 
+  # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_pch, colour = '3')) + 
+  # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_pch, colour = '4')) + 
+  geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_yoy, colour = '5')) + 
+  geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_yoy, colour = '6')) + 
+  geom_line(aes(x = index(na.omit(pi)), y = rev_defl_yoy, colour = '7')) + 
+  geom_line(aes(x = index(na.omit(pi)), y = rev_pce_yoy, colour = '8')) + 
+  geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_yoy, colour = '9'))
