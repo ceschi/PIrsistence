@@ -27,8 +27,8 @@ wind <- 14*4
 flag___optilag <- 1
 
 # upperbound on optimal lags
-llags <- 8
-if (flag___optilag == 1) llags <- 18
+llags <- 50
+# if (flag___optilag == 1) llags <- 18
 
 # flag on plotting
 # 1 for plotting results
@@ -120,6 +120,7 @@ inflation <- list(
 inflation[['unitroot']] <- lapply(X = na.omit(pi),
                                   FUN = urca::ur.df,
                                   lags = llags,
+                                  type = 'drift',
                                   selectlags = 'BIC')
 
 

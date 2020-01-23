@@ -520,7 +520,8 @@ socm_1y_inflation <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/min
                           content('parsed', encoding = 'UTF-8') %>%
                           rvest::html_table() %>% 
                           .[[2]] %>% 
-                          select(X13, X15) %>% 
+                          dplyr::select(X13, X15) %>%
+                          # summarise(X14 = sqrt(X14)) %>% 
                           .[-1,] %>%   
                           rename(socm_1y_inflation_mean = X13,
                                  socm_1y_inflation_sd = X15) %>% 
@@ -539,7 +540,7 @@ socm_5y_inflation <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/min
                             content('parsed', encoding = 'UTF-8') %>%
                             rvest::html_table() %>% 
                             .[[2]] %>% 
-                            select(X13, X15) %>% 
+                            dplyr::select(X13, X15) %>% 
                             .[-1,] %>% 
                             rename(socm_5y_inflation_mean = X13,
                                    socm_5y_inflation_sd = X15) %>% 
@@ -558,7 +559,7 @@ socm_indexes <- POST(url = 'https://data.sca.isr.umich.edu/data-archive/mine.php
                         content('parsed', encoding = 'UTF-8') %>%
                         rvest::html_table() %>% 
                         .[[2]] %>% 
-                        select(X8, X9) %>% 
+                        dplyr::select(X8, X9) %>% 
                         .[-1,] %>%
                         rename(socm_actual_ind = X8,
                                socm_expected_ind = X9) %>% 
