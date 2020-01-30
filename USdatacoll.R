@@ -105,27 +105,27 @@ rev_hist_pch <- merge(
           # Consumer Price Index for All Urban Consumers: All Items Less Food and Energy
           rev_pci_fe  = 4*fredr_series_observations(series_id='CPILFESL', 
                                             frequency='q', 
-                                            # aggregation_method='eop', 
+                                            # aggregation_method='eop',
                                             units='pch') %>% tbl_xts(),
           
           # Gross Domestic Product: Implicit Price Deflator
           rev_defl = 4*fredr_series_observations(series_id='GDPDEF', 
                                           frequency='q', 
-                                         # aggregation_method='eop', 
+                                         # aggregation_method='eop',
                                          units='pch') %>% tbl_xts(),
           
           # Personal Consumption Expenditures including Food and Energy
           rev_pce  = 4*fredr_series_observations(series_id='PCEPI', 
                                              frequency='q', 
-                                         # aggregation_method='eop', 
+                                         # aggregation_method='eop',
                                          units='pch') %>% tbl_xts(),
           
           # Personal Consumption Expenditures Excluding Food and Energy
           rev_pce_fe  = 4*fredr_series_observations(series_id='PCEPILFE', 
                                             frequency='q', 
-                                            # aggregation_method='eop', 
+                                            # aggregation_method='eop',
                                             units='pch') %>% tbl_xts()
-) 
+                      ) 
 
 # renames variables
 names(rev_hist_pch) <-  c('rev_cpi_pch', 'rev_cpi_fe_pch', 'rev_defl_pch',
@@ -163,6 +163,37 @@ rev_hist_yoy <- merge(
                                             frequency='q', 
                                             # aggregation_method='eop', 
                                             units='pc1') %>% tbl_xts()
+  
+  #########################################################
+  # # Consumer Price Index for All Urban Consumers: All Items 
+  # rev_pci = fredr_series_observations(series_id='CPIAUCSL', 
+  #                                     frequency='q', 
+  #                                     # aggregation_method='eop',
+  #                                     units='pc1') %>% tbl_xts(), 
+  # 
+  # # Consumer Price Index for All Urban Consumers: All Items Less Food and Energy
+  # rev_pci_fe  = fredr_series_observations(series_id='CPILFESL', 
+  #                                         frequency='q', 
+  #                                         # aggregation_method='eop', 
+  #                                         units='pc1') %>% tbl_xts(),
+  # 
+  # # Gross Domestic Product: Implicit Price Deflator
+  # rev_defl = fredr_series_observations(series_id='GDPDEF', 
+  #                                      frequency='q', 
+  #                                      # aggregation_method='eop', 
+  #                                      units='pc1') %>% tbl_xts(),
+  # 
+  # # Personal Consumption Expenditures including Food and Energy
+  # rev_pce  = fredr_series_observations(series_id='PCEPI', 
+  #                                      frequency='q', 
+  #                                      # aggregation_method='eop', 
+  #                                      units='pc1') %>% tbl_xts(),
+  # 
+  # # Personal Consumption Expenditures Excluding Food and Energy
+  # rev_pce_fe  = fredr_series_observations(series_id='PCEPILFE', 
+  #                                         frequency='q', 
+  #                                         # aggregation_method='eop', 
+  #                                         units='pc1') %>% tbl_xts()
 )
 
 # renames variables

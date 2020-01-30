@@ -27,7 +27,7 @@ wind <- 14*4
 flag___optilag <- 1
 
 # upperbound on optimal lags
-llags <- 50
+llags <- 10
 # if (flag___optilag == 1) llags <- 18
 
 # flag on plotting
@@ -50,15 +50,20 @@ plan(multiprocess)
 
 # subselect data
 pi <- merge(
+  # nowcasts and forecasts
   # db_US$cpit,
   # db_US$coret,
   # db_US$deflt,
   # db_US$deflt1,
+
+  # qoq percentage change
   db_US$rev_cpi_pch,
   db_US$rev_cpi_fe_pch,
   db_US$rev_defl_pch,
   db_US$rev_pce_pch,
   db_US$rev_pce_fe_pch,
+  
+  # yoy percentage change
   db_US$rev_cpi_yoy,
   db_US$rev_cpi_fe_yoy,
   db_US$rev_defl_yoy,
@@ -228,16 +233,16 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
                                    )
 
 
-# plotting msm
-
-inflation[['plot_aropti_ms']] <- future_pmap(.l = list(ms_model = inflation[['aropti_ms']],
-                                                nam = inflation[['names']],
-                                                laags = inflation[['aropti']],
-                                                path = sapply(rep(graphs_dir, n), list)
-                                                ),
-                                                
-                                      .f = plot_msm
-                                        )
+# # plotting msm
+# 
+# inflation[['plot_aropti_ms']] <- future_pmap(.l = list(ms_model = inflation[['aropti_ms']],
+#                                                 nam = inflation[['names']],
+#                                                 laags = inflation[['aropti']],
+#                                                 path = sapply(rep(graphs_dir, n), list)
+#                                                 ),
+#                                                 
+#                                       .f = plot_msm
+#                                         )
 
 
 p <- ggplot(na.omit(pi)) + 

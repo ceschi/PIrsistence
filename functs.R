@@ -245,15 +245,10 @@ formula.maker <- function(df, y, intercept = T){
   if (intercept){
     fomu <- as.formula(paste(y, 
                            paste(names(df)[names(df)!=y], collapse='+'),
-                           # paste(c(0,names(df)[names(df)!=y]), collapse='+'),
-                           # this prevents to have a constant but breaks the
-                           # functioning of the code 
                            sep='~'))
   } else {
     fomu <- as.formula(paste(y,
                              paste(c(0,names(df)[names(df)!=y]), collapse='+'),
-                             # this prevents to have a constant but breaks the
-                             # functioning of the code somewhere
                              sep='~'))
                 }
   
@@ -693,7 +688,7 @@ pkgs <- c('vars', 'glue', 'lazyeval',
           'readr', 'quantmod','broom', 'fredr',
           'devtools', 'lubridate', 'ggridges',
           'readxl', 'tbl2xts', 'tictoc', 'gmm',
-          'future', 'furrr')
+          'future', 'furrr', 'broom')
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)

@@ -8,6 +8,7 @@
 ./Plots/*.*
 ./Processed data/*.*
 ./todo/*.*
+.RDataTmp
 
 
 Downloaded files/
@@ -15,6 +16,7 @@ Plots/
 Processed data/
 todo/
 pirsistence.Rproj
+orbis.R
 
 
 
