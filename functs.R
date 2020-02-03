@@ -375,38 +375,7 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
 }
 
 
-auto.reg.sum.var <- function(data, interc = T){
-  
-  if (!require(broom)) {install.packages('broom'); library(broom)}
-  # not necessary as already in tidyverse
-  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
-  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
-  
-  # function to estimate AR(lags) and sum over parameters
-  
-  
-  urcaa <- urca::ur.df(na.omit(data), lags = 18, selectlags = "BIC")
-  olags <- urcaa@optilags
-  
-  transf_data <- lagger(series = data,
-                        laag = lags,
-                        na.cut = F)
-  
-  
-  
-  model_formula <- formula.maker(df = transf_data,
-                                 y = first(names(transf_data)),
-                                 intercept = interc)
-  
-  linear_model <- lm(formula = model_formula,
-                     data = transf_data)
-  
-  output <- broom::tidy(linear_model)
-  
-  coef_sum <- output %>% filter(term != '(Intercept)') %>% select(estimate) %>%  sum()
-  
-  return(coef_sum)
-}
+
 
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
@@ -429,27 +398,6 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 }
 
 
-rolloop.sum.var <- function(df, window, interc = T){
-  
-  # remove troublesome NAs
-  df_na <- na.omit(df)
-  
-  lags
-  
-  # computes point estimates
-  # stocks in a dataframe for convenience
-  regs <-rollapply(df_na,
-                   # as.data.frame(df),
-                   width=window,
-                   by.column = F,
-                   FUN = auto.reg.sum.var,
-                   lags = lags,
-                   interc = interc)
-  
-  # # converts and dates the regressions
-  # regs <- xts(regs, frequency=4, 
-  #             order.by=index(df_na)[window:length(index(df_na))])
-}
 
 
 # TRACKING PERSISTENCE OVER TIME #
@@ -568,6 +516,7 @@ plot_roller <- function(df, names, path){
               colour='red')+
     # adds unit root line
     geom_line(aes(y=1), colour='black', size=.8)+
+    geom_line(aes(y=0), colour='black', size=.8)+
     # plot makeup
     geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_bw()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
@@ -595,6 +544,7 @@ plot_autoregsum <- function(df, names, path, laags){
     geom_line(colour='black', size=1)+
     # adds unit root line
     geom_line(aes(y=1), colour='black', size=.8)+
+    geom_line(aes(y=0), colour='black', size=.8)+
     # plot makeup
     geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_bw()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
@@ -628,7 +578,7 @@ plot_ridges <- function(df, nam, laags, path){
                    ' ',
                    laags,
                    ' end. lags')) +
-    xlab('Lag order') + ylab(' ')
+    xlab('Lag order') + ylab(' ') + theme_minimal()
   
   
   ggsave(paste0(nam, ' - AR(',laags,') acf.pdf'),
