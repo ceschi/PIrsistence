@@ -80,15 +80,21 @@ n=length(names(pi))
 # collect all results
 inflation <- list(
   names=list(
+    
+    # forecasts/nowcasts
     # 'CPI nowcast',
     # 'PCE nowcast',
     # 'GDP deflator nowcast',
     # 'GDP deflator forecast',
+
+    # continously compounded annual rate of change
     'Revised CPI pch',
     'Revised CPI, no FE pch',
     'Revised GDP deflator pch',
     'Revised PCE pch',
     'Revised PCE, no FE pch',
+    
+    # percentage change from a year ago
     'Revised CPI yoy',
     'Revised CPI, no FE yoy',
     'Revised GDP deflator yoy',
