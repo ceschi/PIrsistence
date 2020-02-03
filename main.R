@@ -27,7 +27,7 @@ wind <- 14*4
 flag___optilag <- 1
 
 # upperbound on optimal lags
-llags <- 10
+llags <- 18
 # if (flag___optilag == 1) llags <- 18
 
 # flag on plotting
@@ -70,6 +70,9 @@ pi <- merge(
   db_US$rev_pce_yoy,
   db_US$rev_pce_fe_yoy
 )
+
+# reproducibility with Reis&Pivetta
+# pi <- pi["/2002-12-31"]
 
 n=length(names(pi))
 
@@ -180,11 +183,14 @@ inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
 # Markov Switching model on the k* lags
 # on the whole sample
 
-inflation[['aropti_ms']] <- future_pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
-                                           lags = inflation[['aropti']],
-                                           states = flag___ms
-                                           ),
-                                 .f = ms_aropti)
+
+# NOT USEFUL NOW, NOT INFORMATIVE
+
+# inflation[['aropti_ms']] <- future_pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
+#                                            lags = inflation[['aropti']],
+#                                            states = flag___ms
+#                                            ),
+#                                  .f = ms_aropti)
 
 
 
@@ -251,8 +257,8 @@ p <- ggplot(na.omit(pi)) +
   # geom_line(aes(x = index(na.omit(pi)), y = rev_defl_pch, colour = '2')) + 
   # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_pch, colour = '3')) + 
   # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_pch, colour = '4')) + 
-  geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_yoy, colour = '5')) + 
-  geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_yoy, colour = '6')) + 
-  geom_line(aes(x = index(na.omit(pi)), y = rev_defl_yoy, colour = '7')) + 
-  geom_line(aes(x = index(na.omit(pi)), y = rev_pce_yoy, colour = '8')) + 
-  geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_yoy, colour = '9'))
+      geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_yoy, colour = '5')) + 
+      geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_yoy, colour = '6')) + 
+      geom_line(aes(x = index(na.omit(pi)), y = rev_defl_yoy, colour = '7')) + 
+      geom_line(aes(x = index(na.omit(pi)), y = rev_pce_yoy, colour = '8')) + 
+      geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_yoy, colour = '9'))

@@ -9,6 +9,8 @@
 ./Processed data/*.*
 ./todo/*.*
 .RDataTmp
+*.Rprofvis
+ts.xlsx
 
 
 Downloaded files/
