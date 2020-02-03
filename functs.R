@@ -518,7 +518,7 @@ plot_roller <- function(df, names, path){
     geom_line(aes(y=1), colour='black', size=.8)+
     geom_line(aes(y=0), colour='black', size=.8)+
     # plot makeup
-    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_bw()+
+    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names, ' - 1 exogenous lag'))
   
@@ -546,9 +546,9 @@ plot_autoregsum <- function(df, names, path, laags){
     geom_line(aes(y=1), colour='black', size=.8)+
     geom_line(aes(y=0), colour='black', size=.8)+
     # plot makeup
-    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_bw()+
+    geom_smooth(method='loess', colour='blue')+scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
-    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients'))
+    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients')) 
   
   
   # save plot
