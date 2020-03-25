@@ -74,6 +74,13 @@ pi <- merge(
 # reproducibility with Reis&Pivetta
 # pi <- pi["/2002-12-31"]
 
+# write out to disk the series
+write.zoo(x=pi, 
+          file=file.path(data_dir, 'PI_data.csv'), 
+          sep=';',
+          row.names=F, 
+          index.name='date')
+
 n=length(names(pi))
 
 # this preallocated list will
