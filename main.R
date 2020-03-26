@@ -71,6 +71,9 @@ pi <- merge(
   db_US$rev_pce_fe_yoy
 )
 
+# db_US not needed in its entirety
+rm(db_US)
+
 # reproducibility with Reis&Pivetta
 # pi <- pi["/2002-12-31"]
 
