@@ -4,6 +4,9 @@
 # on each series.
 
 
+#' *MAIN SERIES ARE Q-O-Q ANNUALISED!*
+
+
 
 #### 0 - Setup, data, flags ####
 
@@ -83,6 +86,9 @@ write.zoo(x=pi,
           sep=';',
           row.names=F, 
           index.name='date')
+
+# chunck for further analysis in MATLAB
+source('matlab_exp.R')
 
 n=length(names(pi))
 

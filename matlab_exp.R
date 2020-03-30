@@ -2,7 +2,7 @@
 # quick dirty use of R&P07 codes
 
 
-write.table(x = pi, 
+write.table(x = pi[, grep(pattern = '_pch', names(pi))], 
             file = 'D:/emanu/OneDrive/Matlab/infl_pers_07/brute_force/pi_data.csv', 
             row.names = F, 
             quote = F, 
@@ -10,7 +10,7 @@ write.table(x = pi,
             col.names = F)
 
 
-write.table(x = pi %>% names(), 
+write.table(x = pi %>% names() %>% grep(pattern = '_pch', value = T), 
             file = 'D:/emanu/OneDrive/Matlab/infl_pers_07/brute_force/pi_names.csv', 
             row.names = F, 
             quote = F, 
