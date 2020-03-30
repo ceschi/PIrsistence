@@ -273,14 +273,20 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
 #                                         )
 
 
-p <- ggplot(na.omit(pi)) + 
-  # geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_pch, colour = '0')) + 
-  # geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_pch, colour = '1')) + 
-  # geom_line(aes(x = index(na.omit(pi)), y = rev_defl_pch, colour = '2')) + 
-  # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_pch, colour = '3')) + 
-  # geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_pch, colour = '4')) + 
-      geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_yoy, colour = '5')) + 
-      geom_line(aes(x = index(na.omit(pi)), y = rev_cpi_fe_yoy, colour = '6')) + 
-      geom_line(aes(x = index(na.omit(pi)), y = rev_defl_yoy, colour = '7')) + 
-      geom_line(aes(x = index(na.omit(pi)), y = rev_pce_yoy, colour = '8')) + 
-      geom_line(aes(x = index(na.omit(pi)), y = rev_pce_fe_yoy, colour = '9'))
+inflation[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2020"]))) + 
+      geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
+      geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI FE'), alpha = .75) + 
+      geom_line(aes(y = rev_pce_pch, colour = 'PCE'), alpha = .75) + 
+      geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
+      geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
+      theme_minimal() + labs(colour = ' ') +
+      ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
+      guides(colour=guide_legend(nrow = 1, byrow = T)) + 
+      theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))
+
+ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
+       plot = inflation[['plot_ts']], 
+       device = 'pdf',
+       width = 8,
+       units = 'in', 
+       height = 9*8/16)
