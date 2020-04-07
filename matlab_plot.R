@@ -1,31 +1,3 @@
-library(R.matlab)
-library(ggridges)
-
-bsum <- R.matlab::readMat(file.choose()) %>% as.data.frame()
-
-temp <- pi$rev_defl_pch
-temp <- temp[!is.na(temp),]
-names(bsum) <- temp[-(1:40), ] %>% index()
-
-rm(temp)
-
-bsum <- bsum %>% reshape2::melt() %>% 
-  group_by(variable) %>% mutate(med = median(value),
-                                mea = mean(value)) %>% 
-  ungroup()
-
-p <- bsum %>% 
-  as_tibble() %>% 
-  ggplot(aes(x = value, y = variable, group = variable)) +
-  stat_density_ridges(quantile_lines = TRUE, quantiles = c(0.05, .5, 0.95),
-                      scale = .95, rel_min_height = .05) + 
-  coord_flip() + theme_ridges() + scale_y_yearqtr(n = 15) +
-  geom_line(aes(x = med, y = value), size = 2) + 
-  geom_line(aes(x = mea, y = value), size = 2)
-
-format(object.size(bsum), 'Gb')
-
-
 plot_draws <- function(main_path, var, name){
   require(R.matlab)
   require(ggplot2)
@@ -52,29 +24,38 @@ plot_draws <- function(main_path, var, name){
   
   bsum <- bsum %>% 
     reshape2::melt() %>% 
-    mutate(variable = lubridate::yq(variable))
+    dplyr::mutate(variable = lubridate::yq(variable)) %>% 
+    dplyr::group_by(variable) %>% 
+    dplyr::mutate(Median = median(value)) %>% 
+    dplyr::ungroup()
   
-  bsum_collapsed <- bsum %>% group_by(variable) %>% 
-    mutate(median = median(value), 
+  bsum_collapsed <- bsum %>% dplyr::group_by(variable) %>% 
+    dplyr::mutate(median = median(value), 
            mean = mean(value), 
            q5 = quantile(value, .05), 
            q95 = quantile(value, .95)
            ) %>% 
-    select(-value) %>% 
-    distinct() 
-
+    dplyr::select(-value) %>% 
+    dplyr::distinct() 
+  
+  # test chunck
+  # bsum <- bsum[sample(1:nrow(bsum), 10000),]
   
   p <- bsum %>% 
-    ggplot(aes(x = value, y = variable, group = variable)) +
+    ggplot(aes(x = value, y = variable, group = variable, fill = Median)) +
     stat_density_ridges(quantile_lines = TRUE, 
                         quantiles = c(0.05, .5, 0.95),
                         scale = 5, 
                         rel_min_height = .05) + 
-    coord_flip() + theme_ridges() + 
-    ylab(' ') + xlab('Per period draws') + ggtitle(name)+
+    coord_flip() + ylab(' ') + 
+    xlab('Per period draws') + ggtitle(name) +
     theme(axis.text.x = element_text(angle = 45)) +
     geom_vline(xintercept = 1, colour = 'black', size = .75) +
-    geom_vline(xintercept = 0, colour = 'black', size = .75)
+    geom_vline(xintercept = 0, colour = 'black', size = .75) +
+    scale_fill_viridis(option = 'C') + theme_ridges() + 
+    theme(legend.position = 'bottom', legend.justification = 'center') +
+    guides(colour=guide_legend(nrow = 1, byrow = T))
+  
   
   p2 <- bsum_collapsed %>% 
     ggplot() +
@@ -93,7 +74,7 @@ plot_draws <- function(main_path, var, name){
               colour = 'red') +
     geom_hline(yintercept = 0, colour = 'black', size = .75)+
     geom_hline(yintercept = 1, colour = 'black', size = .75)+
-    theme_minimal() + ggtitle(name) + labs(colour = 'Qtls') + 
+    theme_ridges() + ggtitle(name) + labs(colour = 'Qtls') + 
     theme(axis.text.x = element_text(angle = 45),
           legend.position = 'none') +
     ylab(' ') + xlab(' ')
@@ -131,9 +112,11 @@ names <- c(
 )
 
 mega_plots <- list()
+
 pb <- txtProgressBar(min = 0, 
                      max = length(var),
                      style = 3)
+
 for (i in 1:length(var)){
   
   mega_plots[[i]] <- plot_draws(main_path, var[i], names[i])

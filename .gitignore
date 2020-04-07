@@ -11,17 +11,18 @@
 .RDataTmp
 *.Rprofvis
 ts.xlsx
+matlab/*
 
-
-Downloaded files/
-Plots/
-Processed data/
+downloaded_files/
+plots/
+processed_data/
 todo/
 pirsistence.Rproj
 orbis.R
 PROF.Rprofvis
 ts.xlsx
-
+*.eps
+*.mat
 
 
 ### Julia ###

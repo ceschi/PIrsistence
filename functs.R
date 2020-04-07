@@ -95,10 +95,8 @@ rolloop <- function(df, window=8, lags=1, interc = T){
   regs <- xts(regs, frequency=4, 
               order.by=index(df)[window:length(index(df))])
   
-return(regs)
+ return(regs)
 }
-
-
 
 make_stars <- function(x){
   # ancillary function for
@@ -123,76 +121,6 @@ make_stars <- function(x){
   
   return(signif)
 }
-
-
-
-subfilter <- function(df){
-  # function to convert a df with multiple observations per unit
-  # of time in a df with one observation per unit of time,
-  # namely the last one among those previously present
-  
-  
-  indice <- as.character(unique(df$date))
-  len <- length(indice)
-  outp <- matrix(NA, ncol=ncol(df), nrow=len)
-  outp <- data.frame(outp)
-  names(outp) <- names(df)
-  for (i in 1:len){
-    supp <- indice[i]
-    ram <- subset(df, date==supp)
-    outp[i,] <- ram[nrow(ram),]
-    outp[i,1] <- indice[i]
-  }
-  return(outp)
-}
-
-
-subfilter.mean <- function(df){
-  # function to convert a df with multiple observations per unit
-  # of time in a df with one observation per unit of time,
-  # namely the mean of those previously present
-  
-  
-  indice <- as.character(unique(df$date))
-  len <- length(indice)
-  outp <- matrix(NA, ncol=ncol(df), nrow=len)
-  outp <- data.frame(outp)
-  names(outp) <- names(df)
-  for (i in 1:len){
-    supp <- indice[i]
-    ram <- subset(df, date==supp)
-    outp[i,] <- c(0, as.numeric(apply(ram[,-1], 2, mean)))
-  }
-  outp[,1] <- indice
-  return(outp)
-}
-
-
-trendev<-function(mat){
-  # for multiple observation in particular shape, this function
-  # estimates a quadratic trend on the available series and consider
-  # the deviation from the trend in the last observation. This deviation
-  # is put into another time series. The purpose of this function is to
-  # extract real time output gap from Philadelphia dataset.
-  
-  
-  matdat<-mat[,2:ncol(mat)]
-  temp<-1:nrow(mat)
-  temp2<-temp^2
-  regr<-function(x){
-    dta<-data.frame(x, temp, temp2)
-    names(dta)<-c('x', 'temp', 'temp2')
-    model<-lm(x~temp+temp2, data=dta)
-    GAPS<-(model$residuals/(x-model$residuals))
-    gaps<-as.matrix(na.omit(GAPS))
-    gap<-gaps[nrow(gaps)]
-    return(gap)
-  }
-  outcome<-apply(matdat, 2, regr)
-  outcome<-as.matrix(outcome)
-  return(outcome*100)
-}
-
 
 lagger <- function(series, laag, na.cut=F){
   # Takes a time series and creates a matrix with given number
@@ -256,74 +184,6 @@ formula.maker <- function(df, y, intercept = T){
   attr(fomu, which='.Environment') <- .GlobalEnv
   return(fomu)
 }
-
-
-spf_funct <-  function(filnam, typs, ahead=1) {
-  # this function imports the files, reformats,
-  # renames, saves in raw format and produces
-  # aggregate statistics in XTS format
-  
-  # read in xlsx files and reshape w\ spread
-  # this block selects one quarter ahead forecasts
-  # but adjusting 'ahead' parameter below one can
-  # extract other values
-  
-  # ad-hoc function inconsistent w/ external use
-  # typs is one of CPI, CORECPI, PCE, COREPCE
-  
-  
-  # 'ahead' allows to select the horizon of 
-  # forecasts one wishes to extract:
-  # -1 for previous quarter estimates
-  # 0 for nowcast
-  # 1 for one quarter ahead -- default
-  # 2 for two quarters ahead
-  # 3 for three quarters ahead
-  # 4 for one year ahead
-  
-  typ=tolower(typs)
-  
-  colu=c(rep('numeric',3),  # picks year, quarter, ID
-         rep('skip', 2+ahead),	 # skips industry
-         'numeric',				 # moving target picking 'ahead' horizon
-         rep('skip', 7-ahead)	 # skips the rest
-  )
-  
-  df=read_excel(file.path(temp_dir,filnam), 
-                na='#N/A', col_types=colu) %>%
-    spread(ID, paste0(typs,ahead+2)) %>% 
-    ts(start=c(1968, 4), frequency=4) %>%
-    as.xts()
-  
-  pst=paste0(typ,'_')
-  if (ahead==-1){
-    pst=paste0(pst,'b1')
-  } 	else {
-    pst=paste0(pst,'h') %>% paste0(ahead)
-  }
-  
-  names(df)=c('year', 'quarter', paste(pst, (1:(ncol(df)-2)), sep='_'))
-  
-  df$year <- df$quarter <- NULL
-  
-  # saving in txt csv format the raw data
-  write.zoo(df, file.path(data_dir, paste(paste0('SPF_IND_',pst),'txt', sep='.')), sep=';', row.names=F, index.name='time')
-  
-  
-  iqr <- apply(df, 1, IQR, na.rm=TRUE) %>% ts(start=c(1968, 4), frequency=4) %>% as.xts()
-  stand<-apply(df, 1, var, na.rm=T) %>% sqrt()%>% ts(start=c(1968, 4), frequency=4) %>% as.xts()
-  mean<-apply(df, 1, mean, na.rm=T)%>% ts(start=c(1968, 4), frequency=4) %>% as.xts()
-  mean[is.nan(mean)] <- NA
-  
-  lab <- paste0('spf_', pst)
-  
-  df_stat=merge(iqr, stand, mean)
-  names(df_stat)=paste(lab, c('iqr', 'sd', 'mean'), sep='_')
-  
-  
-  return(df_stat)
-}
-
 
 
 ############ PIRSISTENCE FUNCTIONS #############################################
@@ -631,16 +491,19 @@ plot_msm <- function(ms_model, nam, laags, path){
 
 ##### Packages Loader #####
 
-pkgs <- c('vars', 'glue', 'lazyeval',
-          'quantreg', 'tidyverse', 'devtools',
-          'tseries', 'dynlm', 'stargazer',
-          'dyn', 'strucchange', 'xts', 'httr',
-          'MASS', 'car', 'rvest', 'viridis',
-          'mFilter', 'fredr','ggridges', 'MSwM',
-          'readr', 'quantmod','broom', 'fredr',
-          'devtools', 'lubridate', 'ggridges',
-          'readxl', 'tbl2xts', 'tictoc', 'gmm',
-          'future', 'furrr', 'broom')
+pkgs <- c(
+  'broom',
+  'devtools',
+  'furrr', 
+  'future',
+  'ggridges', 
+  'glue',
+  'MSwM',
+  'stargazer',
+  'strucchange',
+  'tictoc',
+  'viridis'
+  )
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)

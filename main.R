@@ -44,21 +44,18 @@ flag___ms <- 2
 
 
 # directories, functions and data
-
-source('directories.R')
 source('functs.R')
-source('USdatacoll.R')
+ahead <- 1
+download.file(url = 'https://raw.githubusercontent.com/ceschi/us_macro_data/master/USdata_coll.R',
+      destfile = 'temp.R',
+      quiet = T)
+source('temp.R',)
+unlink(x = 'temp.R')
 
 plan(multiprocess)
 
 # subselect data
 pi <- merge(
-  # nowcasts and forecasts
-  # db_US$cpit,
-  # db_US$coret,
-  # db_US$deflt,
-  # db_US$deflt1,
-
   # qoq percentage change
   db_US$rev_cpi_pch,
   db_US$rev_cpi_fe_pch,
