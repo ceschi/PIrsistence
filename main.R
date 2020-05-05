@@ -287,3 +287,4 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        width = 8,
        units = 'in', 
        height = 9*8/16)
+

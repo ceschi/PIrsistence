@@ -267,7 +267,7 @@ lag_setting  <- 120 # = nrow(df_tst)
 batch_size   <- 40
 train_length <- 440
 tsteps       <- 1
-epochs       <- 3000# previously 300
+epochs       <- 30# previously 300
 
 
 
