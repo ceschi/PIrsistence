@@ -10,12 +10,15 @@ library(tibbletime)
 library(rsample)
 library(keras)
 library(tictoc)
+rm(list = ls())
+invisible(gc())
 
 ##### Part I: linear data ######################################################
 
 # just a sequence
-fake <- seq(1, 10000, 1) %>% log()
-fake <- fake + rnorm(10000, 0, .01)
+fake <- seq(1, 10000, 1) %>% log() %>% `+`(., rnorm(10000, 0, .10))
+fake <- cos(seq(1, 10000, 1)*.005)
+
 # make it time series
 fake <-fake %>% 
   as_tibble() %>% 
@@ -76,10 +79,10 @@ rec_test <- recipe(value ~ ., df_test) %>%
 # compose together the rescaled
 # observations
 df_proc <- bind_rows(
-  bake(rec_train, df_train),
-  bake(rec_test, df_test)
-) %>% 
-  as_tbl_time(index = date)
+                      bake(rec_train, df_train),
+                      bake(rec_test, df_test)
+                    ) %>% 
+                      as_tbl_time(index = date)
 
 # store means & SDs
 train_mean <- rec_train$steps[[1]]$means
@@ -104,17 +107,17 @@ test_sd <- rec_test$steps[[2]]$sds
 # tsteps <- 1
 ################################################################################################################
 # for how long train the model?
-epochs <- 150
+epochs <- 500
 
 
 # how much past use?
-lag_set <- 1
+lag_set <- 100
 
 # how many observations feed?
-batch <- 10
+batch <- 100
 
 # no idea here, really
-train_length <- 6000
+train_length <- 5000
 
 # still, not clear
 tsteps <- 10
@@ -156,58 +159,55 @@ if (exists('model')) rm(model)
 
 model <- keras_model_sequential()
 model %>%
-  layer_lstm(units = 10, 
-             # activation = 'relu',
+  layer_lstm(units = 64,
              input_shape = c(tsteps, 1), 
              batch_size = batch, 
-             return_sequences = T, 
+             return_sequences = F, 
              stateful = T) %>% 
-  # stateful = T) %>% 
-  # layer_lstm(units = 200,
+  # layer_lstm(units = 5,
   #            return_sequences = T,
   #            stateful = T) %>%
-  # layer_lstm(units =100,
+  # layer_lstm(units = 5,
   #            return_sequences = T,
   #            stateful = T) %>%
   # layer_gru(units = 20,
   #           return_sequences = T,
   #           stateful = T,
   #           batch_size = batch) %>%
-  layer_lstm(units = 21,
-             return_sequences = F,
-             stateful = T) %>%
+  # layer_lstm(units = 50,
+  #            return_sequences = F,
+  #            stateful = T) %>%
   layer_dense(units = 1)
 
-model %>% compile(loss = 'mae', 
-                  # metrics = 'mse', 
-                  
+model %>% compile(loss = 'mae',
+                  # metrics = 'mae',
                   optimizer = 'adam')
 
 
 tic('model fit')
-# model %>% fit(x = x_train_arr,
-#                   y = y_train_arr,
-#                   batch_size = batch,
-#                   epochs = epochs,
-#                   verbose = 1,
-#                   shuffle = F)
+history <- model %>% fit(x = x_train_arr,
+                         y = y_train_arr,
+                         batch_size = batch,
+                         epochs = epochs,
+                         verbose = 1,
+                         shuffle = F)
 
-for (i in 1:epochs){
-  model %>% fit(x = x_train_arr,
-                y = y_train_arr,
-                batch_size = batch,
-                epochs = 1,
-                verbose = 1,
-                shuffle = T)
-  model %>% reset_states()
-  cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
-}
+# for (i in 1:epochs){
+#   model %>% fit(x = x_train_arr,
+#                 y = y_train_arr,
+#                 batch_size = batch,
+#                 epochs = 1,
+#                 verbose = 1,
+#                 shuffle = T)
+#   model %>% reset_states()
+#   cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
+# }
 toc()
 
 ##### predictions
 
 pred <- model %>% 
-  predict(x_test_arr, batch_size = batch) %>% .[,1]
+  predict(x_test_arr, batch_size = batch) #%>% .[,1]
 
 t_train <- tibble(value = df_proc %>% 
                     filter(key == 'train') %>% 
@@ -237,4 +237,6 @@ output <- rbind(t_test, t_train, t_pred)
 output <- tibble(value = output$value$value, date = output$date$date, key = output$key)
 output <- arrange(output, date, key)
 
-tail(output, 7500) %>% ggplot(aes(x = date, colour = as.factor(key)))+geom_line(aes(y=value), size = .2, alpha = .5) + ggtitle('model1')
+tail(output, 7500) %>% ggplot(aes(x = date, colour = as.factor(key)))+
+  geom_line(aes(y=value), size = .2, alpha = .5) +
+  ggtitle('model1') + theme_minimal()

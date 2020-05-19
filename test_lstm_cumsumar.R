@@ -16,12 +16,12 @@ library(tictoc)
 ##### Some more complicated data ##############################################
 
 
-fake <- arima.sim(model = list(ar = c(.8, .1, 0.02)), n = 10000)  %>% cumsum 
+fake <- arima.sim(model = list(ar = c(.8, .1, 0.02)), n = 10000) # %>% cumsum 
 
 # make it time series
 fake <-fake %>% 
   as_tibble() %>% 
-  mutate(date = as_date(index(.))) %>% 
+  mutate(date = as_date(index(.)), value = x, x= NULL) %>% 
   # rename(value = x) %>% 
   as_tbl_time(date)
 
@@ -104,10 +104,10 @@ batch <- 50
 train_length <- 6000
 
 # still, not clear
-tsteps <- 1
+tsteps <- 10
 
 # for how long train the model?
-epochs <- 500
+epochs <- 1500
 
 lag_train <- df_proc %>% 
   mutate(value_lag = lag(value, lag_set)) %>% 
@@ -166,9 +166,9 @@ model %>%
              stateful = T) %>%
   layer_dense(units = 1)
 
-model %>% compile(loss = 'mse',
-                  optimizer = 'adam',
-                  metrics = 'mae')
+model %>% compile(loss = 'mae',
+                  optimizer = 'adam')#,
+                  # metrics = 'mae')
 
 
 tic('model fit')
@@ -210,7 +210,7 @@ t_pred <- tibble(value = pred*test_sd + test_mean) %>%
                select(date))
 
 output <- rbind(t_test, t_train, t_pred)
-output <- tibble(value = output$value$value, date = output$date$date, key = output$key)
+output <- tibble(value = output$value$value %>% cumsum, date = output$date$date, key = output$key)
 output <- arrange(output, date, key)
 
 output %>% ggplot(aes(x = date, colour = as.factor(key)))+geom_line(aes(y=value), size = 1, alpha = .5) + ggtitle('model2')
