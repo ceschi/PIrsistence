@@ -11,18 +11,31 @@ library(rsample)
 library(keras)
 library(tictoc)
 rm(list = ls())
-invisible(gc())
+gc(full = T, verbose = T)
 
 ##### Part I: linear data ######################################################
 
 # just a sequence
-fake <- seq(1, 10000, 1) %>% log() %>% `+`(., rnorm(10000, 0, .10))
-fake <- cos(seq(1, 10000, 1)*.005)
+# fake <- seq(1, 10000, 1) %>% log() %>% `+`(., rnorm(10000, 0, .10))
+# fake <- cos(seq(1, 10000, 1)*.005)
+# fake <- rep(1, 10000) + 
+#   rnorm(n = 10000, 0, .01) + (1:10000)/10000
+  # arima.sim(n = 10000, model = list(ar = c(.995)), sd = .001)
 
+seq <- seq(1, 10000, 1)
+# fake <- cos(seq*.005*pi) +
+#   rnorm(n = 10000, 0, .01) -
+#   seq/10000 +
+#   sin(seq*.008*pi)
+
+fake <- seq
+
+fake %>% ts.plot
 # make it time series
 fake <-fake %>% 
   as_tibble() %>% 
   mutate(date = as_date(index(.))) %>% 
+  # rename(value = x) %>% 
   as_tbl_time(date)
 
 ##### splitting ################################################################
@@ -107,20 +120,23 @@ test_sd <- rec_test$steps[[2]]$sds
 # tsteps <- 1
 ################################################################################################################
 # for how long train the model?
-epochs <- 500
+epochs <- 3000
 
 
 # how much past use?
-lag_set <- 100
+lag_set <- 1
 
 # how many observations feed?
-batch <- 100
+batch <- 250
 
 # no idea here, really
-train_length <- 5000
+train_length <- 7250
 
 # still, not clear
-tsteps <- 10
+tsteps <- 5
+# tsteps here seem to have a bad effect on overall 
+# fit and prediction: lower values entail 
+# faster fit and better predictions in general
 
 
 lag_train <- df_proc %>% 
@@ -159,55 +175,53 @@ if (exists('model')) rm(model)
 
 model <- keras_model_sequential()
 model %>%
-  layer_lstm(units = 64,
+  layer_lstm(units = 25,
              input_shape = c(tsteps, 1), 
-             batch_size = batch, 
-             return_sequences = F, 
-             stateful = T) %>% 
+             batch_size = batch,
+             return_sequences = T, 
+             stateful = F) %>% 
   # layer_lstm(units = 5,
   #            return_sequences = T,
   #            stateful = T) %>%
-  # layer_lstm(units = 5,
+  # layer_lstm(units = 150,
   #            return_sequences = T,
   #            stateful = T) %>%
-  # layer_gru(units = 20,
-  #           return_sequences = T,
-  #           stateful = T,
-  #           batch_size = batch) %>%
-  # layer_lstm(units = 50,
+  # layer_lstm(units = 75,
   #            return_sequences = F,
   #            stateful = T) %>%
   layer_dense(units = 1)
 
-model %>% compile(loss = 'mae',
+model %>% compile(
+                  loss = 'mae',
+                  # loss = 'mse',
                   # metrics = 'mae',
                   optimizer = 'adam')
-
+summary(model)
 
 tic('model fit')
-history <- model %>% fit(x = x_train_arr,
-                         y = y_train_arr,
-                         batch_size = batch,
-                         epochs = epochs,
-                         verbose = 1,
-                         shuffle = F)
+# history <- model %>% fit(x = x_train_arr,
+#                          y = y_train_arr,
+#                          batch_size = batch,
+#                          epochs = epochs,
+#                          verbose = 1,
+#                          shuffle = F)
 
-# for (i in 1:epochs){
-#   model %>% fit(x = x_train_arr,
-#                 y = y_train_arr,
-#                 batch_size = batch,
-#                 epochs = 1,
-#                 verbose = 1,
-#                 shuffle = T)
-#   model %>% reset_states()
-#   cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
-# }
+for (i in 1:epochs){
+  model %>% fit(x = x_train_arr,
+                y = y_train_arr,
+                batch_size = batch,
+                epochs = 1,
+                verbose = 1,
+                shuffle = T)
+  model %>% reset_states()
+  cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
+}
 toc()
 
 ##### predictions
 
 pred <- model %>% 
-  predict(x_test_arr, batch_size = batch) #%>% .[,1]
+  predict(x_test_arr, batch_size = batch) %>% .[,1,]
 
 t_train <- tibble(value = df_proc %>% 
                     filter(key == 'train') %>% 
@@ -238,5 +252,6 @@ output <- tibble(value = output$value$value, date = output$date$date, key = outp
 output <- arrange(output, date, key)
 
 tail(output, 7500) %>% ggplot(aes(x = date, colour = as.factor(key)))+
-  geom_line(aes(y=value), size = .2, alpha = .5) +
-  ggtitle('model1') + theme_minimal()
+  geom_line(aes(y=value), size = 1.2, alpha = .5) +
+  ggtitle('model1') + theme_minimal()#+geom_smooth(method = 'loess', aes(x = date, y = value, colour = as.factor(key)))
+

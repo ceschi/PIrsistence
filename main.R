@@ -288,3 +288,18 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        units = 'in', 
        height = 9*8/16)
 
+
+##### LSTM part ###############################################################
+
+# todo list
+  # - function to prep data
+  # - function to fit model on whole sample
+  # - function to slice data two ways
+  #   + rolling window
+  #   + increasing width
+  # - reuse function to fit models
+  # - use stored models to make predictions two ways
+  #   + indirectly, by iterating on previous forecasts
+  #   + directly, by specifying an appropriate model
+  # - compute persistence
+  # - plot all of the above
