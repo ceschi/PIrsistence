@@ -22,13 +22,15 @@ gc(full = T, verbose = T)
 #   rnorm(n = 10000, 0, .01) + (1:10000)/10000
   # arima.sim(n = 10000, model = list(ar = c(.995)), sd = .001)
 
-seq <- seq(1, 10000, 1)
+len <- 100000
+seq <- seq(1, len, 1)
 # fake <- cos(seq*.005*pi) +
 #   rnorm(n = 10000, 0, .01) -
 #   seq/10000 +
 #   sin(seq*.008*pi)
 
-fake <- seq
+# fake <- seq
+fake <- seq + rnorm(n = len, 0, 10)
 
 fake %>% ts.plot
 # make it time series
@@ -40,9 +42,9 @@ fake <-fake %>%
 
 ##### splitting ################################################################
 
-t_train <- 7500
-t_test <- 2500
-skip_span <- 10000
+t_train <- floor(len*.75)
+t_test <- floor(len*.25)
+skip_span <- len + 2
 
 # rolling origin creates instructions to 
 # later split data, especially good 
@@ -120,17 +122,17 @@ test_sd <- rec_test$steps[[2]]$sds
 # tsteps <- 1
 ################################################################################################################
 # for how long train the model?
-epochs <- 3000
+epochs <- 10
 
 
 # how much past use?
 lag_set <- 1
 
 # how many observations feed?
-batch <- 250
+batch <- 2500
 
 # no idea here, really
-train_length <- 7250
+train_length <- 75000
 
 # still, not clear
 tsteps <- 5
@@ -176,9 +178,10 @@ if (exists('model')) rm(model)
 model <- keras_model_sequential()
 model %>%
   layer_lstm(units = 25,
+             # activation = 'tanh',
              input_shape = c(tsteps, 1), 
-             batch_size = batch,
-             return_sequences = T, 
+             # batch_size = batch,
+             return_sequences = F, 
              stateful = F) %>% 
   # layer_lstm(units = 5,
   #            return_sequences = T,
@@ -199,29 +202,29 @@ model %>% compile(
 summary(model)
 
 tic('model fit')
-# history <- model %>% fit(x = x_train_arr,
-#                          y = y_train_arr,
-#                          batch_size = batch,
-#                          epochs = epochs,
-#                          verbose = 1,
-#                          shuffle = F)
+history <- model %>% fit(x = x_train_arr,
+                         y = y_train_arr,
+                         # batch_size = batch,
+                         epochs = epochs,
+                         verbose = 1,
+                         shuffle = T)
 
-for (i in 1:epochs){
-  model %>% fit(x = x_train_arr,
-                y = y_train_arr,
-                batch_size = batch,
-                epochs = 1,
-                verbose = 1,
-                shuffle = T)
-  model %>% reset_states()
-  cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
-}
+# for (i in 1:epochs){
+#   model %>% fit(x = x_train_arr,
+#                 y = y_train_arr,
+#                 batch_size = batch,
+#                 epochs = 1,
+#                 verbose = 1,
+#                 shuffle = T)
+#   model %>% reset_states()
+#   cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
+# }
 toc()
 
 ##### predictions
 
 pred <- model %>% 
-  predict(x_test_arr, batch_size = batch) %>% .[,1,]
+  predict(x_test_arr, batch_size = batch) %>% .[,1]
 
 t_train <- tibble(value = df_proc %>% 
                     filter(key == 'train') %>% 
