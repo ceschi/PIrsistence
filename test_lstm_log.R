@@ -22,15 +22,15 @@ gc(full = T, verbose = T)
 #   rnorm(n = 10000, 0, .01) + (1:10000)/10000
   # arima.sim(n = 10000, model = list(ar = c(.995)), sd = .001)
 
-len <- 100000
+len <- 10000
 seq <- seq(1, len, 1)
-# fake <- cos(seq*.005*pi) +
-#   rnorm(n = 10000, 0, .01) -
-#   seq/10000 +
-#   sin(seq*.008*pi)
+fake <- cos(seq*.005*pi) +
+  rnorm(n = len, 0, .01) -
+  # seq/len +
+  sin(seq*.008*pi)
 
 # fake <- seq
-fake <- seq + rnorm(n = len, 0, 10)
+# fake <- seq + rnorm(n = len, 0, 10)
 
 fake %>% ts.plot
 # make it time series
@@ -122,29 +122,29 @@ test_sd <- rec_test$steps[[2]]$sds
 # tsteps <- 1
 ################################################################################################################
 # for how long train the model?
-epochs <- 10
+epochs <- 300
 
 
 # how much past use?
 lag_set <- 1
 
 # how many observations feed?
-batch <- 2500
+batch <- 100
 
 # no idea here, really
-train_length <- 75000
+train_length <- 7000
 
 # still, not clear
-tsteps <- 5
+tsteps <- 50
 # tsteps here seem to have a bad effect on overall 
 # fit and prediction: lower values entail 
 # faster fit and better predictions in general
 
 
 lag_train <- df_proc %>% 
+  filter(key == 'train') %>%
   mutate(value_lag = lag(value, lag_set)) %>% 
   filter(!is.na(value_lag)) %>% 
-  filter(key == 'train') %>%
   tail(train_length)
 
 x_train_vec <- lag_train$value_lag
@@ -158,11 +158,11 @@ y_train_arr <- array(data = y_train_vec,
 
 # Testing Set
 lag_test <- df_proc %>%
+  filter(key == 'test') %>% 
   mutate(
     value_lag = lag(value, n = lag_set)
   ) %>%
-  filter(!is.na(value_lag)) %>%
-  filter(key == "test")
+  filter(!is.na(value_lag))
 
 x_test_vec <- lag_test$value_lag
 x_test_arr <- array(data = x_test_vec, dim = c(length(x_test_vec), tsteps, 1))
