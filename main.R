@@ -49,7 +49,7 @@ ahead <- 1
 download.file(url = 'https://raw.githubusercontent.com/ceschi/us_macro_data/master/USdata_coll.R',
       destfile = 'temp.R',
       quiet = T)
-source('temp.R',)
+source('temp.R')
 unlink(x = 'temp.R')
 
 plan(multiprocess)
