@@ -22,14 +22,14 @@ gc(full = T, verbose = T)
 #   rnorm(n = 10000, 0, .01) + (1:10000)/10000
   # arima.sim(n = 10000, model = list(ar = c(.995)), sd = .001)
 
-len <- 10000
+len <- 100000
 seq <- seq(1, len, 1)
-fake <- cos(seq*.005*pi) +
+fake <- (cos(seq*.005*base::pi) +
   rnorm(n = len, 0, .01) -
-  # seq/len +
-  sin(seq*.008*pi)
+  seq/len + 10 +
+  sin(seq*.008*base::pi)) + log(seq)
 
-# fake <- seq
+fake <- seq
 # fake <- seq + rnorm(n = len, 0, 10)
 
 fake %>% ts.plot
@@ -42,8 +42,8 @@ fake <-fake %>%
 
 ##### splitting ################################################################
 
-t_train <- floor(len*.75)
-t_test <- floor(len*.25)
+l_train <- floor(len*.75)
+l_test <- floor(len*.25)
 skip_span <- len + 2
 
 # rolling origin creates instructions to 
@@ -51,8 +51,8 @@ skip_span <- len + 2
 # for backtesting, could be done in
 # a rough way too
 rolling_samples <- rolling_origin(fake,
-                                  initial = t_train,
-                                  assess = t_test, 
+                                  initial = l_train,
+                                  assess = l_test, 
                                   cumulative = F, 
                                   skip = skip_span)
 
@@ -108,19 +108,6 @@ test_sd <- rec_test$steps[[2]]$sds
 
 
 ######' *NOW THE FUCKING LSTM* ############################################
-
-# # how much past use?
-# lag_set <- 1
-# 
-# # how many observations feed?
-# batch <- 100
-# 
-# # no idea here, really
-# train_length <- 5000
-# 
-# # still, not clear
-# tsteps <- 1
-################################################################################################################
 # for how long train the model?
 epochs <- 300
 
@@ -129,13 +116,13 @@ epochs <- 300
 lag_set <- 1
 
 # how many observations feed?
-batch <- 100
+batch <- 1000
 
 # no idea here, really
-train_length <- 7000
+train_length <- 70000
 
 # still, not clear
-tsteps <- 50
+tsteps <- 20
 # tsteps here seem to have a bad effect on overall 
 # fit and prediction: lower values entail 
 # faster fit and better predictions in general
@@ -179,10 +166,11 @@ model <- keras_model_sequential()
 model %>%
   layer_lstm(units = 25,
              # activation = 'tanh',
+             # activation = 'relu',
              input_shape = c(tsteps, 1), 
-             # batch_size = batch,
+             batch_size = batch,
              return_sequences = F, 
-             stateful = F) %>% 
+             stateful = T) %>% 
   # layer_lstm(units = 5,
   #            return_sequences = T,
   #            stateful = T) %>%
@@ -204,21 +192,17 @@ summary(model)
 tic('model fit')
 history <- model %>% fit(x = x_train_arr,
                          y = y_train_arr,
-                         # batch_size = batch,
+                         batch_size = batch,
                          epochs = epochs,
+                         callbacks = list(
+                           callback_early_stopping(monitor = 'val_loss',
+                                                   mode = 'min',
+                                                   patience = 50,
+                                                   min_delta = .00001)
+                         ),
+                         validation_split = .1,
                          verbose = 1,
-                         shuffle = T)
-
-# for (i in 1:epochs){
-#   model %>% fit(x = x_train_arr,
-#                 y = y_train_arr,
-#                 batch_size = batch,
-#                 epochs = 1,
-#                 verbose = 1,
-#                 shuffle = T)
-#   model %>% reset_states()
-#   cat('\nIteration ', i, ' completed out of ', epochs,'.\n')
-# }
+                         shuffle = F)
 toc()
 
 ##### predictions
@@ -247,7 +231,7 @@ t_test <- tibble(value = df_proc %>%
 t_pred <- tibble(value = pred*test_sd + test_mean) %>% 
   add_column(key = 'predicted', 
              date = df_proc %>% 
-               filter(key == 'test') %>% 
+               filter(key == 'test', date != last(date)) %>% 
                select(date))
 
 output <- rbind(t_test, t_train, t_pred)
@@ -258,3 +242,28 @@ tail(output, 7500) %>% ggplot(aes(x = date, colour = as.factor(key)))+
   geom_line(aes(y=value), size = 1.2, alpha = .5) +
   ggtitle('model1') + theme_minimal()#+geom_smooth(method = 'loess', aes(x = date, y = value, colour = as.factor(key)))
 
+
+##### online estimation and forecast ###########################################
+
+# horizon of forecast
+h_forecast <- l_test + 1
+
+pred_h <- array(data = NA, dim = c(h_forecast, 1))
+pred_h[1,] <- x_train_arr[nrow(x_train_arr), ncol(x_train_arr), 1]
+
+
+for (i in 2:h_forecast){
+  pred_h[i,] <- predict(model,
+                        x = array(data = pred_h[(i-1), 1],
+                                  dim = c(1, tsteps, 1)),
+                        batch_size = 1)
+    # prediction plateaus after about 32
+    # iterations, might well be model
+    # depentent factor
+}
+
+
+  
+pred_h_trans <- pred_h*test_sd+test_mean
+
+pred_h_trans %>% ts.plot
