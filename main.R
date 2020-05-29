@@ -85,7 +85,7 @@ write.zoo(x=pi,
           index.name='date')
 
 # chunck for further analysis in MATLAB
-source('matlab_exp.R')
+# source('matlab_exp.R')
 
 n=length(names(pi))
 
@@ -289,6 +289,8 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        height = 9*8/16)
 
 
+
+
 ##### LSTM part ###############################################################
 
 # todo list
@@ -304,128 +306,28 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
   # - compute persistence
   # - plot all of the above
 
-f_data_prepper <- function(data, train = 1, test = NULL){
-  # train and test shall be expressed in percentage terms
-  
-  # preallocate list
-  output <- list()
-  
-  # remove NAs
-  data <- data[!is.na(data)]
-  
-  # train/rep
-  len <- dim(data)[1]
-  l_train <- floor(len*train)
-  l_test <- ifelse(is.null(test), 0, (len-l_train))
 
-  # split data
-  data_train <- data[1:l_train, ]
+
+inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
+                                                  train = sapply(rep(1, n), list)
+                                                  ),
+                                        .f = data_prepper
+                                        )
+
+
+inflation[['lstm_fullsample']] <- list()
+
+for (i in 1:n){
+  inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
+                                                      n_steps = inflation[['aropti']][[i]], 
+                                                      n_feat = 1, 
+                                                      nodes = 75, 
+                                                      size_batch = 1, 
+                                                      epochs = 2000, 
+                                                      ES = T)
   
-  # rescale train
-  output$train[['mean']] <- mean(data_train)
-  output$train[['sd']] <- sd(data_train)
-  output$train[['train_norm']] <- (data_train - output$train[['mean']])/output$train[['sd']]
-  
-  if (train != 1){
-    
-    data_test <- data[(l_train+1):len, ]
-    # rescale test
-    output$test[['mean']] <- mean(data_test)
-    output$test[['sd']] <- sd(data_test)
-    output$test[['test_norm']] <- (data_test - output$test[['mean']])/output$test[['sd']]  
-  }
-  
-  
-  return(output)
+  keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
+                         filepath = paste0('./', inflation[['names']][[i]], ' fullsample.h5')
+                        )
 }
 
-k_fullsample <- function(data, 
-                         n_steps, 
-                         n_feat = 1, 
-                         # model_compiled,
-                         size_batch = 1, 
-                         epochs = 2000){
-  
-  require(magrittr)
-  require(keras)
-  
-  # data come in as a simple TS,
-  # it comes then with n of observations (n_sample)
-  # and must be lagged according to n_steps.
-  # The number of features is 1 by default, can be varied tho
-  
-  # we will drop as many obs as many lags we include
-  n_sample <- nrow(data) - n_steps
-  n_feat <- ncol(data)
-  
-  # preserve the time index of data
-  # for later use
-  if (is.ts(data)){
-    time_index <- time(data)[(n_steps+1):length(time_index)]
-    
-  }
-  
-  # embed automates lags and turns into lower
-  # object matrix/array: first col is original series
-  # second to end are lags
-  data_lagged <- embed(x = as.matrix(data), dimension = (n_steps+1))
-  
-  
-  # NB: y must be 2D array/matrix
-  y_data_arr <- array(data = data_lagged[,1],
-                      dim = c(n_sample, n_steps))
-  
-  # X must be 3D for a stateful LSTM
-  x_data_arr <- array(data = data_lagged[,-1],
-                      dim = c(n_sample, n_steps, n_feat))
-  
-  model_compiled <- keras_model_sequential()
-  model_compiled %>%
-    layer_lstm(units = 50,
-               input_shape = c(n_steps, n_feat),
-               return_sequences = F,
-               stateful = T,
-               batch_size = size_batch,
-               ) %>% 
-    layer_dense(units = 1) %>% 
-    compile(optimizer = 'adam',
-            loss = 'mae')
-  
-  
-  tictoc::tic('Model estimation')
-  if (is.null(epochs)){
-    # estimate with early stopping
-    history <- fit(object = model_compiled, 
-                   y = y_data_arr, 
-                   x = x_data_arr,
-                   verbose = 1,
-                   shuffle = F,
-                   callbacks = list(
-                     callback_early_stopping(monitor = 'val_loss',
-                                             mode = 'min',
-                                             patience = 150)#,
-                                             # min_delta = .0001)
-                                    ),
-                   validation_split = .1,
-                   batch_size = size_batch)
-  } else {
-    # estimate with given number of epochs
-    history <- fit(object = model_compiled, 
-                   y = y_data_arr, 
-                   x = x_data_arr, 
-                   epochs = epochs, 
-                   verbose = 1,
-                   shuffle = F,
-                   batch_size = size_batch)
-  }
-  tictoc::toc()
-  
-  out <- list()
-  out[['model_fitted']] <- model_compiled
-  out[['history']] <- history
-  if (is.ts(data)){
-    out[['time_index']] <- time_index
-  }
-  
-  return(out)
-}

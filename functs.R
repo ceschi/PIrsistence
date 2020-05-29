@@ -1,5 +1,26 @@
 ##### Specifically designed functions ####
 
+
+
+##### I - create directories ###################################################
+working_directory <- getwd()
+temp_dir <- 'downloaded_files'
+data_dir <- 'processed_data'
+graphs_dir <- 'plots'
+
+temp_dir <- file.path(working_directory, temp_dir)
+data_dir <- file.path(working_directory, data_dir)
+graphs_dir <- file.path(working_directory, graphs_dir)
+
+options(warn=-1) # turns off warnings momentarily
+dir.create(temp_dir)
+dir.create(data_dir)
+dir.create(graphs_dir)
+options(warn=0) # turns warnings back on
+
+
+
+
 # A file to gather all home made functions with relative descriptions
 
 
@@ -487,6 +508,160 @@ plot_msm <- function(ms_model, nam, laags, path){
   return(plot_out)
 }
 
+
+# LSTM functions ----------------------------------------------------------
+
+data_prepper <- function(data, train = 1, test = NULL){
+  # function to rescale data to normal values
+  # that are required for the LSTM model fit.
+  # It stores first and second moments for later
+  # scaling back to observed data. All outputs are
+  # stored in a list, usually TS properties (index) are 
+  # preserved.
+  
+  
+  # train and test shall be expressed in percentage terms
+  if (train>1){stop(cat('Train should be expressed in percentage not intergers.'))}
+  
+  # preallocate list
+  output <- list()
+  
+  # remove NAs
+  data <- data[!is.na(data)]
+  
+  # train/rep
+  len <- dim(data)[1]
+  l_train <- floor(len*train)
+  l_test <- ifelse(is.null(test), 0, (len-l_train))
+  
+  # split data
+  data_train <- data[1:l_train, ]
+  
+  # rescale train
+  output$train[['mean']] <- mean(data_train)
+  output$train[['sd']] <- sd(data_train)
+  output$train[['train_norm']] <- (data_train - output$train[['mean']])/output$train[['sd']]
+  
+  if (train != 1){
+    # condition on test subsample, whether present
+    data_test <- data[(l_train+1):len, ]
+    # rescale test
+    output$test[['mean']] <- mean(data_test)
+    output$test[['sd']] <- sd(data_test)
+    output$test[['test_norm']] <- (data_test - output$test[['mean']])/output$test[['sd']]  
+  }
+  
+  return(output)
+}
+
+
+k_fullsample <- function(data, 
+                         n_steps, 
+                         n_feat = 1, 
+                         # model_compiled,
+                         nodes = 50,
+                         size_batch = 1, 
+                         epochs = 2000,
+                         ES = F){
+  
+  # Function to fit a model on the whole sample of data;
+  # it takes care of lagging & reshaping the data according to parameters
+  # passed and to declare a model with one layer of LSTM and a final
+  # dense layer. It requires 'keras' and pipes. It preserves the 
+  # time dimension dropping the NAs generated after lagging.
+  # Optionally it accommodates the early stopping callback
+  # for which the epochs are then an UPPER bound.
+  # Output contains history, model, and optionally time index.
+  
+  # Keras usually run in parallel by default, call this function 
+  # sequentially to avoid nested parallelism.
+  
+  
+  
+  require(magrittr)
+  require(keras)
+  require(tictoc)
+  
+  # data come in as a simple TS,
+  # it comes then with n of observations (n_sample)
+  # and must be lagged according to n_steps.
+  # The number of features is 1 by default, can be varied tho
+  
+  # we will drop as many obs as many lags we include
+  n_sample <- nrow(data) - n_steps
+  n_feat <- ncol(data)
+  
+  # preserve the time index of data
+  # for later use
+  if (is.ts(data)){
+    time_index <- time(data)[(n_steps+1):length(time_index)]
+    
+  }
+  
+  # embed automates lags and turns into lower
+  # object matrix/array: first col is original series
+  # second to end are lags
+  data_lagged <- embed(x = as.matrix(data), dimension = (n_steps+1))
+  
+  
+  # NB: y must be 2D array/matrix
+  y_data_arr <- array(data = data_lagged[,1],
+                      dim = c(n_sample, n_feat))
+  
+  # X must be 3D for a stateful LSTM
+  x_data_arr <- array(data = data_lagged[,-1],
+                      dim = c(n_sample, n_steps, n_feat))
+  
+  model_compiled <- keras_model_sequential()
+  model_compiled %>%
+    layer_lstm(units = nodes,
+               input_shape = c(n_steps, n_feat),
+               return_sequences = F,
+               stateful = T,
+               batch_size = size_batch,
+    ) %>% 
+    layer_dense(units = 1) %>% 
+    compile(optimizer = 'adam',
+            loss = 'mse')
+  
+  
+  tictoc::tic('Model estimation')
+  if (ES){
+    # estimate with early stopping
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr,
+                   verbose = 0,
+                   shuffle = F,
+                   callbacks = list(
+                     callback_early_stopping(monitor = 'val_loss',
+                                             mode = 'auto',
+                                             patience = 150)#,
+                                             # min_delta = .0001)
+                   ),
+                   validation_split = .1,
+                   batch_size = size_batch)
+  } else {
+    # estimate with given number of epochs
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr, 
+                   epochs = epochs, 
+                   verbose = 0,
+                   shuffle = F,
+                   batch_size = size_batch)
+  }
+  tictoc::toc()
+  
+  out <- list()
+  out[['model_fitted']] <- model_compiled
+  out[['history']] <- history
+  if (is.ts(data)){
+    out[['time_index']] <- time_index
+  }
+  
+  return(out)
+}
 
 
 ##### Packages Loader #####
