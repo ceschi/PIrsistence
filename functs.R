@@ -639,6 +639,7 @@ k_fullsample <- function(data,
                                              patience = 150)#,
                                              # min_delta = .0001)
                    ),
+                   epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch)
   } else {
