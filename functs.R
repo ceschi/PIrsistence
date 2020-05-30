@@ -631,13 +631,13 @@ k_fullsample <- function(data,
     history <- fit(object = model_compiled, 
                    y = y_data_arr, 
                    x = x_data_arr,
-                   verbose = 0,
+                   verbose = 2,
                    shuffle = F,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = 150)#,
-                                             # min_delta = .0001)
+                                             patience = 150,
+                                             min_delta = .0001)
                    ),
                    epochs = epochs,
                    validation_split = .1,
@@ -648,7 +648,7 @@ k_fullsample <- function(data,
                    y = y_data_arr, 
                    x = x_data_arr, 
                    epochs = epochs, 
-                   verbose = 0,
+                   verbose = 2,
                    shuffle = F,
                    batch_size = size_batch)
   }

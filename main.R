@@ -317,6 +317,8 @@ inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
 
 inflation[['lstm_fullsample']] <- list()
 
+tic('Full Loop')
+sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
   inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
                                                       n_steps = inflation[['aropti']][[i]], 
@@ -330,4 +332,5 @@ for (i in 1:n){
                          filepath = paste0('./', inflation[['names']][[i]], ' fullsample.h5')
                         )
 }
-
+toc()
+sink(NULL)
