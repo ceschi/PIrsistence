@@ -317,6 +317,10 @@ inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
 
 inflation[['lstm_fullsample']] <- list()
 
+if (!keras::is_keras_available()){
+  keras::install_keras()
+}
+
 tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){

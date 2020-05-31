@@ -32,7 +32,7 @@ instant_pkgs <- function(pkgs) {
   
   pkgs_miss <- pkgs[which(!pkgs %in% installed.packages()[, 1])]
   if (length(pkgs_miss) > 0) {
-    install.packages(pkgs_miss)
+    install.packages(pkgs_miss, dependencies = T, Ncpus = 2, INSTALL_opts = '--no-lock')
   }
   
   if (length(pkgs_miss) == 0) {
@@ -42,7 +42,7 @@ instant_pkgs <- function(pkgs) {
   # install packages not already loaded:
   pkgs_miss <- pkgs[which(!pkgs %in% installed.packages()[, 1])]
   if (length(pkgs_miss) > 0) {
-    install.packages(pkgs_miss)
+    install.packages(pkgs_miss, dependencies = T, Ncpus = 2, INSTALL_opts = '--no-lock')
   }
   
   # load packages not already loaded:
@@ -570,7 +570,7 @@ k_fullsample <- function(data,
   # dense layer. It requires 'keras' and pipes. It preserves the 
   # time dimension dropping the NAs generated after lagging.
   # Optionally it accommodates the early stopping callback
-  # for which the epochs are then an UPPER bound.
+  # for which the epochs are then the patience limit.
   # Output contains history, model, and optionally time index.
   
   # Keras usually run in parallel by default, call this function 
@@ -636,7 +636,7 @@ k_fullsample <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = 150,
+                                             patience = epochs,
                                              min_delta = .0001)
                    ),
                    epochs = epochs,
@@ -678,7 +678,8 @@ pkgs <- c(
   'stargazer',
   'strucchange',
   'tictoc',
-  'viridis'
+  'viridis',
+  'keras'
   )
 # fill pkgs with names of the packages to install
 
