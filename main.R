@@ -326,17 +326,22 @@ tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
   inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
-                                                      n_steps = inflation[['aropti']][[i]]*2, 
+                                                      # either twice the BIC lags or 9 quarters to prevent 
+                                                      # too much sample shrinking
+                                                      n_steps = min(inflation[['aropti']][[i]]*2,9), 
                                                       n_feat = 1, 
+                                                      # baseline for one single layer
                                                       nodes = 75, 
+                                                      # online model with one batch, workaround needed
                                                       size_batch = 1, 
+                                                      # either the max epochs or patience
                                                       epochs = 2000, 
                                                       ES = T)
   
   keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
                          filepath = file.path(models_dir,
-                                              inflation[['names']][[i]], 
-                                              ' fullsample.h5')
+                                              paste0(inflation[['names']][[i]], 
+                                                     ' fullsample.h5'))
                         )
 }
 toc()
@@ -346,5 +351,9 @@ sink(NULL)
 ##### If models are fitted esternally, load in those files
 
 for (i in 1:n){
-  inflation[['lstm_']]
+  inflation[['lstm_fullsample']][[i]]$model_fitted <- 
+    keras::load_model_hdf5(filepath = file.path(models_dir,
+                                                paste0(inflation[['names']][[i]], 
+                                                       ' fullsample.h5')),
+                                                compile = T)
 }
