@@ -294,9 +294,10 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
 ##### LSTM part ###############################################################
 
 # todo list
-  # - function to prep data
-  # - function to fit model on whole sample
-  # - function to slice data two ways
+  # - function to prep data                           DONE
+  # - function to fit model on whole sample           DONE
+  # - predictions
+  # - function to slice data two ways                 
   #   + rolling window
   #   + increasing width
   # - reuse function to fit models
@@ -325,7 +326,7 @@ tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
   inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
-                                                      n_steps = inflation[['aropti']][[i]], 
+                                                      n_steps = inflation[['aropti']][[i]]*2, 
                                                       n_feat = 1, 
                                                       nodes = 75, 
                                                       size_batch = 1, 
@@ -333,8 +334,17 @@ for (i in 1:n){
                                                       ES = T)
   
   keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
-                         filepath = paste0('./', inflation[['names']][[i]], ' fullsample.h5')
+                         filepath = file.path(models_dir,
+                                              inflation[['names']][[i]], 
+                                              ' fullsample.h5')
                         )
 }
 toc()
 sink(NULL)
+
+
+##### If models are fitted esternally, load in those files
+
+for (i in 1:n){
+  inflation[['lstm_']]
+}

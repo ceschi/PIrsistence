@@ -7,15 +7,18 @@ working_directory <- getwd()
 temp_dir <- 'downloaded_files'
 data_dir <- 'processed_data'
 graphs_dir <- 'plots'
+models_dir <- 'models'
 
 temp_dir <- file.path(working_directory, temp_dir)
 data_dir <- file.path(working_directory, data_dir)
 graphs_dir <- file.path(working_directory, graphs_dir)
+models_dir <- file.path(working_directory, models_dir)
 
 options(warn=-1) # turns off warnings momentarily
 dir.create(temp_dir)
 dir.create(data_dir)
 dir.create(graphs_dir)
+dir.create(models_dir)
 options(warn=0) # turns warnings back on
 
 
