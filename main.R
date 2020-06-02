@@ -77,12 +77,21 @@ rm(db_US)
 # reproducibility with Reis&Pivetta
 # pi <- pi["/2002-12-31"]
 
+# reshape data in long format
+pi_long <- pi %>% 
+            as_tibble %>%
+            add_column(date = time(pi)) %>% 
+            gather(1:(ncol(.)-1), key = 'index', value = 'rate', na.rm = T)
+
 # write out to disk the series
 write.zoo(x=pi, 
           file=file.path(data_dir, 'PI_data.csv'), 
           sep=';',
           row.names=F, 
           index.name='date')
+
+write_csv(x = pi_long,
+          path = file.path(data_dir, 'PI_long.csv'))
 
 # chunck for further analysis in MATLAB
 # source('matlab_exp.R')
@@ -343,12 +352,17 @@ for (i in 1:n){
                                               paste0(inflation[['names']][[i]], 
                                                      ' fullsample.h5'))
                         )
+  
+  # todo improvements:
+  #   - this is online fit, batch = 1
+  #   - let batch size depend on highest prime factor in n_sample
+  #   - fit model and then copy weights into new model for online forecasts
 }
 toc()
 sink(NULL)
 
 
-##### If models are fitted esternally, load in those files
+##### If models are fitted externally, load in those files
 
 for (i in 1:n){
   inflation[['lstm_fullsample']][[i]]$model_fitted <- 
@@ -356,4 +370,95 @@ for (i in 1:n){
                                                 paste0(inflation[['names']][[i]], 
                                                        ' fullsample.h5')),
                                                 compile = T)
+}
+
+
+online_pred <- function(model_fitted, data_train, horizon = 4*10){
+  
+  # This function produces iterative, indirect predictions with 
+  # a previously trained model. It copies weights and model structure
+  # and resets batch to 1 so to make online predictions easily
+  # and consistently. 'horizon' gives the nomber of indirect
+  # predictions to produce. If data are TS then also dates are generated.
+  
+  require(keras)
+  require(dplyr)
+  
+  # data_train is a list from data_prepper function!
+  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
+  
+  # preallocate array with results
+  pred <- array(NA, dim = c(horizon, 1))
+  
+  if (is.xts(data_train$train[['train_norm']])){
+    time_preds <- seq(from = end(input),
+                      length.out = (horizon+1),
+                      by = periodicity(input)$label)
+    time_preds <- tail(time_preds, n = horizon)
+    pred <- xts(pred, order.by = time_preds)
+  }
+  
+  # retrieve input shape
+  in_shape <- get_input_shape_at(object = model_fitted[['model_online']],
+                                 node_index = 0)
+  in_shape <- sapply(in_shape, FUN = c)
+  
+  # retrieve input data and fitted model
+  input <- data_train$train[['train_norm']]
+  model_online <- model_fitted[['model_online']]
+  
+
+  
+  for (h in 1:horizon){
+    input_lagged <- embed(input, in_shape[2])
+    input_arr <- array(data = input_lagged,
+                       dim = c(nrow(input_lagged), ncol(input_lagged),1))
+    last_row <- nrow(input_arr)
+    
+    pred[h, ] <- predict(model_online,
+                         x = array(data = input_arr[last_row, , ],
+                                   dim = in_shape),
+                         batch_size = 1)
+    input <- rbind(input, pred[h,])
+    }
+  
+  if (is.xts(data_train$train[['train_norm']])){
+    
+    time_preds <- seq(from = end(input),
+                      length.out = (horizon+1),
+                      by = periodicity(input)$label)
+    time_preds <- tail(time_preds, n = horizon)
+    
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train', 
+                                   date = time(data_train$train[['train_norm']])) %>% 
+                        rename(value = V1) %>% 
+                        mutate(value = as.numeric(value)) %>% 
+                        xts(order.by = .$date), 
+                      pred %>% 
+                        as_tibble %>% 
+                        add_column(label = 'forecast', 
+                                   date = time_preds) %>% 
+                        rename(value = V1) %>% 
+                        mutate(value = as.numeric(value)) %>% 
+                        xts(order.by = .$date))
+  } else {
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train'), 
+                      pred %>% 
+                        as_tibble %>% 
+                        add_column(label = 'forecast'))
+  }
+  
+  forecast$date <- NULL
+  forecast$value <- as.numeric(forecast$value)
+  forecast <- forecast*data_train$train[['sd']] + data_train$train[['mean']]
+  
+  
+  
+  
+  return(forecast)
+  
 }

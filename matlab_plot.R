@@ -19,12 +19,16 @@ plot_draws <- function(main_path, var, name){
   
   temp <- temp[!is.na(temp),]
   
-  names(bsum) <- temp[-(1:40), ] %>% index()
+  col_k <- bsum %>% ncol()
+  row_k <- temp %>% nrow()
+  k <- row_k - col_k
+  
+  names(bsum) <- temp[-(1:k), ] %>% index()
   
   
   bsum <- bsum %>% 
     reshape2::melt() %>% 
-    dplyr::mutate(variable = lubridate::yq(variable)) %>% 
+    dplyr::mutate(variable = lubridate::ymd(variable)) %>% 
     dplyr::group_by(variable) %>% 
     dplyr::mutate(Median = median(value)) %>% 
     dplyr::ungroup()
@@ -103,6 +107,7 @@ plot_draws <- function(main_path, var, name){
 
 var <- names(pi) %>% grep(pattern = '_pch', x = ., value = T)
 main_path <- 'C:/Users/emanu/Desktop'
+main_path <- 'D:/emanu/OneDrive/R/pirsistence/matlab/'
 names <- c(
   'Revised CPI pch',
   'Revised CPI, no FE pch',
@@ -122,3 +127,5 @@ for (i in 1:length(var)){
   mega_plots[[i]] <- plot_draws(main_path, var[i], names[i])
   setTxtProgressBar(pb, i)
 }
+
+rm(pb)

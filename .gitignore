@@ -23,6 +23,7 @@ PROF.Rprofvis
 ts.xlsx
 *.eps
 *.mat
+tests/
 
 ### other scripts
 aaaa_lstm_deflt.R

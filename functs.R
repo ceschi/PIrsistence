@@ -544,6 +544,7 @@ data_prepper <- function(data, train = 1, test = NULL){
   output$train[['mean']] <- mean(data_train)
   output$train[['sd']] <- sd(data_train)
   output$train[['train_norm']] <- (data_train - output$train[['mean']])/output$train[['sd']]
+  output$train[['n_sample']] <- l_train
   
   if (train != 1){
     # condition on test subsample, whether present
@@ -551,7 +552,8 @@ data_prepper <- function(data, train = 1, test = NULL){
     # rescale test
     output$test[['mean']] <- mean(data_test)
     output$test[['sd']] <- sd(data_test)
-    output$test[['test_norm']] <- (data_test - output$test[['mean']])/output$test[['sd']]  
+    output$test[['test_norm']] <- (data_test - output$test[['mean']])/output$test[['sd']] 
+    output$train[['n_sample']] <- l_test
   }
   
   return(output)
@@ -584,6 +586,7 @@ k_fullsample <- function(data,
   require(magrittr)
   require(keras)
   require(tictoc)
+  require(numbers)
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -596,10 +599,16 @@ k_fullsample <- function(data,
   
   # preserve the time index of data
   # for later use
-  if (is.ts(data)){
-    time_index <- time(data)[(n_steps+1):length(time_index)]
+  if (is.xts(data)){
+    time_index <- time(data)[(n_steps+1):length(data)]
     
   }
+  
+  # highest prime factor in the number of obs
+  batch_prime <- numbers::primeFactors(n_sample)
+  batch_prime <- batch_prime[length(batch_prime)]
+  
+  # KIM batch must mod train and test samples!
   
   # embed automates lags and turns into lower
   # object matrix/array: first col is original series
@@ -622,7 +631,18 @@ k_fullsample <- function(data,
                return_sequences = F,
                stateful = T,
                batch_size = size_batch,
-    ) %>% 
+              ) %>% 
+    layer_dense(units = 1) %>% 
+    compile(optimizer = 'adam',
+            loss = 'mse')
+  
+  model_online <- keras_model_sequential() %>% 
+    layer_lstm(units = nodes,
+               input_shape = c(n_steps, n_feat),
+               return_sequences = F,
+               stateful = T,
+               batch_size = 1,
+              ) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -660,7 +680,11 @@ k_fullsample <- function(data,
   out <- list()
   out[['model_fitted']] <- model_compiled
   out[['history']] <- history
-  if (is.ts(data)){
+  out[['model_batch']] <- batch_prime
+  out[['model_weights']] <- keras::get_weights(model_compiled)
+  out[['model_online']] <- keras::set_weights(object = model_online, 
+                                              weights = out[['model_weights']])
+  if (is.xts(data)){
     out[['time_index']] <- time_index
   }
   
@@ -682,7 +706,8 @@ pkgs <- c(
   'strucchange',
   'tictoc',
   'viridis',
-  'keras'
+  'keras',
+  'numbers'
   )
 # fill pkgs with names of the packages to install
 
