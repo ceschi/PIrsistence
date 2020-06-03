@@ -524,13 +524,16 @@ data_prepper <- function(data, train = 1, test = NULL){
   
   
   # train and test shall be expressed in percentage terms
-  if (train>1){stop(cat('Train should be expressed in percentage not intergers.'))}
+  if (train>1){stop('Train should be expressed in percentage not intergers.')}
   
   # preallocate list
   output <- list()
   
   # remove NAs
   data <- data[!is.na(data)]
+  if (is.null(dim(data))){
+    data <- array(data = data, dim = c(length(data), 1))
+  }
   
   # train/rep
   len <- dim(data)[1]
@@ -543,8 +546,10 @@ data_prepper <- function(data, train = 1, test = NULL){
   # rescale train
   output$train[['mean']] <- mean(data_train)
   output$train[['sd']] <- sd(data_train)
-  output$train[['train_norm']] <- (data_train - output$train[['mean']])/output$train[['sd']]
+  output$train[['train_norm']] <- array(data = (data_train - output$train[['mean']])/output$train[['sd']],
+                                        dim = c(l_train, 1))
   output$train[['n_sample']] <- l_train
+
   
   if (train != 1){
     # condition on test subsample, whether present
@@ -552,7 +557,8 @@ data_prepper <- function(data, train = 1, test = NULL){
     # rescale test
     output$test[['mean']] <- mean(data_test)
     output$test[['sd']] <- sd(data_test)
-    output$test[['test_norm']] <- (data_test - output$test[['mean']])/output$test[['sd']] 
+    output$test[['test_norm']] <- array(data = (data_test - output$test[['mean']])/output$test[['sd']],
+                                        dim = c(l_test, 1))
     output$train[['n_sample']] <- l_test
   }
   
@@ -565,9 +571,10 @@ k_fullsample <- function(data,
                          n_feat = 1, 
                          # model_compiled,
                          nodes = 50,
-                         size_batch = 1, 
+                         # size_batch = 1, 
                          epochs = 2000,
-                         ES = F){
+                         ES = F,
+                         keepBest = F){
   
   # Function to fit a model on the whole sample of data;
   # it takes care of lagging & reshaping the data according to parameters
@@ -609,6 +616,7 @@ k_fullsample <- function(data,
   batch_prime <- batch_prime[length(batch_prime)]
   
   # KIM batch must mod train and test samples!
+  size_batch <- batch_prime
   
   # embed automates lags and turns into lower
   # object matrix/array: first col is original series
@@ -660,7 +668,8 @@ k_fullsample <- function(data,
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
                                              patience = epochs,
-                                             min_delta = .0001)
+                                             min_delta = 1e-5, 
+                                             restore_best_weights = keepBest)
                    ),
                    epochs = epochs,
                    validation_split = .1,
@@ -690,6 +699,127 @@ k_fullsample <- function(data,
   
   return(out)
 }
+
+extra_layers <- function(nodes_list, options){
+  
+  # function to automate the layering of models 
+  # in keras. It outputs a model ready to compile.
+  
+  require(keras)
+  require(magrittr)
+  
+  model <- keras::keras_model_sequential()
+  
+  for (l in 1:length(nodes_list)){
+    # the first layer needs extra info on input
+    # and batch size.
+    if (l==1){
+      model %>% 
+        layer_lstm(
+          input_shape = options$input_shape,
+          batch_size = options$size_batch,
+          units = nodes_list[[l]],
+          return_sequences = options$ret_sequences[[i]],
+          stateful = options$stateful[[i]]
+          )
+      
+    }else{
+      model %>% 
+        layer_lstm(
+          units = nodes_list[[l]],
+          return_sequences = options$ret_sequences[[i]],
+          stateful = options$stateful[[i]]
+          )
+    }
+  }
+  
+  model %>% layer_dense(units = 1)
+  
+  return(model)
+}
+
+
+online_pred <- function(model_fitted, data_train, horizon = 4*10){
+  
+  # This function produces iterative, indirect predictions with 
+  # a previously trained model. It copies weights and model structure
+  # and resets batch to 1 so to make online predictions easily
+  # and consistently. 'horizon' gives the nomber of indirect
+  # predictions to produce. If data are TS then also dates are generated.
+  
+  require(keras)
+  require(dplyr)
+  
+  
+  # data_train is a list from data_prepper function!
+  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
+  
+  # preallocate array with results
+  pred <- array(NA, dim = c(horizon, 1))
+  
+  # retrieve input data and fitted model
+  input <- data_train$train[['train_norm']]
+  model_online <- model_fitted[['model_online']]
+  
+  if (is.xts(data_train$train[['train_norm']])){
+    time_preds <- seq(from = end(input),
+                      length.out = (horizon+1),
+                      by = periodicity(input)$label)
+    time_preds <- tail(time_preds, n = horizon)
+    pred <- xts(pred, order.by = time_preds)
+  }
+  
+  # retrieve input shape
+  in_shape <- get_input_shape_at(object = model_fitted[['model_online']],
+                                 node_index = 0)
+  in_shape <- sapply(in_shape, FUN = c)
+  
+  for (h in 1:horizon){
+    input_lagged <- embed(input, in_shape[2])
+    input_arr <- array(data = input_lagged,
+                       dim = c(nrow(input_lagged), ncol(input_lagged),1))
+    last_row <- nrow(input_arr)
+    
+    pred[h, ] <- predict(model_online,
+                         x = array(data = input_arr[last_row, , ],
+                                   dim = in_shape),
+                         batch_size = 1)
+    input <- rbind(input, pred[h,])
+  }
+  
+  if (is.xts(data_train$train[['train_norm']])){
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train', 
+                                   date = time(data_train$train[['train_norm']])) %>% 
+                        rename(value = V1) %>% 
+                        mutate(value = as.numeric(value)),
+                      
+                      pred %>% 
+                        as_tibble %>% 
+                        add_column(label = 'forecast', 
+                                   date = time_preds) %>% 
+                        rename(value = V1) %>% 
+                        mutate(value = as.numeric(value)))
+  } else {
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train') %>% 
+                        rename(value = V1), 
+                      pred %>% 
+                        as_tibble %>% 
+                        add_column(label = 'forecast') %>% 
+                        rename(value = V1))
+  }
+  
+  # reconversion to values
+  forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
+  
+  return(forecast)
+  
+}
+
+
 
 
 ##### Packages Loader #####

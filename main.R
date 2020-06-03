@@ -95,6 +95,7 @@ write_csv(x = pi_long,
 
 # chunck for further analysis in MATLAB
 # source('matlab_exp.R')
+# source('matlab_plot.R')
 
 n=length(names(pi))
 
@@ -305,7 +306,7 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
 # todo list
   # - function to prep data                           DONE
   # - function to fit model on whole sample           DONE
-  # - predictions
+  # - predictions                                     DONE
   # - function to slice data two ways                 
   #   + rolling window
   #   + increasing width
@@ -315,6 +316,32 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
   #   + directly, by specifying an appropriate model
   # - compute persistence
   # - plot all of the above
+
+
+# test data 
+len <- 500
+seq <- seq(1, len, 1)
+fake <- (cos(seq*.005*base::pi) +
+           rnorm(n = len, 0, .01) -
+           seq/len + 10 +
+           sin(seq*.008*base::pi)) + log(seq)
+
+fake %>% ts.plot
+# make it time series
+fake <-fake %>% 
+  as_tibble() %>% 
+  mutate(date = as_date(index(.))) %>% 
+  # rename(value = x) %>% 
+  as_tbl_time(date) 
+
+# test with xts format
+fake <- as.xts(x = fake$value, order.by = fake$date)
+
+data_train <- data_prepper(fake, train = 1)
+model_fitted <- k_fullsample(data = data_train$train[['train_norm']], n_steps = 150, nodes = 21, epochs = 10)
+rm(len, seq)
+
+
 
 
 
@@ -334,24 +361,40 @@ if (!keras::is_keras_available()){
 tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
-  inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
-                                                      # either twice the BIC lags or 9 quarters to prevent 
-                                                      # too much sample shrinking
-                                                      n_steps = min(inflation[['aropti']][[i]]*2,9), 
-                                                      n_feat = 1, 
-                                                      # baseline for one single layer
-                                                      nodes = 75, 
-                                                      # online model with one batch, workaround needed
-                                                      size_batch = 1, 
-                                                      # either the max epochs or patience
-                                                      epochs = 2000, 
-                                                      ES = T)
+  # inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  #                                                     # either twice the BIC lags or 9 quarters to prevent
+  #                                                     # too much sample shrinking
+  #                                                     n_steps = min(inflation[['aropti']][[i]]*2,9),
+  #                                                     n_feat = 1,
+  #                                                     # baseline for one single layer
+  #                                                     nodes = 75,
+  #                                                     # online model with one batch, workaround needed
+  #                                                     size_batch = 1,
+  #                                                     # either the max epochs or patience
+  #                                                     epochs = 2000,
+  #                                                     ES = T,
+  #                                                     keepBest = T)
+  # 
+  # keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
+  #                        filepath = file.path(models_dir,
+  #                                             paste0(inflation[['names']][[i]],
+  #                                                    ' fullsample.h5'))
+  #                       )
   
-  keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
-                         filepath = file.path(models_dir,
-                                              paste0(inflation[['names']][[i]], 
-                                                     ' fullsample.h5'))
-                        )
+  
+  inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
+                                                      # either twice the BIC lags or 9 quarters to prevent
+                                                      # too much sample shrinking
+                                                      n_steps = 5,
+                                                      n_feat = 1,
+                                                      # baseline for one single layer
+                                                      nodes = 15,
+                                                      # online model with one batch, workaround needed
+                                                      size_batch = 1,
+                                                      # either the max epochs or patience
+                                                      epochs = 20,
+                                                      ES = F,
+                                                      keepBest = F)
   
   # todo improvements:
   #   - this is online fit, batch = 1
@@ -365,100 +408,12 @@ sink(NULL)
 ##### If models are fitted externally, load in those files
 
 for (i in 1:n){
-  inflation[['lstm_fullsample']][[i]]$model_fitted <- 
+  inflation[['lstm_fullsample']][[i]]$model_fitted <-
     keras::load_model_hdf5(filepath = file.path(models_dir,
-                                                paste0(inflation[['names']][[i]], 
+                                                paste0(inflation[['names']][[i]],
                                                        ' fullsample.h5')),
                                                 compile = T)
 }
 
 
-online_pred <- function(model_fitted, data_train, horizon = 4*10){
-  
-  # This function produces iterative, indirect predictions with 
-  # a previously trained model. It copies weights and model structure
-  # and resets batch to 1 so to make online predictions easily
-  # and consistently. 'horizon' gives the nomber of indirect
-  # predictions to produce. If data are TS then also dates are generated.
-  
-  require(keras)
-  require(dplyr)
-  
-  # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
-  
-  # preallocate array with results
-  pred <- array(NA, dim = c(horizon, 1))
-  
-  if (is.xts(data_train$train[['train_norm']])){
-    time_preds <- seq(from = end(input),
-                      length.out = (horizon+1),
-                      by = periodicity(input)$label)
-    time_preds <- tail(time_preds, n = horizon)
-    pred <- xts(pred, order.by = time_preds)
-  }
-  
-  # retrieve input shape
-  in_shape <- get_input_shape_at(object = model_fitted[['model_online']],
-                                 node_index = 0)
-  in_shape <- sapply(in_shape, FUN = c)
-  
-  # retrieve input data and fitted model
-  input <- data_train$train[['train_norm']]
-  model_online <- model_fitted[['model_online']]
-  
 
-  
-  for (h in 1:horizon){
-    input_lagged <- embed(input, in_shape[2])
-    input_arr <- array(data = input_lagged,
-                       dim = c(nrow(input_lagged), ncol(input_lagged),1))
-    last_row <- nrow(input_arr)
-    
-    pred[h, ] <- predict(model_online,
-                         x = array(data = input_arr[last_row, , ],
-                                   dim = in_shape),
-                         batch_size = 1)
-    input <- rbind(input, pred[h,])
-    }
-  
-  if (is.xts(data_train$train[['train_norm']])){
-    
-    time_preds <- seq(from = end(input),
-                      length.out = (horizon+1),
-                      by = periodicity(input)$label)
-    time_preds <- tail(time_preds, n = horizon)
-    
-    forecast <- rbind(data_train$train[['train_norm']] %>% 
-                        as_tibble %>% 
-                        add_column(label = 'train', 
-                                   date = time(data_train$train[['train_norm']])) %>% 
-                        rename(value = V1) %>% 
-                        mutate(value = as.numeric(value)) %>% 
-                        xts(order.by = .$date), 
-                      pred %>% 
-                        as_tibble %>% 
-                        add_column(label = 'forecast', 
-                                   date = time_preds) %>% 
-                        rename(value = V1) %>% 
-                        mutate(value = as.numeric(value)) %>% 
-                        xts(order.by = .$date))
-  } else {
-    forecast <- rbind(data_train$train[['train_norm']] %>% 
-                        as_tibble %>% 
-                        add_column(label = 'train'), 
-                      pred %>% 
-                        as_tibble %>% 
-                        add_column(label = 'forecast'))
-  }
-  
-  forecast$date <- NULL
-  forecast$value <- as.numeric(forecast$value)
-  forecast <- forecast*data_train$train[['sd']] + data_train$train[['mean']]
-  
-  
-  
-  
-  return(forecast)
-  
-}
