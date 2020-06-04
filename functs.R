@@ -805,12 +805,13 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
     input <- rbind(input, pred[h,])
   }
   
+  va <- names(data_train$train[['train_norm']])
   if (is.xts(data_train$train[['train_norm']])){
     forecast <- rbind(data_train$train[['train_norm']] %>% 
                         as_tibble %>% 
                         add_column(label = 'train', 
                                    date = time(data_train$train[['train_norm']])) %>% 
-                        rename(value = V1) %>% 
+                        rename(value = all_of(va)) %>%
                         mutate(value = as.numeric(value)),
                       
                       pred %>% 
@@ -823,7 +824,7 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
     forecast <- rbind(data_train$train[['train_norm']] %>% 
                         as_tibble %>% 
                         add_column(label = 'train') %>% 
-                        rename(value = V1), 
+                        rename(value = all_of(va)), 
                       pred %>% 
                         as_tibble %>% 
                         add_column(label = 'forecast') %>% 
@@ -832,7 +833,7 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
   
   # reconversion to values
   forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
-  
+  names(forecast)[1] <- va 
   return(forecast)
   
 }
