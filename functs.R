@@ -547,12 +547,16 @@ data_prepper <- function(data, train = 1, test = NULL){
   output$train <- list() # preallocate for compatibility
   output$train[['mean']] <- mean(data_train)
   output$train[['sd']] <- sd(data_train)
-  output$train[['train_norm']] <- ifelse(test = is.xts(data_train), 
-                                         yes = ((data_train - output$train[['mean']])/output$train[['sd']]),
-                                         no = array(data = ((data_train - output$train[['mean']])/output$train[['sd']]),
-                                                    dim = c(l_train, 1)))
   output$train[['n_sample']] <- l_train
-
+  # storage
+  store_train <- ((data_train - output$train[['mean']])/output$train[['sd']])
+  if (is.xts(store_train)){
+    output$train[['train_norm']] <- store_train
+  }else{
+    output$train[['train_norm']] <- array(data = store_train,
+                                          dim = c(l_train, 1))
+  }
+  
   
   if (train != 1){
     # condition on test subsample, whether present
@@ -561,11 +565,16 @@ data_prepper <- function(data, train = 1, test = NULL){
     output$test <- list() # preallocate for compatibility
     output$test[['mean']] <- mean(data_test)
     output$test[['sd']] <- sd(data_test)
-    output$test[['test_norm']] <- ifelse(test = is.xts(data_test), 
-                                         yes = ((data_test - output$test[['mean']])/output$test[['sd']]),
-                                         no = array(data = ((data_test - output$test[['mean']])/output$test[['sd']]),
-                                                    dim = c(l_test, 1)))
-    output$train[['n_sample']] <- l_test
+    output$test[['n_sample']] <- l_test
+    # storage
+    store_test <- ((data_test - output$test[['mean']])/output$test[['sd']])
+    if (is.xts(store_test)){
+      output$test[['test_norm']] <- store_test
+    }else{
+      output$test[['test_norm']] <- array(data = store_test,
+                                          dim = c(l_test, 1))
+    }
+    
   }
   
   return(output)
