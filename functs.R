@@ -654,10 +654,13 @@ k_fullsample <- function(data,
   model_compiled %>%
     layer_lstm(units = nodes,
                input_shape = c(n_steps, n_feat),
-               return_sequences = F,
+               return_sequences = T,
                stateful = T,
                batch_size = size_batch,
               ) %>% 
+    layer_lstm(units = nodes,
+               return_sequences = F,
+               stateful = T) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -665,10 +668,13 @@ k_fullsample <- function(data,
   model_online <- keras_model_sequential() %>% 
     layer_lstm(units = nodes,
                input_shape = c(n_steps, n_feat),
-               return_sequences = F,
+               return_sequences = T,
                stateful = T,
                batch_size = 1,
               ) %>% 
+    layer_lstm(units = nodes,
+               return_sequences = F,
+               stateful = T) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -757,13 +763,20 @@ extra_layers <- function(nodes_list, options){
 }
 
 
-online_pred <- function(model_fitted, data_train, horizon = 4*10){
+online_pred <- function(model_fitted, 
+                        data_train, 
+                        model_type = 'model_online', 
+                        horizon = 4*10){
   
   # This function produces iterative, indirect predictions with 
   # a previously trained model. It copies weights and model structure
   # and resets batch to 1 so to make online predictions easily
   # and consistently. 'horizon' gives the nomber of indirect
   # predictions to produce. If data are TS then also dates are generated.
+  
+  # to use the 'online' model (same weights, batch set to 1) use the default option
+  # 'model_online'; to use other versions of the model, specify it in the model_type
+  # option, eg 'model_fitted'.
   
   require(keras)
   require(dplyr)
@@ -777,7 +790,7 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
   
   # retrieve input data and fitted model
   input <- data_train$train[['train_norm']]
-  model_online <- model_fitted[['model_online']]
+  model_online <- model_fitted[[model_type]]
   
   if (is.xts(data_train$train[['train_norm']])){
     time_preds <- seq(from = end(input),
@@ -788,7 +801,7 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
   }
   
   # retrieve input shape
-  in_shape <- get_input_shape_at(object = model_fitted[['model_online']],
+  in_shape <- get_input_shape_at(object = model_fitted[[model_type]],
                                  node_index = 0)
   in_shape <- sapply(in_shape, FUN = c)
   
@@ -833,7 +846,7 @@ online_pred <- function(model_fitted, data_train, horizon = 4*10){
   
   # reconversion to values
   forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
-  names(forecast)[1] <- va 
+  # names(forecast)[1] <- va
   return(forecast)
   
 }
