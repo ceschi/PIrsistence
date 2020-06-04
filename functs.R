@@ -586,7 +586,7 @@ k_fullsample <- function(data,
                          n_feat = 1, 
                          # model_compiled,
                          nodes = 50,
-                         # size_batch = 1, 
+                         size_batch = 1,
                          epochs = 2000,
                          ES = F,
                          keepBest = F){
@@ -631,7 +631,10 @@ k_fullsample <- function(data,
   batch_prime <- batch_prime[length(batch_prime)]
   
   # KIM batch must mod train and test samples!
-  size_batch <- batch_prime
+  # not working as of now, needs impro
+  if (size_batch == 'auto'){
+    size_batch <- batch_prime
+  }
   
   # embed automates lags and turns into lower
   # object matrix/array: first col is original series
