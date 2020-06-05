@@ -318,28 +318,7 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
   # - plot all of the above
 
 
-# test data 
-len <- 500
-seq <- seq(1, len, 1)
-fake <- (cos(seq*.005*base::pi) +
-           rnorm(n = len, 0, .01) -
-           seq/len + 10 +
-           sin(seq*.008*base::pi)) + log(seq)
 
-fake %>% ts.plot
-# make it time series
-fake <-fake %>% 
-  as_tibble() %>% 
-  mutate(date = as_date(index(.))) %>% 
-  # rename(value = x) %>% 
-  as_tbl_time(date) 
-
-# test with xts format
-fake <- as.xts(x = fake$value, order.by = fake$date)
-
-data_train <- data_prepper(fake, train = 1)
-model_fitted <- k_fullsample(data = data_train$train[['train_norm']], n_steps = 150, nodes = 21, epochs = 10)
-rm(len, seq)
 
 
 
@@ -357,6 +336,7 @@ inflation[['lstm_fullsample']] <- list()
 if (!keras::is_keras_available()){
   keras::install_keras()
 }
+
 
 tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
@@ -381,7 +361,7 @@ for (i in 1:n){
   #                                                    ' fullsample.h5'))
   #                       )
   
-  
+  ### tester
   inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
                                                       # either twice the BIC lags or 9 quarters to prevent
                                                       # too much sample shrinking
@@ -392,14 +372,12 @@ for (i in 1:n){
                                                       # online model with one batch, workaround needed
                                                       size_batch = 1,
                                                       # either the max epochs or patience
-                                                      epochs = 20,
+                                                      epochs = 2,
                                                       ES = F,
                                                       keepBest = F)
   
   # todo improvements:
-  #   - this is online fit, batch = 1
-  #   - let batch size depend on highest prime factor in n_sample
-  #   - fit model and then copy weights into new model for online forecasts
+  #   - let batch size depend on highest prime factor in n_sample - done but critical
 }
 toc()
 sink(NULL)
@@ -417,3 +395,33 @@ for (i in 1:n){
 
 
 
+##### Online predictions #######################################################
+
+for (i in 1:n){
+  inflation[['lstm_online_pred']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample']][[i]], 
+                                                      model_type = 'model_fitted',
+                                                      data_train = inflation[['lstm_data']][[i]],
+                                                      horizon = 40)
+  
+  # inflation[['lstm_online_pred']][[i]] %>% ggplot() + geom_line(aes(x = date, y = value, colour = label)) %>% plot()
+}
+
+
+##### Split data in 10y chuncks ################################################
+
+
+inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.rm(x))}),
+                                                        initial = fm_apply(4*10, n),
+                                                        assess = fm_apply(0, n),
+                                                        cumulative = fm_apply(F, n),
+                                                        skip = fm_apply(0, n),
+                                                        lag = inflation[["aropti"]]), 
+                                              .f = rsample::rolling_origin)
+
+inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, list),
+                                                           initial = fm_apply(4*10, n),
+                                                           assess = fm_apply(0, n),
+                                                           cumulative = fm_apply(F, n),
+                                                           skip = fm_apply(0, n),
+                                                           lag = inflation[["aropti"]]), 
+                                                 .f = rsample::rolling_origin)

@@ -23,10 +23,6 @@ options(warn=0) # turns warnings back on
 
 
 
-
-# A file to gather all home made functions with relative descriptions
-
-
 instant_pkgs <- function(pkgs) { 
   ## Function loading or installing packages in
   ## current R instance.
@@ -207,6 +203,13 @@ formula.maker <- function(df, y, intercept = T){
   
   attr(fomu, which='.Environment') <- .GlobalEnv
   return(fomu)
+}
+
+
+fm_apply <- function(foo, n){
+  # shorthand to use in future_pmap
+  # calls for atom foo
+  return(sapply(rep(foo, n), list))
 }
 
 
