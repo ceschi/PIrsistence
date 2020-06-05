@@ -387,7 +387,7 @@ sink(NULL)
 
 for (i in 1:n){
   inflation[['lstm_fullsample']][[i]]$model_fitted <-
-    keras::load_model_hdf5(filepath = file.path(models_dir,
+    keras::load_model_hdf5(filepath = file.path(paste0(models_dir,'_4k_n75/'),
                                                 paste0(inflation[['names']][[i]],
                                                        ' fullsample.h5')),
                                                 compile = T)
@@ -401,9 +401,17 @@ for (i in 1:n){
   inflation[['lstm_online_pred']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample']][[i]], 
                                                       model_type = 'model_fitted',
                                                       data_train = inflation[['lstm_data']][[i]],
-                                                      horizon = 40)
+                                                      horizon = 80)
   
-  # inflation[['lstm_online_pred']][[i]] %>% ggplot() + geom_line(aes(x = date, y = value, colour = label)) %>% plot()
+  inflation[['plot_lstm_full']][[i]] <- ggplot(data = inflation[['lstm_online_pred']][[i]])+
+                                          geom_line(aes(x = date, y = value, colour = label))+
+                                          theme_minimal() + xlab(label = element_blank()) + 
+                                          ylab(element_blank()) + ggtitle(inflation$names[[i]]) + 
+                                          theme(legend.position = 'bottom', 
+                                                legend.title = element_blank())+
+                                          guides(colour = guide_legend(nrow = 1))
+  
+  plot(inflation[['plot_lstm_full']][[i]])
 }
 
 
