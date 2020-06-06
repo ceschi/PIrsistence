@@ -584,7 +584,7 @@ data_prepper <- function(data, train = 1, test = NULL){
 }
 
 
-k_fullsample <- function(data, 
+k_fullsample_1l <- function(data, 
                          n_steps, 
                          n_feat = 1, 
                          # model_compiled,
@@ -653,17 +653,18 @@ k_fullsample <- function(data,
   x_data_arr <- array(data = data_lagged[,-1],
                       dim = c(n_sample, n_steps, n_feat))
   
+  
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
   model_compiled <- keras_model_sequential()
   model_compiled %>%
     layer_lstm(units = nodes,
                input_shape = c(n_steps, n_feat),
-               return_sequences = T,
+               return_sequences = F,
                stateful = T,
                batch_size = size_batch,
               ) %>% 
-    layer_lstm(units = nodes,
-               return_sequences = F,
-               stateful = T) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -671,13 +672,10 @@ k_fullsample <- function(data,
   model_online <- keras_model_sequential() %>% 
     layer_lstm(units = nodes,
                input_shape = c(n_steps, n_feat),
-               return_sequences = T,
+               return_sequences = F,
                stateful = T,
                batch_size = 1,
               ) %>% 
-    layer_lstm(units = nodes,
-               return_sequences = F,
-               stateful = T) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -732,6 +730,14 @@ extra_layers <- function(nodes_list, options){
   # function to automate the layering of models 
   # in keras. It outputs a model ready to compile.
   
+  # bunch of checks
+  if (!is.list(nodes_list)) stop('Number of nodes per layer must be declared in a list.')
+  if (!is.list(options)) stop('Options must be provided in a list.')
+  if (is.null(options$input_shape)) stop('Options must contain input shape ONLY FOR THE FIRST LAYER.')
+  if (is.null(options$ret_sequences)) stop('Options must declare whether or not to return sequences from one layer to the following as a list.\nThe last must NOT return sequences unless direct forecstas.')
+  if (is.null(options$stateful)) stop('Options must declare whether each layer is stateful (and in case set batch size accordingly).')
+  
+  
   require(keras)
   require(magrittr)
   
@@ -765,6 +771,288 @@ extra_layers <- function(nodes_list, options){
   return(model)
 }
 
+
+k_fullsample_2l <- function(data, 
+                            n_steps, 
+                            n_feat = 1, 
+                            # model_compiled,
+                            nodes = 50,
+                            size_batch = 1,
+                            epochs = 2000,
+                            ES = F,
+                            keepBest = F){
+  
+  # Function to fit a model on the whole sample of data;
+  # it takes care of lagging & reshaping the data according to parameters
+  # passed and to declare a model with one layer of LSTM and a final
+  # dense layer. It requires 'keras' and pipes. It preserves the 
+  # time dimension dropping the NAs generated after lagging.
+  # Optionally it accommodates the early stopping callback
+  # for which the epochs are then the patience limit.
+  # Output contains history, model, and optionally time index.
+  
+  # Keras usually run in parallel by default, call this function 
+  # sequentially to avoid nested parallelism.
+  
+  #' *this version uses only TWO layers*
+  
+  
+  
+  require(magrittr)
+  require(keras)
+  require(tictoc)
+  require(numbers)
+  
+  # data come in as a simple TS,
+  # it comes then with n of observations (n_sample)
+  # and must be lagged according to n_steps.
+  # The number of features is 1 by default, can be varied tho
+  
+  # we will drop as many obs as many lags we include
+  n_sample <- nrow(data) - n_steps
+  n_feat <- ncol(data)
+  
+  # preserve the time index of data
+  # for later use
+  if (is.xts(data)){
+    time_index <- time(data)[(n_steps+1):length(data)]
+    
+  }
+  
+  # highest prime factor in the number of obs
+  batch_prime <- numbers::primeFactors(n_sample)
+  batch_prime <- batch_prime[length(batch_prime)]
+  
+  # KIM batch must mod train and test samples!
+  # not working as of now, needs impro
+  if (size_batch == 'auto'){
+    size_batch <- batch_prime
+  }
+  
+  # embed automates lags and turns into lower
+  # object matrix/array: first col is original series
+  # second to end are lags
+  data_lagged <- embed(x = as.matrix(data), dimension = (n_steps+1))
+  
+  
+  # NB: y must be 2D array/matrix
+  y_data_arr <- array(data = data_lagged[,1],
+                      dim = c(n_sample, n_feat))
+  
+  # X must be 3D for a stateful LSTM
+  x_data_arr <- array(data = data_lagged[,-1],
+                      dim = c(n_sample, n_steps, n_feat))
+  
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
+  model_compiled <- keras_model_sequential()
+  model_compiled %>%
+    layer_lstm(units = nodes,
+               input_shape = c(n_steps, n_feat),
+               return_sequences = T,
+               stateful = T,
+               batch_size = size_batch,
+    ) %>% 
+    layer_lstm(units = nodes,
+               return_sequences = F,
+               stateful = T) %>% 
+    layer_dense(units = 1) %>% 
+    compile(optimizer = 'adam',
+            loss = 'mse')
+  
+  model_online <- keras_model_sequential() %>% 
+    layer_lstm(units = nodes,
+               input_shape = c(n_steps, n_feat),
+               return_sequences = T,
+               stateful = T,
+               batch_size = 1,
+    ) %>% 
+    layer_lstm(units = nodes,
+               return_sequences = F,
+               stateful = T) %>% 
+    layer_dense(units = 1) %>% 
+    compile(optimizer = 'adam',
+            loss = 'mse')
+  
+  
+  tictoc::tic('Model estimation')
+  if (ES){
+    # estimate with early stopping
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr,
+                   verbose = 2,
+                   shuffle = F,
+                   callbacks = list(
+                     callback_early_stopping(monitor = 'val_loss',
+                                             mode = 'auto',
+                                             patience = epochs,
+                                             min_delta = 1e-5, 
+                                             restore_best_weights = keepBest)
+                   ),
+                   epochs = epochs,
+                   validation_split = .1,
+                   batch_size = size_batch)
+  } else {
+    # estimate with given number of epochs
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr, 
+                   epochs = epochs, 
+                   verbose = 2,
+                   shuffle = F,
+                   batch_size = size_batch)
+  }
+  tictoc::toc()
+  
+  out <- list()
+  out[['model_fitted']] <- model_compiled
+  out[['history']] <- history
+  out[['model_batch']] <- batch_prime
+  out[['model_weights']] <- keras::get_weights(model_compiled)
+  out[['model_online']] <- keras::set_weights(object = model_online, 
+                                              weights = out[['model_weights']])
+  if (is.xts(data)){
+    out[['time_index']] <- time_index
+  }
+  
+  return(out)
+}
+
+
+k_fullsample_nl <- function(data, 
+                            n_steps, 
+                            n_feat = 1, 
+                            # model_compiled,
+                            nodes = 50,
+                            size_batch = 1,
+                            epochs = 2000,
+                            ES = F,
+                            keepBest = F,
+                            nodes_list,
+                            options){
+  
+  # Function to fit a model on the whole sample of data;
+  # it takes care of lagging & reshaping the data according to parameters
+  # passed and to declare a model with one layer of LSTM and a final
+  # dense layer. It requires 'keras' and pipes. It preserves the 
+  # time dimension dropping the NAs generated after lagging.
+  # Optionally it accommodates the early stopping callback
+  # for which the epochs are then the patience limit.
+  # Output contains history, model, and optionally time index.
+  
+  # Keras usually run in parallel by default, call this function 
+  # sequentially to avoid nested parallelism.
+  
+  #' *this version adapts for multiple layers*
+  
+  
+  
+  require(magrittr)
+  require(keras)
+  require(tictoc)
+  require(numbers)
+  
+  # data come in as a simple TS,
+  # it comes then with n of observations (n_sample)
+  # and must be lagged according to n_steps.
+  # The number of features is 1 by default, can be varied tho
+  
+  # we will drop as many obs as many lags we include
+  n_sample <- nrow(data) - n_steps
+  n_feat <- ncol(data)
+  
+  # preserve the time index of data
+  # for later use
+  if (is.xts(data)){
+    time_index <- time(data)[(n_steps+1):length(data)]
+    
+  }
+  
+  # highest prime factor in the number of obs
+  batch_prime <- numbers::primeFactors(n_sample)
+  batch_prime <- batch_prime[length(batch_prime)]
+  
+  # KIM batch must mod train and test samples!
+  # not working as of now, needs impro
+  if (size_batch == 'auto'){
+    size_batch <- batch_prime
+  }
+  
+  # embed automates lags and turns into lower
+  # object matrix/array: first col is original series
+  # second to end are lags
+  data_lagged <- embed(x = as.matrix(data), dimension = (n_steps+1))
+  
+  
+  # NB: y must be 2D array/matrix
+  y_data_arr <- array(data = data_lagged[,1],
+                      dim = c(n_sample, n_feat))
+  
+  # X must be 3D for a stateful LSTM
+  x_data_arr <- array(data = data_lagged[,-1],
+                      dim = c(n_sample, n_steps, n_feat))
+  
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
+  model_compiled <- extra_layers(nodes_list,
+                                 options) %>% 
+    compile(optimizer = 'adam', 
+            loss = 'mse')
+  
+  options_online <- options
+  options_online$size_batch <- 1
+  model_online <- extra_layers(nodes_list,
+                               options_online) %>% 
+    compile(optimizer = 'adam',
+            loss = 'mse')
+  
+  
+  tictoc::tic('Model estimation')
+  if (ES){
+    # estimate with early stopping
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr,
+                   verbose = 2,
+                   shuffle = F,
+                   callbacks = list(
+                     callback_early_stopping(monitor = 'val_loss',
+                                             mode = 'auto',
+                                             patience = epochs,
+                                             min_delta = 1e-5, 
+                                             restore_best_weights = keepBest)
+                   ),
+                   epochs = epochs,
+                   validation_split = .1,
+                   batch_size = size_batch)
+  } else {
+    # estimate with given number of epochs
+    history <- fit(object = model_compiled, 
+                   y = y_data_arr, 
+                   x = x_data_arr, 
+                   epochs = epochs, 
+                   verbose = 2,
+                   shuffle = F,
+                   batch_size = size_batch)
+  }
+  tictoc::toc()
+  
+  out <- list()
+  out[['model_fitted']] <- model_compiled
+  out[['history']] <- history
+  out[['model_batch']] <- batch_prime
+  out[['model_weights']] <- keras::get_weights(model_compiled)
+  out[['model_online']] <- keras::set_weights(object = model_online, 
+                                              weights = out[['model_weights']])
+  if (is.xts(data)){
+    out[['time_index']] <- time_index
+  }
+  
+  return(out)
+}
 
 online_pred <- function(model_fitted, 
                         data_train, 
@@ -845,6 +1133,99 @@ online_pred <- function(model_fitted,
                         as_tibble %>% 
                         add_column(label = 'forecast') %>% 
                         rename(value = V1))
+  }
+  
+  # reconversion to values
+  forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
+  # names(forecast)[1] <- va
+  return(forecast)
+}
+
+
+multi_online <- function(model_fitted, 
+                         data_train, 
+                         model_type = 'model_online', 
+                         horizon = 4*10,
+                         reps = 100){
+  
+  # This function produces iterative, indirect predictions with 
+  # a previously trained model. It copies weights and model structure
+  # and resets batch to 1 so to make online predictions easily
+  # and consistently. 'horizon' gives the nomber of indirect
+  # predictions to produce. If data are TS then also dates are generated.
+  
+  # to use the 'online' model (same weights, batch set to 1) use the default option
+  # 'model_online'; to use other versions of the model, specify it in the model_type
+  # option, eg 'model_fitted'.
+  
+  require(keras)
+  require(dplyr)
+  
+  
+  # data_train is a list from data_prepper function!
+  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
+  
+  # preallocate array with results
+  pred <- array(NA, dim = c(horizon, reps))
+  
+  # retrieve input data and fitted model
+  input <- data_train$train[['train_norm']]
+  model_online <- model_fitted[[model_type]]
+  
+  if (is.xts(data_train$train[['train_norm']])){
+    time_preds <- seq(from = end(input),
+                      length.out = (horizon+1),
+                      by = periodicity(input)$label)
+    time_preds <- tail(time_preds, n = horizon)
+    pred <- xts(pred, order.by = time_preds)
+  }
+  
+  # retrieve input shape
+  in_shape <- get_input_shape_at(object = model_fitted[[model_type]],
+                                 node_index = 0)
+  in_shape <- sapply(in_shape, FUN = c)
+  
+  pred_out <- NULL
+  
+  for (i in 1:reps){
+    input <- data_train$train[['train_norm']]
+    for (h in 1:horizon){
+      input_lagged <- embed(input, in_shape[2])
+      input_arr <- array(data = input_lagged,
+                         dim = c(nrow(input_lagged), ncol(input_lagged),1))
+      last_row <- nrow(input_arr)
+      
+      pred[h, i] <- predict(model_online,
+                           x = array(data = input_arr[last_row, , ],
+                                     dim = in_shape),
+                           batch_size = 1)
+      input <- rbind(input, pred[h,i])
+    }
+    pred_out <- bind_rows(pred_out, 
+                          pred[, i] %>% 
+                            as_tibble() %>% 
+                            add_column(label = 'forecast',
+                                       date = time_preds) %>% 
+                            rename(value = V1) %>% 
+                            mutate(value = as.numeric(value))
+                          )
+  }
+  
+  va <- names(data_train$train[['train_norm']])
+  if (is.xts(data_train$train[['train_norm']])){
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train', 
+                                   date = time(data_train$train[['train_norm']])) %>% 
+                        rename(value = all_of(va)) %>%
+                        mutate(value = as.numeric(value)),
+                      pred_out)
+  } else {
+    forecast <- rbind(data_train$train[['train_norm']] %>% 
+                        as_tibble %>% 
+                        add_column(label = 'train') %>% 
+                        rename(value = all_of(va)), 
+                      pred_out)
   }
   
   # reconversion to values

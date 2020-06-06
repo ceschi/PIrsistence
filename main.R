@@ -307,9 +307,9 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
   # - function to prep data                           DONE
   # - function to fit model on whole sample           DONE
   # - predictions                                     DONE
-  # - function to slice data two ways                 
-  #   + rolling window
-  #   + increasing width
+  # - function to slice data two ways                 DONE
+  #   + rolling window                                DONE
+  #   + increasing width                              DONE?
   # - reuse function to fit models
   # - use stored models to make predictions two ways
   #   + indirectly, by iterating on previous forecasts
@@ -341,7 +341,7 @@ if (!keras::is_keras_available()){
 tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
-  # inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  # inflation[['lstm_fullsample']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
   #                                                     # either twice the BIC lags or 9 quarters to prevent
   #                                                     # too much sample shrinking
   #                                                     n_steps = min(inflation[['aropti']][[i]]*2,9),
@@ -362,13 +362,13 @@ for (i in 1:n){
   #                       )
   
   ### tester
-  inflation[['lstm_fullsample']][[i]] <- k_fullsample(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  inflation[['lstm_fullsample']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
                                                       # either twice the BIC lags or 9 quarters to prevent
                                                       # too much sample shrinking
-                                                      n_steps = 5,
+                                                      n_steps = 1,
                                                       n_feat = 1,
                                                       # baseline for one single layer
-                                                      nodes = 15,
+                                                      nodes = 1,
                                                       # online model with one batch, workaround needed
                                                       size_batch = 1,
                                                       # either the max epochs or patience
@@ -382,6 +382,29 @@ for (i in 1:n){
 toc()
 sink(NULL)
 
+sink(file = './log_lstm_2l.txt', split = T, append = F)
+tic('2 layers loop')
+for (i in 1:n){
+  # fit model
+  inflation[['lstm_fullsample_2l']][[i]] <- 
+    k_fullsample_2l(data = inflation[['lstm_data']][[i]]$train$train_norm, 
+                    n_steps = min(inflation[['aropti']][[i]]*2, 12), 
+                    n_feat = 1, 
+                    nodes = 75, 
+                    size_batch = 1, 
+                    epochs = 4000, 
+                    ES = T, 
+                    keepBest = T)
+  # save model somewhere on disk
+  save_model_hdf5(object = inflation[['lstm_fullsample_2l']][[i]], 
+                  filepath = file.path(paste0(model, '_2l'),
+                                       paste0(inflation[['names']][[i]],
+                                              '_2l_fulssample.h5')
+                                       )
+                  )
+}
+toc()
+sink(NULL)
 
 ##### If models are fitted externally, load in those files
 
@@ -401,7 +424,7 @@ for (i in 1:n){
   inflation[['lstm_online_pred']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample']][[i]], 
                                                       model_type = 'model_fitted',
                                                       data_train = inflation[['lstm_data']][[i]],
-                                                      horizon = 80)
+                                                      horizon = 20)
   
   inflation[['plot_lstm_full']][[i]] <- ggplot(data = inflation[['lstm_online_pred']][[i]])+
                                           geom_line(aes(x = date, y = value, colour = label))+
@@ -409,9 +432,12 @@ for (i in 1:n){
                                           ylab(element_blank()) + ggtitle(inflation$names[[i]]) + 
                                           theme(legend.position = 'bottom', 
                                                 legend.title = element_blank())+
-                                          guides(colour = guide_legend(nrow = 1))
+                                          guides(colour = guide_legend(nrow = 1)) + 
+                                          scale_color_viridis_d(option = 'C')
   
   plot(inflation[['plot_lstm_full']][[i]])
+  
+  
 }
 
 
