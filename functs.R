@@ -692,7 +692,7 @@ k_fullsample_1l <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = epochs,
+                                             patience = epochs/2,
                                              min_delta = 1e-5, 
                                              restore_best_weights = keepBest)
                    ),
@@ -887,7 +887,7 @@ k_fullsample_2l <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = epochs,
+                                             patience = epochs/2,
                                              min_delta = 1e-5, 
                                              restore_best_weights = keepBest)
                    ),

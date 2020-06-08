@@ -341,40 +341,41 @@ if (!keras::is_keras_available()){
 tic('Full Loop')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
-  # inflation[['lstm_fullsample']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
-  #                                                     # either twice the BIC lags or 9 quarters to prevent
-  #                                                     # too much sample shrinking
-  #                                                     n_steps = min(inflation[['aropti']][[i]]*2,9),
-  #                                                     n_feat = 1,
-  #                                                     # baseline for one single layer
-  #                                                     nodes = 75,
-  #                                                     # online model with one batch, workaround needed
-  #                                                     size_batch = 1,
-  #                                                     # either the max epochs or patience
-  #                                                     epochs = 2000,
-  #                                                     ES = T,
-  #                                                     keepBest = T)
-  # 
-  # keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
-  #                        filepath = file.path(models_dir,
-  #                                             paste0(inflation[['names']][[i]],
-  #                                                    ' fullsample.h5'))
-  #                       )
-  
-  ### tester
-  inflation[['lstm_fullsample']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
                                                       # either twice the BIC lags or 9 quarters to prevent
                                                       # too much sample shrinking
-                                                      n_steps = 1,
+                                                      n_steps = min(inflation[['aropti']][[i]]*2,9),
                                                       n_feat = 1,
                                                       # baseline for one single layer
-                                                      nodes = 1,
+                                                      nodes = 75,
                                                       # online model with one batch, workaround needed
                                                       size_batch = 1,
                                                       # either the max epochs or patience
-                                                      epochs = 2,
-                                                      ES = F,
-                                                      keepBest = F)
+                                                      epochs = 40,
+                                                      ES = T,
+                                                      keepBest = T)
+  
+  # save the fitted model (with max batch size optionally)
+  keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
+                         filepath = file.path(models_dir,
+                                              paste0(inflation[['names']][[i]],
+                                                     '_fullsample.h5'))
+                        )
+  
+  # ### tester
+  # inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  #                                                     # either twice the BIC lags or 9 quarters to prevent
+  #                                                     # too much sample shrinking
+  #                                                     n_steps = 1,
+  #                                                     n_feat = 1,
+  #                                                     # baseline for one single layer
+  #                                                     nodes = 1,
+  #                                                     # online model with one batch, workaround needed
+  #                                                     size_batch = 1,
+  #                                                     # either the max epochs or patience
+  #                                                     epochs = 2,
+  #                                                     ES = F,
+  #                                                     keepBest = F)
   
   # todo improvements:
   #   - let batch size depend on highest prime factor in n_sample - done but critical
@@ -392,14 +393,14 @@ for (i in 1:n){
                     n_feat = 1, 
                     nodes = 75, 
                     size_batch = 1, 
-                    epochs = 4000, 
+                    epochs = 40, 
                     ES = T, 
                     keepBest = T)
   # save model somewhere on disk
-  save_model_hdf5(object = inflation[['lstm_fullsample_2l']][[i]], 
-                  filepath = file.path(paste0(model, '_2l'),
+  save_model_hdf5(object = inflation[['lstm_fullsample_2l']][[i]]$model_fitted, 
+                  filepath = file.path(models_dir,
                                        paste0(inflation[['names']][[i]],
-                                              '_2l_fulssample.h5')
+                                              '_2l_fullsample.h5')
                                        )
                   )
 }
@@ -408,13 +409,13 @@ sink(NULL)
 
 ##### If models are fitted externally, load in those files
 
-for (i in 1:n){
-  inflation[['lstm_fullsample']][[i]]$model_fitted <-
-    keras::load_model_hdf5(filepath = file.path(paste0(models_dir,'_4k_n75/'),
-                                                paste0(inflation[['names']][[i]],
-                                                       ' fullsample.h5')),
-                                                compile = T)
-}
+# for (i in 1:n){
+#   inflation[['lstm_fullsample']][[i]]$model_fitted <-
+#     keras::load_model_hdf5(filepath = file.path(paste0(models_dir,'_4k_n75/'),
+#                                                 paste0(inflation[['names']][[i]],
+#                                                        ' fullsample.h5')),
+#                                                 compile = T)
+# }
 
 
 
@@ -432,11 +433,9 @@ for (i in 1:n){
                                           ylab(element_blank()) + ggtitle(inflation$names[[i]]) + 
                                           theme(legend.position = 'bottom', 
                                                 legend.title = element_blank())+
-                                          guides(colour = guide_legend(nrow = 1)) + 
-                                          scale_color_viridis_d(option = 'C')
+                                          guides(colour = guide_legend(nrow = 1))
   
   plot(inflation[['plot_lstm_full']][[i]])
-  
   
 }
 
@@ -444,7 +443,7 @@ for (i in 1:n){
 ##### Split data in 10y chuncks ################################################
 
 
-inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.rm(x))}),
+inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
                                                         initial = fm_apply(4*10, n),
                                                         assess = fm_apply(0, n),
                                                         cumulative = fm_apply(F, n),
@@ -452,7 +451,7 @@ inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = 
                                                         lag = inflation[["aropti"]]), 
                                               .f = rsample::rolling_origin)
 
-inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, list),
+inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
                                                            initial = fm_apply(4*10, n),
                                                            assess = fm_apply(0, n),
                                                            cumulative = fm_apply(F, n),
