@@ -23,7 +23,7 @@
 
 
 
-inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
+inflation$lstm[['data']] <- future_pmap(.l = list(data = sapply(pi, list),
                                                   train = sapply(rep(1, n), list)
                                                   ),
                                         .f = data_prepper
@@ -38,7 +38,7 @@ if (!keras::is_keras_available()){
 tic('Full Loop: 1 layer LSTM')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
-  inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
+  inflation$lstm[['fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation$lstm[['data']][[i]]$train$train_norm,
                                                             # either twice the BIC lags or 9 quarters to prevent
                                                             # too much sample shrinking
                                                             n_steps = min(inflation[['aropti']][[i]]*2,9),
@@ -53,7 +53,7 @@ for (i in 1:n){
                                                             keepBest = T)
   
   # save the fitted model (with max batch size optionally)
-  keras::save_model_hdf5(object = inflation[['lstm_fullsample_1l']][[i]]$model_fitted,
+  keras::save_model_hdf5(object = inflation$lstm[['fullsample_1l']][[i]]$model_fitted,
                          filepath = file.path(models_dir,
                                               paste0(inflation[['names']][[i]],
                                                      '_1l_fullsample.h5'))
@@ -88,8 +88,8 @@ sink(file = './log_lstm_2l.txt', split = T, append = F)
 tic('Full loop: 2 layers LSTM')
 for (i in 1:n){
   # fit model
-  inflation[['lstm_fullsample_2l']][[i]] <- 
-    k_fullsample_2l(data = inflation[['lstm_data']][[i]]$train$train_norm, 
+  inflation$lstm[['fullsample_2l']][[i]] <- 
+    k_fullsample_2l(data = inflation$lstm[['data']][[i]]$train$train_norm, 
                     n_steps = min(inflation[['aropti']][[i]]*2, 12), 
                     n_feat = 1, 
                     nodes = 75, 
@@ -98,7 +98,7 @@ for (i in 1:n){
                     ES = T, 
                     keepBest = T)
   # save model somewhere on disk
-  save_model_hdf5(object = inflation[['lstm_fullsample_2l']][[i]]$model_fitted, 
+  save_model_hdf5(object = inflation$lstm[['fullsample_2l']][[i]]$model_fitted, 
                   filepath = file.path(models_dir,
                                        paste0(inflation[['names']][[i]],
                                               '_2l_fullsample.h5')
@@ -123,17 +123,17 @@ sink(NULL)
 ##### Online predictions #######################################################
 # predictions for 2L models
 for (i in 1:n){
-  inflation[['lstm_online_pred_1l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_1l']][[i]], 
+  inflation$lstm[['online_pred_1l']][[i]] <- online_pred(model_fitted = inflation$lstm[['fullsample_1l']][[i]], 
                                                          model_type = 'model_online',
-                                                         data_train = inflation[['lstm_data']][[i]],
+                                                         data_train = inflation$lstm[['data']][[i]],
                                                          horizon = 40)
   
-  inflation[['lstm_online_pred_2l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_2l']][[i]], 
+  inflation$lstm[['online_pred_2l']][[i]] <- online_pred(model_fitted = inflation$lstm[['fullsample_2l']][[i]], 
                                                          model_type = 'model_online',
-                                                         data_train = inflation[['lstm_data']][[i]],
+                                                         data_train = inflation$lstm[['data']][[i]],
                                                          horizon = 40)
   
-  inflation[['plot_lstm_full_1l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_1l']][[i]])+
+  inflation$lstm$plots[['full_1l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_1l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 1L')) + 
@@ -141,7 +141,7 @@ for (i in 1:n){
           legend.title = element_blank())+
     guides(colour = guide_legend(nrow = 1))
   
-  inflation[['plot_lstm_full_2l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_2l']][[i]])+
+  inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 2L')) + 
@@ -150,8 +150,8 @@ for (i in 1:n){
     guides(colour = guide_legend(nrow = 1))
   
   
-  plot(inflation[['plot_lstm_full_1l']][[i]])
-  plot(inflation[['plot_lstm_full_2l']][[i]])
+  plot(inflation$lstm$ploits[['full_1l']][[i]])
+  plot(inflation$lstm$ploits[['full_2l']][[i]])
   
 }
 
@@ -163,16 +163,15 @@ for (i in 1:n){
 # the LSTMs on even grounds.
 
 # 10y splits w/o overlap
-inflation[['lstm_chunk_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
+inflation$lstm[['chunk_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
                                                        initial = sapply(inflation[['aropti']], FUN = function(x) x + 40),
                                                        assess = fm_apply(0, n),
                                                        skip = sapply(inflation[['aropti']], FUN = function(x) x + 40 - 1),
-                                                       cumulative = fm_apply(F, n)
-),
-.f = rsample::rolling_origin)
+                                                       cumulative = fm_apply(F, n)),
+                                             .f = rsample::rolling_origin)
 
 # 10y rolling windows, moves on by one quarter
-inflation[['lstm_wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
+inflation$lstm[['wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
                                                       initial = fm_apply(4*10, n),
                                                       assess = fm_apply(0, n),
                                                       cumulative = fm_apply(F, n),
@@ -181,7 +180,7 @@ inflation[['lstm_wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = fu
                                             .f = rsample::rolling_origin)
 
 # incremental splits: they grow over time incorporating more obs
-inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
+inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
                                                            initial = fm_apply(4*10, n),
                                                            assess = fm_apply(0, n),
                                                            cumulative = fm_apply(F, n),
@@ -206,7 +205,7 @@ for (i in 1:n){
   chunks[[i]] <- list()
   
   # process data chunks all at once
-  prepped_chunks <- inflation[['lstm_chunk_10y']][[i]]$splits %>% 
+  prepped_chunks <- inflation$lstm[['chunk_10y']][[i]]$splits %>% 
     lapply(FUN = rsample::analysis) %>% 
     lapply(FUN = data_prepper)
   
@@ -214,7 +213,6 @@ for (i in 1:n){
   len_chunks <- length(prepped_chunks)
   
   for (s in 1:len_chunks){
-    
     
     # pull out data
     prepped_data <- prepped_chunks[[s]]
@@ -239,15 +237,9 @@ for (i in 1:n){
     
     # store predictions
     chunks[[i]]$predictions[[s]] <- predictions
-    
-    # compute simple AR(1)
-    
-    # compute AR(1) with rolling window
-    
-    # compute AR(k) with given k, rolling window, sum of coefficients
   }
   
-  
+  # store all good stuff in the main list
   # simple AR(1)
   inflation$lstm$chunks[[i]][['ar1']] <- 
     future_pmap(.l = list(data = chunks[[i]]$predictions,
