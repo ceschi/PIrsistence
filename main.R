@@ -331,8 +331,6 @@ inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
                                         )
 
 
-inflation[['lstm_fullsample']] <- list()
-
 if (!keras::is_keras_available()){
   keras::install_keras()
 }
@@ -379,6 +377,10 @@ for (i in 1:n){
   
   # todo improvements:
   #   - let batch size depend on highest prime factor in n_sample - done but critical
+  #   - critical error when using validation set and prime factor batch size:
+  #       it's possible to def outside fit() the validation data w/ size of 
+  #       precisely one batch, but still there is some dimensions mismatch + it's
+  #       really a lot of data that the model does not see and fit on..
 }
 toc()
 sink(NULL)
@@ -420,27 +422,42 @@ sink(NULL)
 
 
 ##### Online predictions #######################################################
-
+# predictions for 2L models
 for (i in 1:n){
-  inflation[['lstm_online_pred']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample']][[i]], 
+  inflation[['lstm_online_pred_1l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_1l']][[i]], 
                                                       model_type = 'model_online',
                                                       data_train = inflation[['lstm_data']][[i]],
-                                                      horizon = 20)
+                                                      horizon = 40)
   
-  inflation[['plot_lstm_full']][[i]] <- ggplot(data = inflation[['lstm_online_pred']][[i]])+
-                                          geom_line(aes(x = date, y = value, colour = label))+
-                                          theme_minimal() + xlab(label = element_blank()) + 
-                                          ylab(element_blank()) + ggtitle(inflation$names[[i]]) + 
-                                          theme(legend.position = 'bottom', 
-                                                legend.title = element_blank())+
-                                          guides(colour = guide_legend(nrow = 1))
+  inflation[['lstm_online_pred_2l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_2l']][[i]], 
+                                                         model_type = 'model_online',
+                                                         data_train = inflation[['lstm_data']][[i]],
+                                                         horizon = 40)
   
-  plot(inflation[['plot_lstm_full']][[i]])
+  inflation[['plot_lstm_full_1l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_1l']][[i]])+
+                                              geom_line(aes(x = date, y = value, colour = label))+
+                                              theme_minimal() + xlab(label = element_blank()) + 
+                                              ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 1L')) + 
+                                              theme(legend.position = 'bottom', 
+                                                    legend.title = element_blank())+
+                                              guides(colour = guide_legend(nrow = 1))
+  
+  inflation[['plot_lstm_full_2l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_2l']][[i]])+
+                                              geom_line(aes(x = date, y = value, colour = label))+
+                                              theme_minimal() + xlab(label = element_blank()) + 
+                                              ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 2L')) + 
+                                              theme(legend.position = 'bottom', 
+                                                    legend.title = element_blank())+
+                                              guides(colour = guide_legend(nrow = 1))
+  
+  
+  plot(inflation[['plot_lstm_full_1l']][[i]])
+  plot(inflation[['plot_lstm_full_2l']][[i]])
   
 }
 
 
-##### Split data in 10y chuncks ################################################
+##### Split data in chuncks for backtesting ####################################
 
 
 inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
@@ -458,3 +475,7 @@ inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
                                                            skip = fm_apply(0, n),
                                                            lag = inflation[["aropti"]]), 
                                                  .f = rsample::rolling_origin)
+
+
+##### LSTM on 10y of data ######################################################
+

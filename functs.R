@@ -635,7 +635,7 @@ k_fullsample_1l <- function(data,
   
   # KIM batch must mod train and test samples!
   # not working as of now, needs impro
-  if (size_batch == 'auto'){
+  if (size_batch == 'auto' && ES == F){
     size_batch <- batch_prime
   }
   
@@ -663,7 +663,7 @@ k_fullsample_1l <- function(data,
                input_shape = c(n_steps, n_feat),
                return_sequences = F,
                stateful = T,
-               batch_size = size_batch,
+               batch_size = size_batch
               ) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
@@ -674,7 +674,7 @@ k_fullsample_1l <- function(data,
                input_shape = c(n_steps, n_feat),
                return_sequences = F,
                stateful = T,
-               batch_size = 1,
+               batch_size = 1
               ) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
@@ -692,7 +692,7 @@ k_fullsample_1l <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = epochs/2,
+                                             patience = floor(epochs*.2),
                                              min_delta = 1e-5, 
                                              restore_best_weights = keepBest)
                    ),
@@ -827,7 +827,7 @@ k_fullsample_2l <- function(data,
   
   # KIM batch must mod train and test samples!
   # not working as of now, needs impro
-  if (size_batch == 'auto'){
+  if (size_batch == 'auto' && ES == F){
     size_batch <- batch_prime
   }
   
@@ -889,7 +889,7 @@ k_fullsample_2l <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = epochs/2,
+                                             patience = floor(epochs*.2),
                                              min_delta = 1e-5, 
                                              restore_best_weights = keepBest)
                    ),
@@ -980,7 +980,7 @@ k_fullsample_nl <- function(data,
   
   # KIM batch must mod train and test samples!
   # not working as of now, needs impro
-  if (size_batch == 'auto'){
+  if (size_batch == 'auto' && ES == F){
     size_batch <- batch_prime
   }
   
@@ -1025,7 +1025,7 @@ k_fullsample_nl <- function(data,
                    callbacks = list(
                      callback_early_stopping(monitor = 'val_loss',
                                              mode = 'auto',
-                                             patience = epochs,
+                                             patience = floor(epochs*.2),
                                              min_delta = 1e-5, 
                                              restore_best_weights = keepBest)
                    ),
