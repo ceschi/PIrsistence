@@ -338,7 +338,7 @@ if (!keras::is_keras_available()){
 }
 
 
-tic('Full Loop')
+tic('Full Loop: 1 layer LSTM')
 sink(file = './log_lstm_full.txt', split = T, append = F)
 for (i in 1:n){
   inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
@@ -356,7 +356,7 @@ for (i in 1:n){
                                                       keepBest = T)
   
   # save the fitted model (with max batch size optionally)
-  keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
+  keras::save_model_hdf5(object = inflation[['lstm_fullsample_1l']][[i]]$model_fitted,
                          filepath = file.path(models_dir,
                                               paste0(inflation[['names']][[i]],
                                                      '_1l_fullsample.h5'))
@@ -384,7 +384,7 @@ toc()
 sink(NULL)
 
 sink(file = './log_lstm_2l.txt', split = T, append = F)
-tic('2 layers loop')
+tic('Full loop: 2 layers LSTM')
 for (i in 1:n){
   # fit model
   inflation[['lstm_fullsample_2l']][[i]] <- 
