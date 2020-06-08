@@ -219,9 +219,9 @@ for (i in 1:n){
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = inflation[['aropti']][[n]], 
-                                 nodes = 5, 
-                                 epochs = 10, 
-                                 ES = F, 
+                                 nodes = 50, 
+                                 epochs = 2000, 
+                                 ES = T, 
                                  keepBest = F,
                                  size_batch = 'auto')
     # make predictions: horizon small to avoid overestimates
@@ -237,19 +237,24 @@ for (i in 1:n){
     
     # store predictions
     chunks[[i]]$predictions[[s]] <- predictions
+    # chunks[[i]]$predictions_xts[[s]] <- tbl_xts(predictions)
   }
+  
+  # convert prediction tbl to xts faster
+  chunks[[i]]$prediction_xts <- lapply(X = chunks[[i]]$predictions,
+                                       FUN = tbl_xts)
   
   # store all good stuff in the main list
   # simple AR(1)
   inflation$lstm$chunks[[i]][['ar1']] <- 
-    future_pmap(.l = list(data = chunks[[i]]$predictions,
+    future_pmap(.l = list(data = chunks[[i]]$predictions_xts,
                           lags = fm_apply(1, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg)
   
   # AR(1) w rolling window
   inflation$lstm$chunks[[i]][['ar1_wind']] <- 
-    future_pmap(.l = list(df = chunks[[i]]$predictions,
+    future_pmap(.l = list(df = chunks[[i]]$predictions_xts,
                           window = fm_apply(20, len_chunks),
                           lags = fm_apply(1, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
@@ -257,23 +262,27 @@ for (i in 1:n){
   
   # simple AR(3) - SOC
   inflation$lstm$chunks[[i]][['ar3']] <- 
-    future_pmap(.l = list(data = chunks[[i]]$predictions,
+    future_pmap(.l = list(data = chunks[[i]]$predictions_xts,
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg.sum)
   
   # AR(3) - rolling SOC
   inflation$lstm$chunks[[i]][['ar3_wind']] <- 
-    future_pmap(.l = list(df = chunks[[i]]$predictions,
+    future_pmap(.l = list(df = chunks[[i]]$predictions_xts,
                           window = fm_apply(20, len_chunks),
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = rolloop.sum)
   
   inflation$lstm$chunks[[i]]$predictions <- bind_rows(chunks[[i]]$predictions)
+  
+  # add plot makeup
   inflation$lstm$chunks[[i]]$plot_hair <- 
     inflation$lstm$chunks[[i]]$predictions %>% ggplot() + 
         geom_line(aes(x = date, y = value, colour = label, group = data_chunk))
+  
+  plot(inflation$lstm$chunks[[i]]$plot_hair)
 }
 
 rm(splits_temp, id)
