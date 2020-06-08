@@ -423,7 +423,7 @@ sink(NULL)
 
 for (i in 1:n){
   inflation[['lstm_online_pred']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample']][[i]], 
-                                                      model_type = 'model_fitted',
+                                                      model_type = 'model_online',
                                                       data_train = inflation[['lstm_data']][[i]],
                                                       horizon = 20)
   
