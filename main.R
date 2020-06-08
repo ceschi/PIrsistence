@@ -359,7 +359,7 @@ for (i in 1:n){
   keras::save_model_hdf5(object = inflation[['lstm_fullsample']][[i]]$model_fitted,
                          filepath = file.path(models_dir,
                                               paste0(inflation[['names']][[i]],
-                                                     '_fullsample.h5'))
+                                                     '_1l_fullsample.h5'))
                         )
   
   # ### tester
