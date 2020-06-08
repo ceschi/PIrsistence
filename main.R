@@ -45,6 +45,14 @@ flag___ms <- 2
 
 # directories, functions and data
 source('functs.R')
+# pick ahead to set how many quarters ahead 
+# to consider for SPF forecasts:
+# -1 for previous quarter estimates
+# 0 for nowcast
+# 1 for one quarter ahead -- default
+# 2 for two quarters ahead
+# 3 for three quarters ahead
+# 4 for one year ahead
 ahead <- 1
 download.file(url = 'https://raw.githubusercontent.com/ceschi/us_macro_data/master/USdata_coll.R',
       destfile = 'temp.R',
@@ -93,7 +101,7 @@ write.zoo(x=pi,
 write_csv(x = pi_long,
           path = file.path(data_dir, 'PI_long.csv'))
 
-# chunck for further analysis in MATLAB
+# scripts for further analysis in MATLAB
 # source('matlab_exp.R')
 # source('matlab_plot.R')
 
@@ -280,16 +288,29 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
 #                                         )
 
 
+
+
+
+##### LSTM #####################################################################
+tic('Machine learning fit and forecasts.\n')
+source('pi_lstm.R')
+toc()
+
+
+
+##### Plots ####################################################################
+
+# general plot with raw data
 inflation[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2020"]))) + 
-      geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
-      geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI FE'), alpha = .75) + 
-      geom_line(aes(y = rev_pce_pch, colour = 'PCE'), alpha = .75) + 
-      geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
-      geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
-      theme_minimal() + labs(colour = ' ') +
-      ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
-      guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-      theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))
+  geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
+  geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI FE'), alpha = .75) + 
+  geom_line(aes(y = rev_pce_pch, colour = 'PCE'), alpha = .75) + 
+  geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
+  geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
+  theme_minimal() + labs(colour = ' ') +
+  ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
+  guides(colour=guide_legend(nrow = 1, byrow = T)) + 
+  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))
 
 ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        plot = inflation[['plot_ts']], 
@@ -297,185 +318,3 @@ ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        width = 8,
        units = 'in', 
        height = 9*8/16)
-
-
-
-
-##### LSTM part ###############################################################
-
-# todo list
-  # - function to prep data                           DONE
-  # - function to fit model on whole sample           DONE
-  # - predictions                                     DONE
-  # - function to slice data two ways                 DONE
-  #   + rolling window                                DONE
-  #   + increasing width                              DONE?
-  # - reuse function to fit models
-  # - use stored models to make predictions two ways
-  #   + indirectly, by iterating on previous forecasts
-  #   + directly, by specifying an appropriate model
-  # - compute persistence
-  # - plot all of the above
-
-
-
-
-
-
-
-
-inflation[['lstm_data']] <- future_pmap(.l = list(data = sapply(pi, list),
-                                                  train = sapply(rep(1, n), list)
-                                                  ),
-                                        .f = data_prepper
-                                        )
-
-
-if (!keras::is_keras_available()){
-  keras::install_keras()
-}
-
-
-tic('Full Loop: 1 layer LSTM')
-sink(file = './log_lstm_full.txt', split = T, append = F)
-for (i in 1:n){
-  inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
-                                                      # either twice the BIC lags or 9 quarters to prevent
-                                                      # too much sample shrinking
-                                                      n_steps = min(inflation[['aropti']][[i]]*2,9),
-                                                      n_feat = 1,
-                                                      # baseline for one single layer
-                                                      nodes = 75,
-                                                      # online model with one batch, workaround needed
-                                                      size_batch = 1,
-                                                      # either the max epochs or patience
-                                                      epochs = 40,
-                                                      ES = T,
-                                                      keepBest = T)
-  
-  # save the fitted model (with max batch size optionally)
-  keras::save_model_hdf5(object = inflation[['lstm_fullsample_1l']][[i]]$model_fitted,
-                         filepath = file.path(models_dir,
-                                              paste0(inflation[['names']][[i]],
-                                                     '_1l_fullsample.h5'))
-                        )
-  
-  # ### tester
-  # inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
-  #                                                     # either twice the BIC lags or 9 quarters to prevent
-  #                                                     # too much sample shrinking
-  #                                                     n_steps = 1,
-  #                                                     n_feat = 1,
-  #                                                     # baseline for one single layer
-  #                                                     nodes = 1,
-  #                                                     # online model with one batch, workaround needed
-  #                                                     size_batch = 1,
-  #                                                     # either the max epochs or patience
-  #                                                     epochs = 2,
-  #                                                     ES = F,
-  #                                                     keepBest = F)
-  
-  # todo improvements:
-  #   - let batch size depend on highest prime factor in n_sample - done but critical
-  #   - critical error when using validation set and prime factor batch size:
-  #       it's possible to def outside fit() the validation data w/ size of 
-  #       precisely one batch, but still there is some dimensions mismatch + it's
-  #       really a lot of data that the model does not see and fit on..
-}
-toc()
-sink(NULL)
-
-sink(file = './log_lstm_2l.txt', split = T, append = F)
-tic('Full loop: 2 layers LSTM')
-for (i in 1:n){
-  # fit model
-  inflation[['lstm_fullsample_2l']][[i]] <- 
-    k_fullsample_2l(data = inflation[['lstm_data']][[i]]$train$train_norm, 
-                    n_steps = min(inflation[['aropti']][[i]]*2, 12), 
-                    n_feat = 1, 
-                    nodes = 75, 
-                    size_batch = 1, 
-                    epochs = 40, 
-                    ES = T, 
-                    keepBest = T)
-  # save model somewhere on disk
-  save_model_hdf5(object = inflation[['lstm_fullsample_2l']][[i]]$model_fitted, 
-                  filepath = file.path(models_dir,
-                                       paste0(inflation[['names']][[i]],
-                                              '_2l_fullsample.h5')
-                                       )
-                  )
-}
-toc()
-sink(NULL)
-
-##### If models are fitted externally, load in those files
-
-# for (i in 1:n){
-#   inflation[['lstm_fullsample']][[i]]$model_fitted <-
-#     keras::load_model_hdf5(filepath = file.path(paste0(models_dir,'_4k_n75/'),
-#                                                 paste0(inflation[['names']][[i]],
-#                                                        ' fullsample.h5')),
-#                                                 compile = T)
-# }
-
-
-
-##### Online predictions #######################################################
-# predictions for 2L models
-for (i in 1:n){
-  inflation[['lstm_online_pred_1l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_1l']][[i]], 
-                                                      model_type = 'model_online',
-                                                      data_train = inflation[['lstm_data']][[i]],
-                                                      horizon = 40)
-  
-  inflation[['lstm_online_pred_2l']][[i]] <- online_pred(model_fitted = inflation[['lstm_fullsample_2l']][[i]], 
-                                                         model_type = 'model_online',
-                                                         data_train = inflation[['lstm_data']][[i]],
-                                                         horizon = 40)
-  
-  inflation[['plot_lstm_full_1l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_1l']][[i]])+
-                                              geom_line(aes(x = date, y = value, colour = label))+
-                                              theme_minimal() + xlab(label = element_blank()) + 
-                                              ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 1L')) + 
-                                              theme(legend.position = 'bottom', 
-                                                    legend.title = element_blank())+
-                                              guides(colour = guide_legend(nrow = 1))
-  
-  inflation[['plot_lstm_full_2l']][[i]] <- ggplot(data = inflation[['lstm_online_pred_2l']][[i]])+
-                                              geom_line(aes(x = date, y = value, colour = label))+
-                                              theme_minimal() + xlab(label = element_blank()) + 
-                                              ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 2L')) + 
-                                              theme(legend.position = 'bottom', 
-                                                    legend.title = element_blank())+
-                                              guides(colour = guide_legend(nrow = 1))
-  
-  
-  plot(inflation[['plot_lstm_full_1l']][[i]])
-  plot(inflation[['plot_lstm_full_2l']][[i]])
-  
-}
-
-
-##### Split data in chuncks for backtesting ####################################
-
-
-inflation[['lstm_splits_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
-                                                        initial = fm_apply(4*10, n),
-                                                        assess = fm_apply(0, n),
-                                                        cumulative = fm_apply(F, n),
-                                                        skip = fm_apply(0, n),
-                                                        lag = inflation[["aropti"]]), 
-                                              .f = rsample::rolling_origin)
-
-inflation[['lstm_increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
-                                                           initial = fm_apply(4*10, n),
-                                                           assess = fm_apply(0, n),
-                                                           cumulative = fm_apply(F, n),
-                                                           skip = fm_apply(0, n),
-                                                           lag = inflation[["aropti"]]), 
-                                                 .f = rsample::rolling_origin)
-
-
-##### LSTM on 10y of data ######################################################
-
