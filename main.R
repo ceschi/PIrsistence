@@ -10,9 +10,6 @@
 
 #### 0 - Setup, data, flags ####
 
-# horizon for now/forecast
-ahead <- 1
-
 # exogenous lags
 k <- 1
 
@@ -38,9 +35,11 @@ llags <- 18
 # 0 for skipping
 flag___plot <- 0
 
-# flag on the MarkovS states,
-# default 2
-flag___ms <- 2
+# flags for LSTM scripts
+# run at all that script?
+flag___lstm <- T
+# run with small n of epochs?
+flag___epochs <- T
 
 
 # directories, functions and data
@@ -214,24 +213,6 @@ inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
                                     .f = rolloop.sum)
 
 
-# inflation[['aroptirollm_var']]
-
-
-# Markov Switching model on the k* lags
-# on the whole sample
-
-
-# NOT USEFUL NOW, NOT INFORMATIVE
-
-# inflation[['aropti_ms']] <- future_pmap(.l = list(df = sapply(pi,FUN = function(x) list(as.data.frame(x))),
-#                                            lags = inflation[['aropti']],
-#                                            states = flag___ms
-#                                            ),
-#                                  .f = ms_aropti)
-
-
-
-
 # ridges plot material
 
 inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
@@ -276,25 +257,24 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
                                    )
 
 
-# # plotting msm
-# 
-# inflation[['plot_aropti_ms']] <- future_pmap(.l = list(ms_model = inflation[['aropti_ms']],
-#                                                 nam = inflation[['names']],
-#                                                 laags = inflation[['aropti']],
-#                                                 path = sapply(rep(graphs_dir, n), list)
-#                                                 ),
-#                                                 
-#                                       .f = plot_msm
-#                                         )
-
-
-
-
 
 ##### LSTM #####################################################################
-tic('Machine learning fit and forecasts.\n')
-source('pi_lstm.R')
-toc()
+if (flag___lstm){
+  if (flag___epochs){
+    fit_epochs <- 40
+    fore_epochs <- 20
+    fore_horiz <- 10
+  } else {
+    fit_epochs <- 5000
+    fore_epochs <- 2000
+    fore_horiz <- 40
+  }
+  
+  tic('Machine learning fit and forecasts.\n')
+  source('pi_lstm.R')
+  toc()
+}
+
 
 
 
