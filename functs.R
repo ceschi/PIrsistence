@@ -583,52 +583,6 @@ data_prepper <- function(data, train = 1, test = NULL){
   return(output)
 }
 
-extra_layers <- function(nodes_list, options){
-  
-  # function to automate the layering of models 
-  # in keras. It outputs a model ready to compile.
-  
-  # bunch of checks
-  if (!is.list(nodes_list)) stop('Number of nodes per layer must be declared in a list.')
-  if (!is.list(options)) stop('Options must be provided in a list.')
-  if (is.null(options$input_shape)) stop('Options must contain input shape ONLY FOR THE FIRST LAYER.')
-  if (is.null(options$ret_sequences)) stop('Options must declare whether or not to return sequences from one layer to the following as a list.\nThe last must NOT return sequences unless direct forecstas.')
-  if (is.null(options$stateful)) stop('Options must declare whether each layer is stateful (and in case set batch size accordingly).')
-  
-  
-  require(keras)
-  require(magrittr)
-  
-  model <- keras::keras_model_sequential()
-  
-  for (l in 1:length(nodes_list)){
-    # the first layer needs extra info on input
-    # and batch size.
-    if (l==1){
-      model %>% 
-        layer_lstm(
-          input_shape = options$input_shape,
-          batch_size = options$size_batch,
-          units = nodes_list[[l]],
-          return_sequences = options$ret_sequences[[i]],
-          stateful = options$stateful[[i]]
-        )
-      
-    }else{
-      model %>% 
-        layer_lstm(
-          units = nodes_list[[l]],
-          return_sequences = options$ret_sequences[[i]],
-          stateful = options$stateful[[i]]
-        )
-    }
-  }
-  
-  model %>% layer_dense(units = 1)
-  
-  return(model)
-}
-
 k_fullsample_1l <- function(data, 
                          n_steps, 
                          n_feat = 1, 
@@ -950,8 +904,55 @@ k_fullsample_nl <- function(data,
   
   #' *this version adapts for multiple layers*
   
+  # costum, scope specific function to automate layering
+  extra_layers <- function(nodes_list, options){
+    
+    # function to automate the layering of models 
+    # in keras. It outputs a model ready to compile.
+    
+    # bunch of checks
+    if (!is.list(nodes_list)) stop('Number of nodes per layer must be declared in a list.')
+    if (!is.list(options)) stop('Options must be provided in a list.')
+    if (is.null(options$input_shape)) stop('Options must contain input shape ONLY FOR THE FIRST LAYER.')
+    if (is.null(options$ret_sequences)) stop('Options must declare whether or not to return sequences from one layer to the following as a list.\nThe last must NOT return sequences unless direct forecstas.')
+    if (is.null(options$stateful)) stop('Options must declare whether each layer is stateful (and in case set batch size accordingly).')
+    
+    
+    require(keras)
+    require(magrittr)
+    
+    model <- keras::keras_model_sequential()
+    
+    for (l in 1:length(nodes_list)){
+      # the first layer needs extra info on input
+      # and batch size.
+      if (l==1){
+        model %>% 
+          layer_lstm(
+            input_shape = options$input_shape,
+            batch_size = options$size_batch,
+            units = nodes_list[[l]],
+            return_sequences = options$ret_sequences[[i]],
+            stateful = options$stateful[[i]]
+          )
+        
+      }else{
+        model %>% 
+          layer_lstm(
+            units = nodes_list[[l]],
+            return_sequences = options$ret_sequences[[i]],
+            stateful = options$stateful[[i]]
+          )
+      }
+    }
+    
+    model %>% layer_dense(units = 1)
+    
+    return(model)
+  }
   
   
+  # packages required
   require(magrittr)
   require(keras)
   require(tictoc)
