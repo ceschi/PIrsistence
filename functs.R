@@ -770,7 +770,6 @@ k_fullsample_2l <- function(data,
   # for later use
   if (is.xts(data)){
     time_index <- time(data)[(n_steps+1):length(data)]
-    
   }
   
   # highest prime factor in the number of obs

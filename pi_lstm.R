@@ -44,12 +44,12 @@ for (i in 1:n){
                                                             n_steps = 15,
                                                             n_feat = 1,
                                                             # baseline for one single layer
-                                                            nodes = 75,
+                                                            nodes = 100,
                                                             # online model with one batch, workaround needed
-                                                            size_batch = 1,
+                                                            size_batch = 'auto',
                                                             # either the max epochs or patience
                                                             epochs = fit_epochs,
-                                                            ES = T,
+                                                            ES = F,
                                                             keepBest = T)
   
   # save the fitted model (with max batch size optionally)
@@ -58,21 +58,6 @@ for (i in 1:n){
                                               paste0(inflation[['names']][[i]],
                                                      '_1l_fullsample.h5'))
   )
-  
-  # ### tester
-  # inflation[['lstm_fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation[['lstm_data']][[i]]$train$train_norm,
-  #                                                     # either twice the BIC lags or 9 quarters to prevent
-  #                                                     # too much sample shrinking
-  #                                                     n_steps = 1,
-  #                                                     n_feat = 1,
-  #                                                     # baseline for one single layer
-  #                                                     nodes = 1,
-  #                                                     # online model with one batch, workaround needed
-  #                                                     size_batch = 1,
-  #                                                     # either the max epochs or patience
-  #                                                     epochs = 2,
-  #                                                     ES = F,
-  #                                                     keepBest = F)
   
   # todo improvements:
   #   - let batch size depend on highest prime factor in n_sample - done but critical
@@ -92,10 +77,10 @@ for (i in 1:n){
     k_fullsample_2l(data = inflation$lstm[['data']][[i]]$train$train_norm, 
                     n_steps = 15, 
                     n_feat = 1, 
-                    nodes = 75, 
-                    size_batch = 1, 
+                    nodes = 100, 
+                    size_batch = 'auto', 
                     epochs = fit_epochs, 
-                    ES = T, 
+                    ES = F, 
                     keepBest = T)
   # save model somewhere on disk
   save_model_hdf5(object = inflation$lstm[['fullsample_2l']][[i]]$model_fitted, 
@@ -241,12 +226,12 @@ for (i in 1:n){
     prepped_data <- prepped_chunks[[s]]
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
-                                 n_steps = inflation[['aropti']][[n]], 
+                                 n_steps = 10,                                  #inflation[['aropti']][[n]], 
                                  nodes = 50, 
                                  epochs = fore_epochs, 
-                                 ES = F, # F: because there's so little data 
+                                 ES = F,                                        # F: because there's so little data 
                                  keepBest = F,
-                                 size_batch = 'auto') # 'auto' is also an alternative but needs testing
+                                 size_batch = 'auto')                           # 'auto' is also an alternative but needs testing
     # make predictions: horizon small to avoid overestimates
     # see paper and make point clear for flatlining preds
     predictions <- online_pred(model_fitted = lstm_list, 
@@ -260,6 +245,9 @@ for (i in 1:n){
     
     # store predictions
     chunks[[i]]$predictions[[s]] <- predictions
+    
+    # checks
+    plot(lstm_list$history)
     
     # dump model to avoid learning spillover
     rm(lstm_list)
@@ -321,7 +309,7 @@ for (i in 1:n){
   
   # save plots
   ggsave(filename = file.path(graphs_dir, tt),
-         plot = inflation$lstm$chunks[[i]]$plot_hair, 
+         plot = inflation$lstm$increm_chunks[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
          height = 9*8/16, 
@@ -335,8 +323,134 @@ for (i in 1:n){
   invisible(gc())
   
   cat('Done with model on ', inflation$names[[i]])
-  stop()
 }
 toc()
 
 rm(chunks, len_chunks)
+
+
+##### Now increasing subsamples ################################################
+
+incre_win <- list()
+
+tic('Chunks nested loop')
+for (i in 1:n){
+  # preallocate for results
+  incre_win[[i]] <- list()
+  
+  # process data chunks all at once
+  prepped_chunks <- #inflation$lstm[['increm_splits']][[i]]$splits %>% 
+    inflation$lstm[['increm_splits']][[i]]$splits %>%
+    lapply(FUN = rsample::analysis) %>% 
+    lapply(FUN = data_prepper)
+  
+  # store number of chunks
+  len_chunks <- length(prepped_chunks)
+  
+  for (s in 1:len_chunks){
+    
+    # pull out data
+    prepped_data <- prepped_chunks[[s]]
+    # fit model
+    lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
+                                 n_steps = 10,                                  #inflation[['aropti']][[n]], 
+                                 nodes = 50, 
+                                 epochs = fore_epochs, 
+                                 ES = F,                                        # F: because there's so little data 
+                                 keepBest = F,
+                                 size_batch = 'auto')                           # 'auto' is also an alternative but needs testing
+    # make predictions: horizon small to avoid overestimates
+    # see paper and make point clear for flatlining preds
+    predictions <- online_pred(model_fitted = lstm_list, 
+                               model_type = 'model_online', 
+                               data_train = prepped_data, 
+                               horizon = fore_horiz)
+    # store id for this chunk in this series
+    # to add label 
+    id <- paste0(names(pi)[i], '_increm_win_', s)
+    predictions <- add_column(predictions, data_chunk = id)
+    
+    # store predictions
+    increm_chunks[[i]]$predictions[[s]] <- predictions
+    
+    # checks
+    plot(lstm_list$history)
+    
+    # dump model to avoid learning spillover
+    rm(lstm_list)
+  }
+  
+  # preallocate to avoid annoying behaviour
+  inflation[['lstm']][['increm_chunks']][[i]] <- list()
+  
+  # convert prediction tbl to xts faster
+  incre_win[[i]]$predictions_xts <- lapply(X = incre_win[[i]]$predictions,
+                                        FUN = tbl_xts)
+  
+  # store all good stuff in the main list
+  # simple AR(1)
+  inflation[['lstm']][['increm_chunks']][[i]][['ar1']] <- 
+    future_pmap(.l = list(data = incre_win[[i]]$predictions_xts,
+                          lags = fm_apply(1, len_chunks),
+                          interc = fm_apply(intercep, len_chunks)),
+                .f = auto.reg)
+  
+  # AR(1) w rolling window
+  inflation$lstm$increm_chunks[[i]][['ar1_wind']] <- 
+    future_pmap(.l = list(df = incre_win[[i]]$predictions_xts,
+                          window = fm_apply(20, len_chunks),
+                          lags = fm_apply(1, len_chunks),
+                          interc = fm_apply(intercep, len_chunks)),
+                .f = rolloop)
+  
+  # simple AR(3) - SOC
+  inflation$lstm$increm_chunks[[i]][['ar3']] <- 
+    future_pmap(.l = list(data = incre_win[[i]]$predictions_xts,
+                          lags = fm_apply(3, len_chunks),
+                          interc = fm_apply(intercep, len_chunks)),
+                .f = auto.reg.sum)
+  
+  # AR(3) - rolling SOC
+  inflation$lstm$increm_chunks[[i]][['ar3_wind']] <- 
+    future_pmap(.l = list(df = incre_win[[i]]$predictions_xts,
+                          window = fm_apply(20, len_chunks),
+                          lags = fm_apply(3, len_chunks),
+                          interc = fm_apply(intercep, len_chunks)),
+                .f = rolloop.sum)
+  
+  # stitch all chunks back together with forecasts
+  inflation$lstm$increm_chunks[[i]]$predictions <- bind_rows(increm_chunks[[i]]$predictions)
+  
+  # hairplot 
+  inflation$lstm$increm_chunks[[i]]$plot_hair <- 
+    inflation$lstm$chunkincrem_chunks[[i]]$predictions %>% ggplot() + 
+    geom_line(aes(x = date, y = value, colour = label, group = data_chunk))+
+    theme_minimal() + xlab(label = element_blank()) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
+    theme(legend.position = 'bottom', 
+          legend.title = element_blank())+
+    guides(colour = guide_legend(nrow = 1))
+  
+  # filename title
+  tt <- paste0(inflation$names[[i]], '_', len_chunks, '_increm_chunks_forecasts.pdf')
+  
+  # save plots
+  ggsave(filename = file.path(graphs_dir, tt),
+         plot = inflation$lstm$increm_chunks[[i]]$plot_hair, 
+         device = 'pdf', 
+         width = 8, 
+         height = 9*8/16, 
+         units = 'in')
+  
+  # display
+  plot(inflation$lstm$increm_chunks[[i]]$plot_hair)
+  
+  # some housekeeping
+  rm(tt, prepped_data, predictions, id)
+  invisible(gc())
+  
+  cat('Done with model on ', inflation$names[[i]])
+}
+toc()
+
+rm(increm_chunks, len_chunks)
