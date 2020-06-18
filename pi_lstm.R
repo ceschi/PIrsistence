@@ -371,7 +371,7 @@ for (i in 1:n){
     predictions <- add_column(predictions, data_chunk = id)
     
     # store predictions
-    increm_chunks[[i]]$predictions[[s]] <- predictions
+    incre_win[[i]]$predictions[[s]] <- predictions
     
     # checks
     plot(lstm_list$history)
@@ -419,11 +419,11 @@ for (i in 1:n){
                 .f = rolloop.sum)
   
   # stitch all chunks back together with forecasts
-  inflation$lstm$increm_chunks[[i]]$predictions <- bind_rows(increm_chunks[[i]]$predictions)
+  inflation$lstm$increm_chunks[[i]]$predictions <- bind_rows(incre_win[[i]]$predictions)
   
   # hairplot 
   inflation$lstm$increm_chunks[[i]]$plot_hair <- 
-    inflation$lstm$chunkincrem_chunks[[i]]$predictions %>% ggplot() + 
+    inflation$lstm$increm_chunks[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = data_chunk))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
