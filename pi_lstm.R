@@ -29,7 +29,7 @@ inflation$lstm[['data']] <- future_pmap(.l = list(data = sapply(pi, list),
                                         .f = data_prepper
                                         )
 
-
+library(keras)
 if (!keras::is_keras_available()){
   keras::install_keras()
 }

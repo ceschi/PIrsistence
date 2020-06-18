@@ -39,7 +39,7 @@ flag___plot <- 0
 # run at all that script?
 flag___lstm <- T
 # run with small n of epochs?
-flag___epochs <- T
+flag___epochs <- F
 
 
 # directories, functions and data
