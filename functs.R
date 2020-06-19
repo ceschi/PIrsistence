@@ -662,6 +662,7 @@ k_fullsample_1l <- function(data,
                input_shape = c(n_steps, n_feat),
                return_sequences = F,
                stateful = T,
+               kernel_regularizer = regularizer_l2(l = 0.01),
                batch_size = size_batch
               ) %>% 
     layer_dense(units = 1) %>% 
@@ -806,10 +807,12 @@ k_fullsample_2l <- function(data,
                return_sequences = T,
                stateful = T,
                batch_size = size_batch,
+               kernel_regularizer = regularizer_l2(l = 0.01)
     ) %>% 
     layer_lstm(units = nodes,
                return_sequences = F,
-               stateful = T) %>% 
+               stateful = T,
+               kernel_regularizer = regularizer_l2(l = 0.01)) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -819,7 +822,7 @@ k_fullsample_2l <- function(data,
                input_shape = c(n_steps, n_feat),
                return_sequences = T,
                stateful = T,
-               batch_size = 1,
+               batch_size = 1
     ) %>% 
     layer_lstm(units = nodes,
                return_sequences = F,
@@ -940,7 +943,8 @@ k_fullsample_nl <- function(data,
           layer_lstm(
             units = nodes_list[[l]],
             return_sequences = options$ret_sequences[[i]],
-            stateful = options$stateful[[i]]
+            stateful = options$stateful[[i]],
+            kernel_regularizer = regularizer_l2(l = 0.01)
           )
       }
     }
