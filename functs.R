@@ -527,7 +527,7 @@ data_prepper <- function(data, train = 1, test = NULL){
   
   
   # train and test shall be expressed in percentage terms
-  if (train>1){stop('Train should be expressed in percentage not intergers.')}
+  if (train>1){stop('\nTrain should be expressed in percentage not intergers.')}
   
   # preallocate list
   output <- list()
@@ -680,7 +680,7 @@ k_fullsample_1l <- function(data,
             loss = 'mse')
   
   
-  tictoc::tic('Model estimation\n')
+  tictoc::tic('\n\nModel estimation')
   if (ES){
     # estimate with early stopping
     history <- fit(object = model_compiled, 
@@ -829,7 +829,7 @@ k_fullsample_2l <- function(data,
             loss = 'mse')
   
   
-  tictoc::tic('Model estimation\n')
+  tictoc::tic('\n\nModel estimation')
   if (ES){
     # estimate with early stopping
     history <- fit(object = model_compiled, 
@@ -910,11 +910,11 @@ k_fullsample_nl <- function(data,
     # in keras. It outputs a model ready to compile.
     
     # bunch of checks
-    if (!is.list(nodes_list)) stop('Number of nodes per layer must be declared in a list.')
-    if (!is.list(options)) stop('Options must be provided in a list.')
-    if (is.null(options$input_shape)) stop('Options must contain input shape ONLY FOR THE FIRST LAYER.')
-    if (is.null(options$ret_sequences)) stop('Options must declare whether or not to return sequences from one layer to the following as a list.\nThe last must NOT return sequences unless direct forecstas.')
-    if (is.null(options$stateful)) stop('Options must declare whether each layer is stateful (and in case set batch size accordingly).')
+    if (!is.list(nodes_list)) stop('\nNumber of nodes per layer must be declared in a list.')
+    if (!is.list(options)) stop('\nOptions must be provided in a list.')
+    if (is.null(options$input_shape)) stop('\nOptions must contain input shape ONLY FOR THE FIRST LAYER.')
+    if (is.null(options$ret_sequences)) stop('\nOptions must declare whether or not to return sequences from one layer to the following as a list.\nThe last must NOT return sequences unless direct forecstas.')
+    if (is.null(options$stateful)) stop('\nOptions must declare whether each layer is stateful (and in case set batch size accordingly).')
     
     
     require(keras)
@@ -1013,7 +1013,7 @@ k_fullsample_nl <- function(data,
             loss = 'mse')
   
   
-  tictoc::tic('Model estimation\n')
+  tictoc::tic('\n\nModel estimation')
   if (ES){
     # estimate with early stopping
     history <- fit(object = model_compiled, 
@@ -1079,7 +1079,7 @@ online_pred <- function(model_fitted,
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
+  if (!is.list(data_train)) error('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, 1))
@@ -1168,7 +1168,7 @@ multi_online <- function(model_fitted,
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) error('Provide list from "data_prepper" function')
+  if (!is.list(data_train)) error('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, reps))
@@ -1258,7 +1258,8 @@ pkgs <- c(
   'tictoc',
   'viridis',
   'keras',
-  'numbers'
+  'numbers',
+  'rsample'
   )
 # fill pkgs with names of the packages to install
 
