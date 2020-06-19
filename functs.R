@@ -518,7 +518,7 @@ plot_msm <- function(ms_model, nam, laags, path){
 
 # nicer names from human readable strings
 noms <- function(x){
-  if (!is.character(x)) error('\nNot a string')
+  if (!is.character(x)) stop('\nNot a string')
   invisible(require(magrittr))
   x %>% 
     tolower() %>% 
