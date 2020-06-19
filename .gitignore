@@ -40,6 +40,7 @@ log_lstm_full.txt
 models_4k_n75.zip
 robust_checks.R
 test_data.R
+models.zip
 
 ### saved models
 *.h5
