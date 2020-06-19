@@ -35,7 +35,7 @@ for (i in 1:n){
                                horizon = fore_horiz)
     # store id for this chunk in this series
     # to add label 
-    id <- paste0(names(pi)[i], '_increm_win_', s)
+    id <- paste0(names(pi)[i] %>% noms, '_increm_win_', s)
     predictions <- add_column(predictions, data_chunk = id)
     
     # store predictions
@@ -117,7 +117,10 @@ for (i in 1:n){
     guides(colour = guide_legend(nrow = 1))
   
   # filename title
-  tt <- paste0(inflation$names[[i]], '_', len_chunks, '_increm_chunks_forecasts.pdf')
+  tt <- paste0(inflation$names[[i]] %>% noms,
+               '_',
+               len_chunks, 
+               '_increm_chunks_forecasts.pdf')
   
   # save plots
   ggsave(filename = file.path(graphs_dir, tt),

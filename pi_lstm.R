@@ -88,7 +88,7 @@ for (i in 1:n){
   # save the fitted model (with max batch size optionally)
   keras::save_model_hdf5(object = inflation$lstm[['fullsample_1l']][[i]]$model_fitted,
                          filepath = file.path(models_dir,
-                                              paste0(inflation[['names']][[i]],
+                                              paste0(inflation[['names']][[i]] %>% noms,
                                                      '_1l_fullsample.h5'))
   )
   
@@ -120,7 +120,7 @@ for (i in 1:n){
   # save model somewhere on disk
   save_model_hdf5(object = inflation$lstm[['fullsample_2l']][[i]]$model_fitted, 
                   filepath = file.path(models_dir,
-                                       paste0(inflation[['names']][[i]],
+                                       paste0(inflation[['names']][[i]] %>% noms,
                                               '_2l_fullsample.h5')
                   )
   )
@@ -175,7 +175,8 @@ for (i in 1:n){
   
   # write out plots
   ggsave(filename = file.path(graphs_dir, 
-                              paste0(inflation$names[[i]], '_1l_forecast.pdf')),
+                              paste0(inflation$names[[i]] %>% noms,
+                                     '_1l_forecast.pdf')),
          plot = inflation$lstm$plots[['full_1l']][[i]],
          device = 'pdf',
          width = 8,
@@ -183,7 +184,8 @@ for (i in 1:n){
          units = 'in')
   
   ggsave(filename = file.path(graphs_dir, 
-                              paste0(inflation$names[[i]], '_1l_forecast.pdf')),
+                              paste0(inflation$names[[i]] %>% noms,
+                                     '_1l_forecast.pdf')),
          plot = inflation$lstm$plots[['full_1l']][[i]],
          device = 'pdf',
          width = 8,

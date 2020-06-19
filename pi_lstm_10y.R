@@ -40,7 +40,7 @@ for (i in 1:n){
                                horizon = fore_horiz)
     # store id for this chunk in this series
     # to add label 
-    id <- paste0(names(pi)[i], '_chunk_', s)
+    id <- paste0(names(pi)[i] %>% noms, '_chunk_', s)
     predictions <- add_column(predictions, data_chunk = id)
     
     # store predictions
@@ -97,7 +97,7 @@ for (i in 1:n){
                 filter(label == 'train') %>% 
                 group_by(data_chunk) %>% 
                 mutate(ll = last(date)) %>% 
-                ungroup %>% 
+                ungroup() %>% 
                 distinct(ll)
   
   # hairplot 
@@ -112,7 +112,10 @@ for (i in 1:n){
     geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)
   
   # filename title
-  tt <- paste0(inflation$names[[i]], '_', len_chunks, '_chunks_forecasts.pdf')
+  tt <- paste0(inflation$names[[i]] %>% noms,
+               '_',
+               len_chunks,
+               '_chunks_forecasts.pdf')
   
   # save plots
   ggsave(filename = file.path(graphs_dir, tt),

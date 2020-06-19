@@ -231,7 +231,7 @@ inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
 # AR(1) rolling
 
 inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
-                                            names = inflation[['names']],
+                                            names = inflation[['names']] %>% noms,
                                             path = sapply(rep(graphs_dir, n), list)),
                                   .f = plot_roller
                                   )
@@ -249,7 +249,7 @@ inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
 # plotting ridges
 
 inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
-                                             nam = inflation[['names']],
+                                             nam = inflation[['names']] %>% noms,
                                              laags = inflation[['aropti']],
                                              path = sapply(rep(graphs_dir, n), list)),
                                     

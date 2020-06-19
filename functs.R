@@ -515,6 +515,21 @@ plot_msm <- function(ms_model, nam, laags, path){
 }
 
 
+
+# nicer names from human readable strings
+noms <- function(x){
+  if (!is.character(x)) error('\nNot a string')
+  invisible(require(magrittr))
+  x %>% 
+    tolower() %>% 
+    gsub(x = ., 'revised ', '') %>% 
+    gsub(x = ., 'rev_', '') %>% 
+    gsub(x = ., ',', '') %>% 
+    gsub(x = ., ' ', '_') %>% 
+    return()
+}
+
+
 # LSTM functions ----------------------------------------------------------
 
 data_prepper <- function(data, train = 1, test = NULL){
