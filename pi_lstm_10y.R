@@ -93,6 +93,12 @@ for (i in 1:n){
   
   # stitch all chunks back together with forecasts
   inflation$lstm$chunks[[i]]$predictions <- bind_rows(chunks[[i]]$predictions)
+  d_vline <- inflation$lstm$chunks[[i]]$predictions %>% 
+                filter(label == 'train') %>% 
+                group_by(data_chunk) %>% 
+                mutate(ll = last(date)) %>% 
+                ungroup %>% 
+                distinct(ll)
   
   # hairplot 
   inflation$lstm$chunks[[i]]$plot_hair <- 
@@ -102,7 +108,8 @@ for (i in 1:n){
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom', 
           legend.title = element_blank())+
-    guides(colour = guide_legend(nrow = 1))
+    guides(colour = guide_legend(nrow = 1))+
+    geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)
   
   # filename title
   tt <- paste0(inflation$names[[i]], '_', len_chunks, '_chunks_forecasts.pdf')
@@ -119,7 +126,7 @@ for (i in 1:n){
   plot(inflation$lstm$chunks[[i]]$plot_hair)
   
   # some housekeeping
-  rm(tt, prepped_data, predictions, id)
+  rm(tt, prepped_data, predictions, id, d_vline)
   invisible(gc())
   
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])
