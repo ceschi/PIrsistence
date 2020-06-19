@@ -97,7 +97,7 @@ for (i in 1:n){
   # hairplot 
   inflation$lstm$chunks[[i]]$plot_hair <- 
     inflation$lstm$chunks[[i]]$predictions %>% ggplot() + 
-    geom_line(aes(x = date, y = value, colour = label, group = data_chunk))+
+    geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk)))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom', 
@@ -109,7 +109,7 @@ for (i in 1:n){
   
   # save plots
   ggsave(filename = file.path(graphs_dir, tt),
-         plot = inflation$lstm$increm_chunks[[i]]$plot_hair, 
+         plot = inflation$lstm$chunks[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
          height = 9*8/16, 

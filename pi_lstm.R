@@ -1,4 +1,4 @@
-##### LSTM part ###############################################################
+##### LSTM part ################################################################
 
 # todo list
 # - function to prep data                                                 DONE
@@ -8,7 +8,7 @@
 #   + rolling window                                                      DONE
 #   + increasing width                                                    DONE
 #   + chunks with 0 offset                                                DONE
-# - reuse function to fit models                                          DONE?
+# - reuse function to fit models                                          DONE
 # - use stored models to make predictions two ways
 #   + indirectly, by iterating on previous forecasts
 #   + directly, by specifying an appropriate model
