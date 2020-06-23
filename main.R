@@ -280,21 +280,6 @@ if (flag___lstm){
 
 ##### Plots ####################################################################
 
-# general plot with raw data
-inflation[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2020"]))) + 
-  geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
-  geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI FE'), alpha = .75) + 
-  geom_line(aes(y = rev_pce_pch, colour = 'PCE'), alpha = .75) + 
-  geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
-  geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
-  theme_minimal() + labs(colour = ' ') +
-  ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
-  guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))
-
-ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
-       plot = inflation[['plot_ts']], 
-       device = 'pdf',
-       width = 8,
-       units = 'in', 
-       height = 9*8/16)
+tic('Plotting')
+source('plotte.R')
+toc()
