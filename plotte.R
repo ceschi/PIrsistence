@@ -111,9 +111,30 @@ oil_p <- fredr_series_observations(series_id = 'DCOILWTICO',
                                     aggregation_method = 'eop') %>% 
   select(-series_id) %>% 
   tibbletime::as_tbl_time(date) %>% 
-  rename(oil=value) %>% mutate(oil_p=c(NA, diff(log(oil))))
+  rename(oil=value) %>% mutate(oil_p=c(NA, 100*diff(log(oil))))
 
 
 inflation$plots[['oil']] <- oil_p %>% ggplot()+
+  geom_line(aes(x = date, y = oil)) + theme_minimal()+
+  ggtitle('Crude oil spot price: WTI level')+theme(legend.position = 'none') + 
+  xlab(' ') + ylab(' ')
+
+inflation$plots[['oil_p']] <- oil_p %>% ggplot()+
   geom_line(aes(x = date, y = oil_p)) + theme_minimal()+
-  ggtitle('Crude oil spot price: WTI')+theme(legend.position = 'none')
+  ggtitle('Crude oil spot price: WTI price change')+theme(legend.position = 'none') + 
+  xlab(' ') + ylab(' ')
+
+inflation$plots[['oil_grid']] <- cowplot::plot_grid(inflation$plots[['oil']],
+                                                    inflation$plots[['oil_p']],
+                                                    nrow = 2)
+
+ggsave(filename = file.path(graphs_dir, 'wti_pi_plot.pdf'),
+       plot = inflation$plots[['oil_grid']], 
+       device = 'pdf',
+       width = 8,
+       units = 'in', 
+       height = 9*8/16)
+
+
+# housekeeping
+rm(oil_p)
