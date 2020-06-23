@@ -111,7 +111,7 @@ oil_p <- fredr_series_observations(series_id = 'DCOILWTICO',
                                     aggregation_method = 'eop') %>% 
   select(-series_id) %>% 
   tibbletime::as_tbl_time(date) %>% 
-  rename(oil=value) %>% mutate(oil_p=c(NA, 100*diff(log(oil))))
+  rename(oil=value) %>% mutate(oil_p=c(NA, 400*diff(log(oil))))
 
 
 inflation$plots[['oil']] <- oil_p %>% ggplot()+
@@ -135,6 +135,36 @@ ggsave(filename = file.path(graphs_dir, 'wti_pi_plot.pdf'),
        units = 'in', 
        height = 9*8/16)
 
+#### all commodities
+
+comms <- fredr_series_observations(series_id = 'PALLFNFINDEXM',
+                                   frequency = 'q',
+                                   aggregation_method = 'eop') %>% 
+  select(-series_id) %>% 
+  tibbletime::as_tbl_time(date) %>% 
+  mutate(value_p=c(NA, 400*diff(log(value))))
+
+inflation$plots[['comm']] <- comms %>% ggplot()+
+  geom_line(aes(x = date, y = value)) + theme_minimal()+
+  ggtitle('Commodities GPI: level')+theme(legend.position = 'none') + 
+  xlab(' ') + ylab(' ')
+
+inflation$plots[['comm_p']] <- comms %>% ggplot()+
+  geom_line(aes(x = date, y = value_p)) + theme_minimal()+
+  ggtitle('Commodities GPI: price change')+theme(legend.position = 'none') + 
+  xlab(' ') + ylab(' ')
+
+inflation$plots[['comm_grid']] <- cowplot::plot_grid(inflation$plots[['comm']],
+                                                    inflation$plots[['comm_p']],
+                                                    nrow = 2)
+
+ggsave(filename = file.path(graphs_dir, 'comm_pi_plot.pdf'),
+       plot = inflation$plots[['comm_grid']], 
+       device = 'pdf',
+       width = 8,
+       units = 'in', 
+       height = 9*8/16)
+
 
 # housekeeping
-rm(oil_p)
+rm(oil_p, comms)

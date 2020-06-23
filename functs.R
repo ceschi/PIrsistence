@@ -413,7 +413,7 @@ plot_roller <- function(df, names, path){
   
   
   # saves the plots in given path
-  ggsave(paste0(names, ' - AR(1) coeff estimates.pdf'),
+  ggsave(paste0(names %>% noms(), '_AR(1)_coeff.pdf'),
          plot = po,
          device='pdf',
          path = path,
@@ -442,7 +442,7 @@ plot_autoregsum <- function(df, names, path, laags){
   
   # save plot
   
-  ggsave(paste0(names, ' - AR(',laags,') coeff estimates sum.pdf'),
+  ggsave(paste0(names %>% noms(), '_AR(',laags,')_coeffsum.pdf'),
          plot = po,
          device='pdf',
          path = path,
@@ -470,7 +470,7 @@ plot_ridges <- function(df, nam, laags, path){
     xlab('Lag order') + ylab(' ') + theme_minimal()
   
   
-  ggsave(paste0(nam, ' - AR(',laags,') acf.pdf'),
+  ggsave(paste0(nam %>% noms(), '_AR(',laags,')acf.pdf'),
          plot = out,
          device = 'pdf',
          path = path,
