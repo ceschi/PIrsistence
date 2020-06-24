@@ -185,8 +185,8 @@ for (i in 1:n){
   
   ggsave(filename = file.path(graphs_dir, 
                               paste0(inflation$names[[i]] %>% noms,
-                                     '_1l_forecast.pdf')),
-         plot = inflation$lstm$plots[['full_1l']][[i]],
+                                     '_2l_forecast.pdf')),
+         plot = inflation$lstm$plots[['full_2l']][[i]],
          device = 'pdf',
          width = 8,
          height = 9*8/16,

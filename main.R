@@ -270,6 +270,10 @@ if (flag___lstm){
     fore_horiz <- 40
   }
   
+  fit_epochs <- 15
+  fore_epochs <- 5
+  fore_horiz <- 4
+  
   tic('Machine learning fit and forecasts.\n')
   source('pi_lstm.R')
   toc()

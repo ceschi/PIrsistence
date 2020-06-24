@@ -32,7 +32,7 @@ inflation$plots[['cpis']] <- pi_long %>%
     axis.text.x = element_text(angle = 45),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
-ass(pi_long)
+
 
 ggsave(filename = file.path(graphs_dir, 'cpis_plot.pdf'),
        plot = inflation$plots[['cpis']], 
