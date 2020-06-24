@@ -10,7 +10,9 @@ inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2
   theme_minimal() + theme(legend.title = element_blank()) +
   ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))
+  theme(legend.position = 'bottom', 
+    axis.text.x = element_text(angle = 45),
+    plot.title = element_text(hjust = 0.5))
 
 ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
        plot = inflation$plots[['plot_ts']], 
@@ -26,7 +28,9 @@ inflation$plots[['cpis']] <- pi_long %>%
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))+ 
+  theme(legend.position = 'bottom', 
+    axis.text.x = element_text(angle = 45),
+    plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 ass(pi_long)
 
@@ -43,7 +47,9 @@ inflation$plots[['pces']] <- pi_long %>%
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))+ 
+  theme(legend.position = 'bottom', 
+    axis.text.x = element_text(angle = 45),
+    plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 ggsave(filename = file.path(graphs_dir, 'pces_plot.pdf'),
@@ -59,7 +65,9 @@ inflation$plots[['cpis_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))+ 
+  theme(legend.position = 'bottom', 
+    axis.text.x = element_text(angle = 45),
+    plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 
@@ -76,7 +84,9 @@ inflation$plots[['pces_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', axis.text.x = element_text(angle = 45))+ 
+  theme(legend.position = 'bottom', 
+    axis.text.x = element_text(angle = 45),
+    plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 ggsave(filename = file.path(graphs_dir, 'pces_zoomed_plot.pdf'),
@@ -116,12 +126,16 @@ oil_p <- fredr_series_observations(series_id = 'DCOILWTICO',
 
 inflation$plots[['oil']] <- oil_p %>% ggplot()+
   geom_line(aes(x = date, y = oil)) + theme_minimal()+
-  ggtitle('Crude oil spot price: WTI level')+theme(legend.position = 'none') + 
+  ggtitle('Crude oil spot price: WTI level')+
+  theme(legend.position = 'none',
+    plot.title = element_text(hjust = 0.5)) + 
   xlab(' ') + ylab(' ')
 
 inflation$plots[['oil_p']] <- oil_p %>% ggplot()+
   geom_line(aes(x = date, y = oil_p)) + theme_minimal()+
-  ggtitle('Crude oil spot price: WTI price change')+theme(legend.position = 'none') + 
+  ggtitle('Crude oil spot price: WTI price change')+
+  theme(legend.position = 'none',
+    plot.title = element_text(hjust = 0.5)) + 
   xlab(' ') + ylab(' ')
 
 inflation$plots[['oil_grid']] <- cowplot::plot_grid(inflation$plots[['oil']],
@@ -146,12 +160,16 @@ comms <- fredr_series_observations(series_id = 'PALLFNFINDEXM',
 
 inflation$plots[['comm']] <- comms %>% ggplot()+
   geom_line(aes(x = date, y = value)) + theme_minimal()+
-  ggtitle('Commodities GPI: level')+theme(legend.position = 'none') + 
+  ggtitle('Commodities GPI: level')+
+  theme(legend.position = 'none',
+    plot.title = element_text(hjust = 0.5)) + 
   xlab(' ') + ylab(' ')
 
 inflation$plots[['comm_p']] <- comms %>% ggplot()+
   geom_line(aes(x = date, y = value_p)) + theme_minimal()+
-  ggtitle('Commodities GPI: price change')+theme(legend.position = 'none') + 
+  ggtitle('Commodities GPI: price change')+
+  theme(legend.position = 'none',
+    plot.title = element_text(hjust = 0.5)) + 
   xlab(' ') + ylab(' ')
 
 inflation$plots[['comm_grid']] <- cowplot::plot_grid(inflation$plots[['comm']],

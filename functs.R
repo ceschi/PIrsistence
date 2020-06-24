@@ -408,7 +408,8 @@ plot_roller <- function(df, names, path){
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
-    ggtitle(paste0(names, ' - 1 exogenous lag'))
+    ggtitle(paste0(names, ' - 1 exogenous lag'))+
+    theme(plot.title = element_text(hjust = 0.5))
   
   
   
@@ -437,7 +438,8 @@ plot_autoregsum <- function(df, names, path, laags){
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
-    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients')) 
+    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients')) +
+    theme(plot.title = element_text(hjust = 0.5))
   
   
   # save plot
@@ -467,7 +469,8 @@ plot_ridges <- function(df, nam, laags, path){
                    ' ',
                    laags,
                    ' end. lags')) +
-    xlab('Lag order') + ylab(' ') + theme_minimal()
+    xlab('Lag order') + ylab(' ') + theme_minimal()+
+    theme(plot.title = element_text(hjust = 0.5))
   
   
   ggsave(paste0(nam %>% noms(), '_AR(',laags,')acf.pdf'),
