@@ -99,7 +99,7 @@ ggsave(filename = file.path(graphs_dir, 'pces_zoomed_plot.pdf'),
 inflation$plots[['headcores']] <- cowplot::plot_grid( # full cpi
   inflation$plots[['cpis']],
   # full pce
-  inflation$plots[['cpis']],
+  inflation$plots[['pces']],
   # zoomed cpi
   inflation$plots[['cpis_zoom']],
   # zoomed pce
