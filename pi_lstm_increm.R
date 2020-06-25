@@ -134,7 +134,7 @@ for (i in 1:n){
   plot(inflation$lstm$increm_chunks[[i]]$plot_hair)
 
   # some housekeeping
-  rm(tt, prepped_data, predictions, id, prepperd_chunks)
+  rm(tt, prepped_data, predictions, id, prepped_chunks)
   invisible(gc())
   
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])

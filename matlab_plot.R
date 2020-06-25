@@ -57,7 +57,9 @@ plot_draws <- function(main_path, var, name){
     geom_vline(xintercept = 1, colour = 'black', size = .75) +
     geom_vline(xintercept = 0, colour = 'black', size = .75) +
     scale_fill_viridis(option = 'C') + theme_ridges() + 
-    theme(legend.position = 'bottom', legend.justification = 'center') +
+    theme(legend.position = 'bottom', 
+    	legend.justification = 'center',
+    	plot.title = element_text(hjust = 0.5, size = 22)) +
     guides(colour=guide_legend(nrow = 1, byrow = T))
   
   
@@ -80,7 +82,8 @@ plot_draws <- function(main_path, var, name){
     geom_hline(yintercept = 1, colour = 'black', size = .75)+
     theme_ridges() + ggtitle(name) + labs(colour = 'Qtls') + 
     theme(axis.text.x = element_text(angle = 45),
-          legend.position = 'none') +
+          legend.position = 'none',
+    	  plot.title = element_text(hjust = 0.5, size = 22)) +
     ylab(' ') + xlab(' ')
   
   
