@@ -184,5 +184,18 @@ ggsave(filename = file.path(graphs_dir, 'comm_pi_plot.pdf'),
        height = 9*8/16)
 
 
+
+##### histograms ###############################################################
+inflation$plots$histo <- pi_long %>%
+  filter(str_detect(index, 'pch')) %>% 
+  ggplot(data = ., aes(x = rate, group = index)) + geom_density(fill = 'grey') + 
+  facet_wrap(~index) + theme_minimal() + ggtitle('Kernel densities') + 
+  theme(plot.title = element_text(hjust = .5))
+
+
+
+
 # housekeeping
 rm(oil_p, comms)
+
+

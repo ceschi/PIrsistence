@@ -113,7 +113,8 @@ for (i in 1:n){
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom', 
-          legend.title = element_blank())+
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))
   
   # filename title

@@ -60,6 +60,8 @@ for (i in 1:n){
   chunks[[i]]$predictions_xts <- lapply(X = chunks[[i]]$predictions,
                                         FUN = tbl_xts)
   
+  inflation[['lstm']][['chunks']][[i]]
+  
   # store all good stuff in the main list
   # simple AR(1)
   inflation[['lstm']][['chunks']][[i]][['ar1']] <- 
@@ -93,6 +95,10 @@ for (i in 1:n){
   
   # stitch all chunks back together with forecasts
   inflation$lstm$chunks[[i]]$predictions <- bind_rows(chunks[[i]]$predictions)
+  
+  inflation$lstm$chunks[[i]]$predictions_xts <- inflation$lstm$chunks[[i]]$predictions %>% 
+    group_by(data_chunk) %>% nest() %>% map(tbl_xts)
+  
   d_vline <- inflation$lstm$chunks[[i]]$predictions %>% 
                 filter(label == 'train') %>% 
                 group_by(data_chunk) %>% 
@@ -107,7 +113,8 @@ for (i in 1:n){
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom', 
-          legend.title = element_blank())+
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)
   
@@ -137,3 +144,14 @@ for (i in 1:n){
 
 
 rm(chunks, len_chunks)
+
+# to improve hairplots set alpha to lower for forecasts
+# ggplot(data = cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar, alpha = big)) +
+#   geom_bar(position = "dodge", stat = "identity") +
+#   scale_alpha_discrete(range = c(0.35, 0.9))
+
+# plus change colours to red/black for all series in the ML part
+# + 
+# scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+
+

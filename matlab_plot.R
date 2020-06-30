@@ -120,6 +120,8 @@ names <- c(
 )
 
 mega_plots <- list()
+names <- names %>% gsub('Revised ', '', .) %>% gsub(', no FE pch', ' core', .) %>% gsub(' pch', ' headline', .)
+
 
 pb <- txtProgressBar(min = 0, 
                      max = length(var),

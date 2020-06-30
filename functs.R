@@ -1281,7 +1281,8 @@ pkgs <- c(
   'viridis',
   'keras',
   'numbers',
-  'rsample'
+  'rsample',
+  'tbl2xts'
   )
 # fill pkgs with names of the packages to install
 
