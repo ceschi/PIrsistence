@@ -116,7 +116,8 @@ for (i in 1:n){
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)
+    geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)+
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,
@@ -144,12 +145,6 @@ for (i in 1:n){
 
 
 rm(chunks, len_chunks)
-
-# to improve hairplots set alpha to lower for forecasts
-# ggplot(data = cabbage_exp, aes(x = Date, y = Weight, fill = Cultivar, alpha = big)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_alpha_discrete(range = c(0.35, 0.9))
-
 # plus change colours to red/black for all series in the ML part
 # + 
 # scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))

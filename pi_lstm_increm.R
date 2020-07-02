@@ -107,15 +107,18 @@ for (i in 1:n){
                                                             )
   
   # hairplot 
+  #' *needs fixing labels*
   inflation$lstm$increm_chunks[[i]]$plot_hair <- 
     inflation$lstm$increm_chunks[[i]]$predictions %>% ggplot() + 
-    geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk)))+
+    geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk), alpha = label))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
-    theme(legend.position = 'bottom', 
+    theme(legend.position = 'bottom',
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
-    guides(colour = guide_legend(nrow = 1))
+    guides(colour = guide_legend(nrow = 1))+
+    scale_alpha_discrete(range = c(.3, 1))+
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,
