@@ -56,11 +56,14 @@ for (i in 1:n){
   # preallocate to avoid annoying behaviour
   inflation[['lstm']][['chunks']][[i]] <- list()
   
+  
   # convert prediction tbl to xts faster
   chunks[[i]]$predictions_xts <- lapply(X = chunks[[i]]$predictions,
                                         FUN = tbl_xts)
   
-  inflation[['lstm']][['chunks']][[i]]
+  # store all the predictions and data, raw
+  inflation[['lstm']][['chunks']][[i]][['raw']] <- chunks[[i]]$predictions
+  inflation[['lstm']][['chunks']][[i]][['raw_xts']] <- chunks[[i]]$predictions_xts
   
   # store all good stuff in the main list
   # simple AR(1)

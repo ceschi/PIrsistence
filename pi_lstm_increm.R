@@ -64,6 +64,10 @@ for (i in 1:n){
   incre_win[[i]]$predictions_xts <- lapply(X = incre_win[[i]]$predictions,
                                            FUN = tbl_xts)
   
+  # store prediction and data in main list, raw
+  inflation[['lstm']][['increm_chunks']][[i]][['raw']] <- incre_win[[i]]$predictions
+  inflation[['lstm']][['increm_chunks']][[i]][['raw_xts']] <- incre_win[[i]]$predictions_xts
+  
   # store all good stuff in the main list
   # simple AR(1)
   inflation[['lstm']][['increm_chunks']][[i]][['ar1']] <- 
