@@ -160,7 +160,7 @@ inflation <- list(
 
 #### I - ADF test and optimal lags #############################################
 
-# run ADF test with max llags, minimises BIC, computes pval
+# runs ADF test with max llags, minimises BIC, computes pval
 inflation[['unitroot']] <- lapply(X = na.omit(pi),
                                   FUN = urca::ur.df,
                                   lags = llags,
@@ -214,7 +214,6 @@ inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
 
 
 # ridges plot material
-
 inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']]),
