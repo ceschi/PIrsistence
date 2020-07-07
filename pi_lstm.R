@@ -49,8 +49,7 @@ inflation$lstm[['wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = fu
                                                       initial = sapply(inflation[['aropti']], FUN = function(x) x + 4*10),
                                                       assess = fm_apply(0, n),
                                                       cumulative = fm_apply(F, n),
-                                                      skip = fm_apply(0, n),
-                                                      lag = inflation[["aropti"]]), 
+                                                      skip = fm_apply(0, n)), 
                                             .f = rsample::rolling_origin)
 
 # incremental splits: they grow over time incorporating more obs
@@ -58,8 +57,7 @@ inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
                                                            initial = sapply(inflation[['aropti']], FUN = function(x) x + 4*10),
                                                            assess = fm_apply(0, n),
                                                            cumulative = fm_apply(T, n),
-                                                           skip = fm_apply(0, n),
-                                                           lag = inflation[["aropti"]]), 
+                                                           skip = fm_apply(0, n)), 
                                                  .f = rsample::rolling_origin)
 
 
