@@ -533,6 +533,90 @@ noms <- function(x){
 }
 
 
+chunk_regs <- function(regs_list, fore_horiz){
+  # create a tibble from chunks' regressions
+  # and labels for start/end
+  
+  require(magrittr)
+  
+  tidyout <- function(onereg, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    # start date
+    start <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      head(1) %>% 
+      as.Date()
+    # adjust for one lag
+    start <- start - months(3)
+    
+    end <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
+    
+    out <- broom::tidy(onereg) %>% tibble::add_column(chunk = labl)
+    
+    return(out)
+  }
+  
+  
+  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  
+  out <- tidycoefs %>% dplyr::bind_rows()
+  
+  return(out)
+  
+}
+
+
+
+plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir = graphs_dir, name){
+  
+  # bar plot/save for the AR1 models on chunks of data
+  # can be used also for rolling windows and increasing windows
+  # but DOES require lm object - hence need adaptation for autosum fct
+  
+  # number of chunks
+  len <- chunk_regs_obj %>% 
+    select(chunk) %>% 
+    unique() %>% 
+    nrow()
+  
+  # setup title
+  tt <- paste0(name,
+               ': ',
+               len,
+               ' chunks with forecasts')
+  
+  # make plot, filtering out intercept
+  plt <- chunk_regs_obj %>% 
+    filter(term != '(Intercept)') %>% 
+    ggplot(aes(x = chunk, y = estimate, group = chunk))+
+    geom_col() +
+    geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
+    ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  ggsave(plot = plt, filename = file.path(graphs_dir, 
+                                          name %>% noms() %>% paste0('.pdf')),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  
+  return(plt)
+}
+
+
+
 # LSTM functions ----------------------------------------------------------
 
 data_prepper <- function(data, train = 1, test = NULL){
