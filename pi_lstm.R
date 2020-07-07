@@ -46,7 +46,7 @@ inflation$lstm[['chunk_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = f
 
 # 10y rolling windows, moves on by one quarter
 inflation$lstm[['wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
-                                                      initial = fm_apply(4*10, n),
+                                                      initial = sapply(inflation[['aropti']], FUN = function(x) x + 4*10),
                                                       assess = fm_apply(0, n),
                                                       cumulative = fm_apply(F, n),
                                                       skip = fm_apply(0, n),
@@ -55,7 +55,7 @@ inflation$lstm[['wind_10y']] <- future_pmap(.l = list(data = sapply(pi, FUN = fu
 
 # incremental splits: they grow over time incorporating more obs
 inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN = function(x) {list(na.omit(x))}),
-                                                           initial = fm_apply(4*10, n),
+                                                           initial = sapply(inflation[['aropti']], FUN = function(x) x + 4*10),
                                                            assess = fm_apply(0, n),
                                                            cumulative = fm_apply(T, n),
                                                            skip = fm_apply(0, n),
