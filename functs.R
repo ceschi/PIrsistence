@@ -256,7 +256,10 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   
   output <- broom::tidy(linear_model)
   
-  coef_sum <- output %>% filter(term != '(Intercept)') %>% dplyr::select(estimate) %>%  sum()
+  coef_sum <- output %>% 
+    filter(term != '(Intercept)') %>% 
+    dplyr::select(estimate) %>%  
+    sum()
   
   return(coef_sum)
 }

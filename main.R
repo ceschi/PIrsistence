@@ -274,6 +274,13 @@ if (flag___lstm){
   # fore_horiz <- 4
   # 
   tic('Machine learning fit and forecasts.\n')
+  
+  # workaround to limit CPUs usage @PSE
+  library(tensorflow)
+  tf$config$threading$set_intra_op_parallelism_threads(25L)
+  tf$config$threading$set_inter_op_parallelism_threads(25L)
+  tf$executing_eagerly()
+  
   source('pi_lstm.R')
   toc()
 }
