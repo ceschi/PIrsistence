@@ -138,6 +138,20 @@ for (i in 1:n){
   # display
   plot(inflation$lstm$rolling_window[[i]]$plot_hair)
   
+  
+  # additional analysis
+  inflation$lstm$rolling_window[[i]][['freq_stats']] <- 
+    chunk_rolling(regs_list = inflation[['lstm']][['rolling_window']][[i]][['ar1']],
+                  regs_list_sum = inflation$lstm$rolling_window[[i]][['ar3']], 
+                  ar_lags_sum = 3,
+                  fore_horiz = fore_horiz)
+  
+  # save and print plots
+  inflation$lstm$rolling_window[[i]][['plots_freq_stats']] <- 
+    plot_rollregs_lines(chunk_regs_obj = inflation$lstm$rolling_window[[i]][['freq_stats']],
+                        graphs_dir. = graphs_dir, 
+                        name = inflation$names[[i]])
+  
   # some housekeeping
   rm(tt, prepped_data, predictions, id, prepped_chunks)
   invisible(gc())

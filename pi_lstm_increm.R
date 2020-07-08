@@ -140,6 +140,22 @@ for (i in 1:n){
   
   # display
   plot(inflation$lstm$increm_chunks[[i]]$plot_hair)
+  
+  
+  # additional analysis
+  inflation$lstm$increm_chunks[[i]][['freq_stats']] <- 
+    chunk_increm(regs_list = inflation[['lstm']][['increm_chunks']][[i]][['ar1']],
+                  regs_list_sum = inflation$lstm$increm_chunks[[i]][['ar3']], 
+                  ar_lags_sum = 3,
+                  fore_horiz = fore_horiz)
+  
+  # save and print plots
+  inflation$lstm$increm_chunks[[i]][['plots_freq_stats']] <- 
+    plot_increm_lines(chunk_regs_obj = inflation$lstm$increm_chunks[[i]][['freq_stats']],
+                        graphs_dir. = graphs_dir, 
+                        name = inflation$names[[i]])
+  
+  
 
   # some housekeeping
   rm(tt, prepped_data, predictions, id, prepped_chunks)

@@ -68,16 +68,13 @@ plot_draws <- function(main_path, var, name){
     geom_line(aes(x = variable,
                   y = median),
               size = 1.5, 
-              alpha = .5,
+              alpha = 1,
               colour = 'black') + 
-    geom_line(aes(x = variable,
-                  y = q5),
-              size = .75,
-              colour = 'red') +
-    geom_line(aes(x = variable,
-                  y = q95),
-              size = .75,
-              colour = 'red') +
+    geom_ribbon(aes(ymin = q5,
+                    ymax = q95),
+              colour = 'red', 
+              alpha = .2,
+              size = .5) +
     geom_hline(yintercept = 0, colour = 'black', size = .75)+
     geom_hline(yintercept = 1, colour = 'black', size = .75)+
     theme_ridges() + ggtitle(name) + labs(colour = 'Qtls') + 

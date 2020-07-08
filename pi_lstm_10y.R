@@ -139,6 +139,22 @@ for (i in 1:n){
   # display
   plot(inflation$lstm$chunks[[i]]$plot_hair)
   
+  # additional analysis
+  inflation$lstm$chunks[[i]][['freq_stats']] <- chunk_regs(regs_list = inflation[['lstm']][['chunks']][[i]][['ar1']],
+                                                           regs_list_sum = inflation$lstm$chunks[[i]][['ar3']], 
+                                                           ar_lags_sum = 3,
+                                                           fore_horiz = fore_horiz)
+  # save and print plots
+  inflation$lstm$chunks[[i]][['plots_freq_stats']] <- plot_chunkregs_bar(chunk_regs_obj = inflation$lstm$chunks[[i]][['freq_stats']],
+                                                                         graphs_dir. = graphs_dir, 
+                                                                         name = inflation$names[[i]])
+  
+  # save and print tables in TeX
+  chunk_stargazer(ar1 = inflation[['lstm']][['chunks']][[i]][['ar1']], 
+                  chunk_out = inflation$lstm$chunks[[i]][['freq_stats']], 
+                  name = inflation$names[[i]], 
+                  pathout = graphs_dir)
+  
   # some housekeeping
   rm(tt, prepped_data, predictions, id, d_vline)
   invisible(gc())
