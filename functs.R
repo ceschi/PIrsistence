@@ -536,7 +536,9 @@ noms <- function(x){
 }
 
 
-chunk_regs <- function(regs_list, fore_horiz){
+
+
+chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
   # and labels for start/end
   
@@ -553,6 +555,7 @@ chunk_regs <- function(regs_list, fore_horiz){
       head(1) %>% 
       as.Date()
     # adjust for one lag
+    # true only for this cAR1 case
     start <- start - months(3)
     
     end <- onereg %>% 
@@ -572,22 +575,65 @@ chunk_regs <- function(regs_list, fore_horiz){
   
   tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
   
-  out <- tidycoefs %>% dplyr::bind_rows()
+  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  
+  
+  # second part for regsum
+  tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    # start date
+    start <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      head(1) %>% 
+      as.Date()
+    # adjust for lags wrt ar1
+    start <- start - months(3)*(ar_lags_sum-1)
+    
+    end <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
+    
+    out <- tibble::tibble(ar_sum = regs_list_sum,
+                          chunk = labl,
+                          k_lags = ar_lags_sum)
+    
+    return(out)
+  }
+  
+  out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+                                              ar_lags_sum = ar_lags_sum, 
+                                              fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                              regs_list_sum = regs_list_sum), 
+                                    .f = tidyout_sum) %>% 
+    dplyr::bind_rows()
+  
+  
+  out <- list(ar1 = out_ar1,
+              ark_sum = out_ark_sum)
   
   return(out)
   
 }
 
 
-
-plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir = graphs_dir, name){
+plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # bar plot/save for the AR1 models on chunks of data
   # can be used also for rolling windows and increasing windows
   # but DOES require lm object - hence need adaptation for autosum fct
   
+  # part 1: bar plot for AR1 on each chunk
+  
   # number of chunks
-  len <- chunk_regs_obj %>% 
+  len <- chunk_regs_obj$ar1 %>% 
     select(chunk) %>% 
     unique() %>% 
     nrow()
@@ -598,8 +644,12 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir = graphs_dir, name){
                len,
                ' chunks with forecasts')
   
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar1_chunks.pdf')
+  
   # make plot, filtering out intercept
-  plt <- chunk_regs_obj %>% 
+  plt <- chunk_regs_obj$ar1 %>% 
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = chunk, y = estimate, group = chunk))+
     geom_col() +
@@ -607,16 +657,382 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir = graphs_dir, name){
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
     theme(plot.title = element_text(hjust = 0.5))
   
-  ggsave(plot = plt, filename = file.path(graphs_dir, 
-                                          name %>% noms() %>% paste0('.pdf')),
+  
+  
+  ggsave(plot = plt, 
+         filename = file.path(graphs_dir., 
+                              jj),
          device = 'pdf', 
          units = 'in', 
          width = 8, 
          height = 9*8/16)
   
   
-  return(plt)
+  # Part 2: barplot for each chunk, sum of coefficients
+  
+  labely <- chunk_regs_obj$ark_sum %>% 
+    select(k_lags) %>% 
+    unique() %>% 
+    paste0('sum of AR(', ., ') coefficients')
+  
+  tt <- paste0(name,
+               ': ', len, ' chunks with forecasts - ',
+               labely)
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ark_sum_chunks.pdf')
+  
+  
+  plt_sum <- chunk_regs_obj$ark_sum %>% 
+    ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
+    geom_col() + theme_minimal() + ylab(labely) + xlab('Time periods') + 
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+  
+  ggsave(plot = plt_sum, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  plt_list <- list(ar1 = plt, 
+                   ark_sum = plt_sum)
+  
+  
+  return(plt_list)
 }
+
+chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
+  
+  # function to output regressions results with stargazer from 
+  # tidy object and lm one
+  
+  # store periods in character form
+  mod_labels <- chunk_out$ar1 %>% 
+    dplyr::select(chunk) %>% 
+    unique() %>% 
+    unlist() 
+  
+  # create file name 
+  filename <- name %>% noms %>% paste0('_chunkreg_tab.tex')
+  
+  # turn into appropriate path
+  destination <- file.path(pathout, filename)
+  
+  # regex stuff
+  strin <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name, '\\}')
+  repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{p\\{1cm\\}\\}\\{', name, '\\}')
+  
+  # produce table and suppress console output
+  sink('nul')
+  # stargazer formatting
+  tabtex <- stargazer::stargazer(ar1, 
+                                 type = 'latex', 
+                                 covariate.labels = c('first lag', NA), 
+                                 dep.var.labels = name,
+                                 ci = T,
+                                 header = F, 
+                                 model.numbers = F,
+                                 column.sep.width = '2pt',
+                                 style = 'qje') %>% 
+    # regex replace to fix cell width
+    gsub(pattern = strin,
+         replacement = repla,
+         x = .) %>% 
+    # write output
+    write(x = ., 
+          file = destination) %>% capture.output()
+  sink()
+}
+
+chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
+  # function to extract and manipulate regressions made on rolling windows with 
+  # lstm predictions
+  
+  require(magrittr)
+  
+  ### For the ar1 rolling window results
+  tidyout <- function(onereg, fore_horiz){
+    # ancillary function to extract and label coefficients and dates
+    
+    # extract only the end date, as the window moves on
+    end <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    # extract coefficients, add enddate, turn in time format
+    out <- broom::tidy(onereg) %>% 
+      tibble::add_column(enddate = end) %>% 
+      tibbletime::as_tbl_time(index = enddate)
+    
+    return(out)
+  }
+  
+  # apply extractor to all regressions
+  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  
+  # rowbind all different results
+  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  
+  ### For the ark rolling window results
+  tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    end <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    out <- tibble::tibble(ar_sum = regs_list_sum,
+                          enddate = end,
+                          k_lags = ar_lags_sum) %>% 
+      tibbletime::as_tbl_time(index = enddate)
+    
+    return(out)
+  }
+  
+  
+  out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+                                              ar_lags_sum = ar_lags_sum, 
+                                              fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                              regs_list_sum = regs_list_sum), 
+                                    .f = tidyout_sum) %>% 
+    dplyr::bind_rows()
+  
+  out <- list(ar1_roll = out_ar1, 
+              ark_sum_roll = out_ark_sum)
+  
+  return(out)  
+}
+
+plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
+  
+  # line plot/save for the AR1 models on rolling window of data
+  
+  # part 1: bar plot for AR1 on each chunk
+  
+  # number of windows
+  len <- chunk_regs_obj$ar1_roll %>% 
+    select(enddate) %>% 
+    unique() %>% 
+    nrow()
+  
+  # setup title
+  tt <- paste0(name,
+               ': rolling window with forecasts')
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar1_rollwind.pdf')
+  
+  # make plot, filtering out intercept
+  plt <- chunk_regs_obj$ar1_roll %>% 
+    filter(term != '(Intercept)') %>% 
+    ggplot(aes(x = enddate, y = estimate))+
+    geom_line(size = 2) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .2)+
+    ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+  
+  ggsave(plot = plt, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  
+  # Part 2: barplot for each chunk, sum of coefficients
+  
+  labely <- chunk_regs_obj$ark_sum_roll %>% 
+    select(k_lags) %>% 
+    unique() %>% 
+    paste0('sum of AR(', ., ') coefficients')
+  
+  tt <- paste0(name,
+               ': rolling window with forecasts - ',
+               labely)
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar3_rollwind.pdf')
+  
+  
+  plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
+    ggplot(aes(x = enddate, y = ar_sum)) + 
+    geom_line(size = 2) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+  
+  ggsave(plot = plt_sum, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  plt_list <- list(ar1 = plt, 
+                   ark_sum = plt_sum)
+  
+  
+  return(plt_list)
+}
+
+
+chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
+  # function to extract and manipulate regressions made on rolling windows with 
+  # lstm predictions
+  
+  require(magrittr)
+  
+  ### For the ar1 rolling window results
+  tidyout <- function(onereg, fore_horiz){
+    # ancillary function to extract and label coefficients and dates
+    
+    # extract only the end date, as the window moves on
+    end <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    # extract coefficients, add enddate, turn in time format
+    out <- broom::tidy(onereg) %>% 
+      tibble::add_column(enddate = end) %>% 
+      tibbletime::as_tbl_time(index = enddate)
+    
+    return(out)
+  }
+  
+  # apply extractor to all regressions
+  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  
+  # rowbind all different results
+  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  
+  ### For the ark rolling window results
+  tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    end <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    out <- tibble::tibble(ar_sum = regs_list_sum,
+                          enddate = end,
+                          k_lags = ar_lags_sum) %>% 
+      tibbletime::as_tbl_time(index = enddate)
+    
+    return(out)
+  }
+  
+  
+  out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+                                              ar_lags_sum = ar_lags_sum, 
+                                              fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                              regs_list_sum = regs_list_sum), 
+                                    .f = tidyout_sum) %>% 
+    dplyr::bind_rows()
+  
+  out <- list(ar1_roll = out_ar1, 
+              ark_sum_roll = out_ark_sum)
+  
+  return(out)  
+}
+
+plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
+  
+  # line plot/save for the AR1 models on rolling window of data
+  
+  # part 1: bar plot for AR1 on each chunk
+  
+  # number of windows
+  len <- chunk_regs_obj$ar1_roll %>% 
+    select(enddate) %>% 
+    unique() %>% 
+    nrow()
+  
+  # setup title
+  tt <- paste0(name,
+               ': increasing sample with forecasts')
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar1_increm.pdf')
+  
+  # make plot, filtering out intercept
+  plt <- chunk_regs_obj$ar1_roll %>% 
+    filter(term != '(Intercept)') %>% 
+    ggplot(aes(x = enddate, y = estimate))+
+    geom_line(size = 2) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .2)+
+    ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+  
+  ggsave(plot = plt, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  
+  # Part 2: barplot for each chunk, sum of coefficients
+  
+  labely <- chunk_regs_obj$ark_sum_roll %>% 
+    select(k_lags) %>% 
+    unique() %>% 
+    paste0('sum of AR(', ., ') coefficients')
+  
+  tt <- paste0(name,
+               ': increasing sample with forecasts - ',
+               labely)
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar3_increm.pdf')
+  
+  
+  plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
+    ggplot(aes(x = enddate, y = ar_sum)) + 
+    geom_line(size = 2) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+  
+  ggsave(plot = plt_sum, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  plt_list <- list(ar1 = plt, 
+                   ark_sum = plt_sum)
+  
+  
+  return(plt_list)
+}
+
+
 
 
 
