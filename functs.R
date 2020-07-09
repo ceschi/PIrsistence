@@ -1086,7 +1086,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   
   ark_plt <- ark_tbltime %>% 
     ggplot(aes(x = date, y = ark_sum, group = chunk_id))+
-    geom_line(size = 1, alpha = 1)+ theme_minimal() + 
+    geom_line(size = 1, alpha = .3)+ theme_minimal() + 
     ylab('Sum of coefficients') + xlab(element_blank())+
     theme(plot.title = element_text(hjust = .5))+
     ggtitle(tt)
