@@ -155,6 +155,18 @@ for (i in 1:n){
                         graphs_dir. = graphs_dir, 
                         name = inflation$names[[i]])
   
+  # should these functions be adapted to rolling windows format as above?
+  # that is: after say, 50 increments, start rolling window stuff, then plot
+  # as in a hair plot but with coefficients and sum thereof
+  
+  # quick and dirt, just two plots
+  inflation$lstm$increm_chunks[[i]][['plot_rolling_within_increm']] <- 
+    chunk_increm_window(ar1 = inflation$lstm$increm_chunks[[i]][['ar1_wind']],
+                        ark = inflation$lstm$increm_chunks[[i]][['ar3_wind']],
+                        graphs_dir. = graphs_dir,
+                        name = inflation$names[[i]])
+  
+  
   
 
   # some housekeeping

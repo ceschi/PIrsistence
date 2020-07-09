@@ -536,7 +536,7 @@ noms <- function(x){
 }
 
 
-
+##### functions for data+lstm preds
 
 chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
@@ -622,7 +622,6 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   return(out)
   
 }
-
 
 plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
@@ -889,7 +888,6 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   return(plt_list)
 }
 
-
 chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
@@ -1030,6 +1028,81 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   
   return(plt_list)
+}
+
+chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
+  
+  
+  # AR1 part: take data and do a plot
+  
+  # labels and data
+  
+  ids <- 1:length(ar1) %>% 
+    paste0('chunk_', .) %>% 
+    fm_apply()
+  
+  ar1_tbl <- furrr::future_map(.x = ar1, 
+                               .f = tbl2xts::xts_tbl)
+  
+  data_tbltime <- furrr::future_pmap_dfr(.l = list(.data = ar1_tbl,
+                                                   chunk_id = ids),
+                                         .f = tibble::add_column)
+  
+  tt <- name %>% paste0(., ' - AR(1) rolling window on increasing sample')
+  jj <- name %>% noms %>% paste0(., '_ar1_rolling_within_increm.pdf')
+  
+  ar1_plt <- data_tbltime %>% 
+    ggplot(aes(x = date, y = Var.1, group = chunk_id))+
+    geom_line(colour = 'red', size = 2, alpha = 1)+
+    geom_ribbon(eas(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
+                colour = 'grey', alpha = .01)+
+    theme_minimal() + ggtitle(tt) + 
+    ylab('AR(1) coefficient') + xlab(element_blank())
+  theme(plot.title = element_text(hjust = .5))
+  
+  ggsave(plot = ar1_plt,
+         filename = file.path(graphs_dir., jj),
+         device = 'pdf',
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  # AR_k part, just sum over basically
+  
+  ark_tbltime <- furrr::future_map(.x = ark,
+                                   .f = tbl2xts::xts_tbl) %>% 
+    furrr::future_map(.f = na.omit) 
+  
+  ark_tbltime <- furrr::future_pmap_dfr(.l = list(.data = ark_tbltime,
+                                                  chunk_id = ids,
+                                                  lag_k = fm_apply(lags, length(ark_tbltime))),
+                                        .f = tibble::add_column) %>% 
+    dplyr::rename(ark_sum=coredata.xts.)
+  
+  
+  
+  tt <- name %>% paste0(., ' - AR(',lags, ') sum rolling window on increasing sample')
+  jj <- name %>% noms %>% paste0(., '_ark_sum_rolling_within_increm.pdf')
+  
+  ark_plt <- ark_tbltime %>% 
+    ggplot(aes(x = date, y = ark_sum, group = chunk_id))+
+    geom_line(size = 1, alpha = 1)+ theme_minimal() + 
+    ylab('Sum of coefficients') + xlab(element_blank())+
+    theme(plot.title = element_text(hjust = .5))+
+    ggtitle(tt)
+  
+  ggsave(plot = ark_plt,
+         filename = file.path(graphs_dir., jj),
+         device = 'pdf',
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  out <- list(ar1_plot = ar1_plt,
+              ark_sum_plot = ark_plt)
+  
+  return(out)
+  
 }
 
 
