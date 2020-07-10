@@ -208,6 +208,11 @@ source('pi_lstm_10y.R')
 toc()
 
 
+##### LSTM on rolling sample ###################################################
+tic('\n10y rolling samples')
+source('pi_lstm_wind_10y.R')
+toc()
+
 
 ##### increasing samples #######################################################
 tic('Increasing samples')
