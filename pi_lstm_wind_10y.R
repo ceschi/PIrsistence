@@ -62,7 +62,7 @@ for (i in 1:n){
   inflation[['lstm']][['rolling_wind']][[i]] <- list()
   
   # convert prediction tbl to xts faster
-  rolling_wind[[i]]$predictions_xts <- lapply(X = incre_win[[i]]$predictions,
+  rolling_wind[[i]]$predictions_xts <- lapply(X = rolling_wind[[i]]$predictions,
                                            FUN = tbl_xts)
   
   # store all good stuff in the main list
