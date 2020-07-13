@@ -118,7 +118,7 @@ for (i in 1:n){
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    scale_alpha_discrete(range = c(.03, 1))+
+    scale_alpha_discrete(range = c(.1, 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   # filename title
@@ -136,19 +136,19 @@ for (i in 1:n){
          units = 'in')
   
   # display
-  plot(inflation$lstm$rolling_window[[i]]$plot_hair)
+  plot(inflation$lstm$rolling_wind[[i]]$plot_hair)
   
   
   # additional analysis
-  inflation$lstm$rolling_window[[i]][['freq_stats']] <- 
-    chunk_rolling(regs_list = inflation[['lstm']][['rolling_window']][[i]][['ar1']],
-                  regs_list_sum = inflation$lstm$rolling_window[[i]][['ar3']], 
+  inflation$lstm$rolling_wind[[i]][['freq_stats']] <- 
+    chunk_rolling(regs_list = inflation[['lstm']][['rolling_wind']][[i]][['ar1']],
+                  regs_list_sum = inflation$lstm$rolling_wind[[i]][['ar3']], 
                   ar_lags_sum = 3,
                   fore_horiz = fore_horiz)
   
   # save and print plots
-  inflation$lstm$rolling_window[[i]][['plots_freq_stats']] <- 
-    plot_rollregs_lines(chunk_regs_obj = inflation$lstm$rolling_window[[i]][['freq_stats']],
+  inflation$lstm$rolling_wind[[i]][['plots_freq_stats']] <- 
+    plot_rollregs_lines(chunk_regs_obj = inflation$lstm$rolling_wind[[i]][['freq_stats']],
                         graphs_dir. = graphs_dir, 
                         name = inflation$names[[i]])
   
