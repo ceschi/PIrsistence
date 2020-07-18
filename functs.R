@@ -555,7 +555,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       head(1) %>% 
       as.Date()
     # adjust for one lag
-    # true only for this cAR1 case
+    # true only for this AR1 case
     start <- start - months(3)
     
     end <- onereg %>% 
@@ -590,7 +590,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       head(1) %>% 
       as.Date()
     # adjust for lags wrt ar1
-    start <- start - months(3)*(ar_lags_sum-1)
+    start <- start - base::months(3)*(ar_lags_sum-1)
     
     end <- ar1 %>% 
       model.frame() %>% 
@@ -608,8 +608,15 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     return(out)
   }
   
-  out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
-                                              ar_lags_sum = ar_lags_sum, 
+  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+  #                                             ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
+  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+  #                                             regs_list_sum = regs_list_sum), 
+  #                                   .f = tidyout_sum) %>% 
+  #   dplyr::bind_rows()
+  
+  out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
+                                              ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
                                               fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                               regs_list_sum = regs_list_sum), 
                                     .f = tidyout_sum) %>% 
@@ -799,7 +806,14 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   }
   
   
-  out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+  #                                             ar_lags_sum = ar_lags_sum, 
+  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+  #                                             regs_list_sum = regs_list_sum), 
+  #                                   .f = tidyout_sum) %>% 
+  #   dplyr::bind_rows()
+  
+  out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
                                               ar_lags_sum = ar_lags_sum, 
                                               fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                               regs_list_sum = regs_list_sum), 

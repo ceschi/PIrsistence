@@ -53,7 +53,7 @@ for (i in 1:n){
     rm(lstm_list)
     
     cat('\n\nJust ended iteration ', s, ' of ', len_chunks, ' in the inner loop. 
-         \nOuter loop is at iteration ', i, ' of the total ', n, '.')
+         \nOuter loop is at iteration ', i, ' of the total ', n, '.\n')
   }
   
   # preallocate to avoid annoying behaviour
@@ -102,8 +102,9 @@ for (i in 1:n){
   # stitch all chunks back together with forecasts
   inflation$lstm$chunks[[i]]$predictions <- bind_rows(chunks[[i]]$predictions)
   
-  inflation$lstm$chunks[[i]]$predictions_xts <- inflation$lstm$chunks[[i]]$predictions %>% 
-    group_by(data_chunk) %>% nest() %>% map(tbl_xts)
+  # is this rogue code?? 
+  # inflation$lstm$chunks[[i]]$predictions_xts <- inflation$lstm$chunks[[i]]$predictions %>% 
+  #   group_by(data_chunk) %>% nest() %>% map(tbl_xts)
   
   d_vline <- inflation$lstm$chunks[[i]]$predictions %>% 
                 filter(label == 'train') %>% 
