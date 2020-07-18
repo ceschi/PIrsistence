@@ -1068,7 +1068,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   ar1_plt <- data_tbltime %>% 
     ggplot(aes(x = date, y = Var.1, group = chunk_id))+
     geom_line(colour = 'red', size = 2, alpha = 1)+
-    geom_ribbon(eas(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
+    geom_ribbon(aes(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
                 colour = 'grey', alpha = .01)+
     theme_minimal() + ggtitle(tt) + 
     ylab('AR(1) coefficient') + xlab(element_blank())
