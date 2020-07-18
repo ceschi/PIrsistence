@@ -57,7 +57,7 @@ for (i in 1:n){
     rm(lstm_list)
     
     cat('\n\nJust ended iteration ', s, ' of ', len_chunks, ' in the inner loop. 
-         \nOuter loop is at iteration ', i, ' of the total ', n, '.')
+         \nOuter loop is at iteration ', i, ' of the total ', n, '.\n')
   }
   
   # preallocate to avoid annoying behaviour
