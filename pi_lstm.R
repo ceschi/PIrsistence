@@ -10,10 +10,10 @@
 #   + chunks with 0 offset                                                DONE
 # - reuse function to fit models                                          DONE
 # - use stored models to make predictions two ways
-#   + indirectly, by iterating on previous forecasts
+#   + indirectly, by iterating on previous forecasts                      DONE
 #   + directly, by specifying an appropriate model
-# - compute persistence
-# - plot all of the above
+# - compute persistence                                                   DONE
+# - plot all of the above                                                 DONE
 
 # restructure list for having a big node for LSTM stuff
 

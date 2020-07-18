@@ -57,8 +57,8 @@ for (i in 1:n){
     # dump model to avoid learning spillover
     rm(lstm_list)
     
-    print('\n\nJust ended iteration ', s, ' of ', len_chunks, ' in the inner loop. 
-          \nOuter loop is at iteration ', i, ' of the total ', n, '.')
+    cat('\n\nJust ended iteration ', s, ' of ', len_chunks, ' in the inner loop. 
+         \nOuter loop is at iteration ', i, ' of the total ', n, '.')
   }
   
   # preallocate to avoid annoying behaviour

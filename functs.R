@@ -1858,7 +1858,8 @@ pkgs <- c(
   'keras',
   'numbers',
   'rsample',
-  'tbl2xts'
+  'tbl2xts',
+  'tibbletime'
   )
 # fill pkgs with names of the packages to install
 
