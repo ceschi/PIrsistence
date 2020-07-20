@@ -15,9 +15,6 @@
 # - compute persistence                                                   DONE
 # - plot all of the above                                                 DONE
 
-##### Save time and run LSTMs only on pch
-pi_full <- pi
-pi <- pi %>% dplyr::select(contains('_pch'))
 
 
 
@@ -62,6 +59,9 @@ inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
                                                            skip = fm_apply(0, n)), 
                                                  .f = rsample::rolling_origin)
 
+
+####' *TIME SAVING BACKSTOP*'
+n <- 5
 
 # safety check for keras
 library(keras)
