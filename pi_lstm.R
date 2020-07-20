@@ -15,7 +15,9 @@
 # - compute persistence                                                   DONE
 # - plot all of the above                                                 DONE
 
-# restructure list for having a big node for LSTM stuff
+##### Save time and run LSTMs only on pch
+pi_full <- pi
+pi <- pi %>% dplyr::select(contains('_pch'))
 
 
 
