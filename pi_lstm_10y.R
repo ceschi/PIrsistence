@@ -140,6 +140,10 @@ for (i in 1:n){
          height = 9*8/16, 
          units = 'in')
   
+  write.csv(x = inflation$lstm$chunks[[i]]$predictions,
+            file = file.path(data_dir, paste0(tt,'.csv')),
+            row.names = F)
+  
   # display
   plot(inflation$lstm$chunks[[i]]$plot_hair)
   

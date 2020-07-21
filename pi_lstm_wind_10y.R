@@ -121,7 +121,7 @@ for (i in 1:n){
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    scale_alpha_discrete(range = c(.1, 1))+
+    scale_alpha_discrete(range = c(.12, 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   # filename title
@@ -137,6 +137,10 @@ for (i in 1:n){
          width = 8, 
          height = 9*8/16, 
          units = 'in')
+  
+  write.csv(x = inflation$lstm$rolling_wind[[i]]$predictions,
+            file = file.path(data_dir, paste0(tt,'.csv')),
+            row.names = F)
   
   # display
   plot(inflation$lstm$rolling_wind[[i]]$plot_hair)

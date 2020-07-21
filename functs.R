@@ -234,7 +234,7 @@ auto.reg <- function(data, lags = 1, interc = T){
 
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
-  if (!require(broom)) {install.packages('broom'); library(broom)}
+  if (!require(broom)) {invisible(install.packages('broom')); invisible(library(broom))}
   # not necessary as already in tidyverse
   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
@@ -293,8 +293,8 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 # TRACKING PERSISTENCE OVER TIME #
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
-  if (!require(zoo))    {install.packages('zoo');   library(zoo)}
-  if (!require(broom))  {install.packages('broom'); library(broom)}
+  if (!require(zoo))    {install.packages('zoo');   invisible(library(zoo))}
+  if (!require(broom))  {install.packages('broom'); invisible(library(broom))}
   
   # check out the nature of the input
   # throw an error if it's not time series class
@@ -535,6 +535,16 @@ noms <- function(x){
     return()
 }
 
+noms_tt <- function(x){
+  invisible(require(magrittr))
+  
+  x %>% 
+    gsub(x = ., 'Revised ', '') %>% 
+    gsub(x = ., ', no FE ', ' core ') %>% 
+    gsub(x = ., 'pch', '') %>% 
+    return()
+}
+
 
 ##### functions for data+lstm preds
 
@@ -542,7 +552,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
   # and labels for start/end
   
-  require(magrittr)
+  invisible(require(magrittr))
   
   tidyout <- function(onereg, fore_horiz){
     # extract results from lm and 
@@ -756,8 +766,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
-  
-  require(magrittr)
+  invisible(require(magrittr))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -906,7 +915,7 @@ chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
   
-  require(magrittr)
+  invisible(require(magrittr))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -1215,10 +1224,10 @@ k_fullsample_1l <- function(data,
   
   
   
-  require(magrittr)
-  require(keras)
-  require(tictoc)
-  require(numbers)
+  invisible(require(magrittr))
+  invisible(require(keras))
+  invisible(require(tictoc))
+  invisible(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1361,10 +1370,10 @@ k_fullsample_2l <- function(data,
   
   
   
-  require(magrittr)
-  require(keras)
-  require(tictoc)
-  require(numbers)
+  invisible(require(magrittr))
+  invisible(require(keras))
+  invisible(require(tictoc))
+  invisible(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1528,8 +1537,8 @@ k_fullsample_nl <- function(data,
     if (is.null(options$stateful)) stop('\nOptions must declare whether each layer is stateful (and in case set batch size accordingly).')
     
     
-    require(keras)
-    require(magrittr)
+    invisible(require(keras))
+    invisible(require(magrittr))
     
     model <- keras::keras_model_sequential()
     
@@ -1564,10 +1573,10 @@ k_fullsample_nl <- function(data,
   
   
   # packages required
-  require(magrittr)
-  require(keras)
-  require(tictoc)
-  require(numbers)
+  invisible(require(magrittr))
+  invisible(require(keras))
+  invisible(require(tictoc))
+  invisible(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1686,8 +1695,8 @@ online_pred <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  require(keras)
-  require(dplyr)
+  invisible(require(keras))
+  invisible(require(dplyr))
   
   
   # data_train is a list from data_prepper function!
@@ -1775,8 +1784,8 @@ multi_online <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  require(keras)
-  require(dplyr)
+  invisible(require(keras))
+  invisible(require(dplyr))
   
   
   # data_train is a list from data_prepper function!

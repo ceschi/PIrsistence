@@ -82,7 +82,7 @@ for (i in 1:n){
   # AR(1) w rolling window
   inflation$lstm$increm_chunks[[i]][['ar1_wind']] <- 
     future_pmap(.l = list(df = incre_win[[i]]$predictions_xts,
-                          window = fm_apply(20, len_chunks),
+                          window = fm_apply(wind, len_chunks),
                           lags = fm_apply(1, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = rolloop)
@@ -97,7 +97,7 @@ for (i in 1:n){
   # AR(3) - rolling SOC
   inflation$lstm$increm_chunks[[i]][['ar3_wind']] <- 
     future_pmap(.l = list(df = incre_win[[i]]$predictions_xts,
-                          window = fm_apply(20, len_chunks),
+                          window = fm_apply(wind, len_chunks),
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = rolloop.sum)
@@ -113,18 +113,20 @@ for (i in 1:n){
                                                                filter(label == 'forecast')
                                                             )
   
+  
+  
   # hairplot 
   #' *needs fixing labels*
   inflation$lstm$increm_chunks[[i]]$plot_hair <- 
     inflation$lstm$increm_chunks[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk), alpha = label))+
     theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom',
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    scale_alpha_discrete(range = c(.03, 1))+
+    scale_alpha_discrete(range = c(.12, 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   # filename title
@@ -133,13 +135,17 @@ for (i in 1:n){
                len_chunks, 
                '_increm_chunks_forecasts.pdf')
   
-  # save plots
+  # save plots & files
   ggsave(filename = file.path(graphs_dir, tt),
          plot = inflation$lstm$increm_chunks[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
          height = 9*8/16, 
          units = 'in')
+  
+  write.csv(x = inflation$lstm$increm_chunks[[i]]$predictions,
+            file = file.path(data_dir, paste0(tt,'.csv')),
+            row.names = F)
   
   # display
   plot(inflation$lstm$increm_chunks[[i]]$plot_hair)
@@ -166,6 +172,7 @@ for (i in 1:n){
   inflation$lstm$increm_chunks[[i]][['plot_rolling_within_increm']] <- 
     chunk_increm_window(ar1 = inflation$lstm$increm_chunks[[i]][['ar1_wind']],
                         ark = inflation$lstm$increm_chunks[[i]][['ar3_wind']],
+                        lags = 3,
                         graphs_dir. = graphs_dir,
                         name = inflation$names[[i]])
   
