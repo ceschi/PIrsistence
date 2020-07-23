@@ -1,10 +1,10 @@
 plot_draws <- function(main_path, var, name){
-  require(R.matlab)
-  require(ggplot2)
-  require(ggridges)
-  require(dplyr)
-  require(lubridate)
-  require(reshape2)
+  invisible(require(R.matlab))
+  invisible(require(ggplot2))
+  invisible(require(ggridges))
+  invisible(require(dplyr))
+  invisible(require(lubridate))
+  invisible(require(reshape2))
   
   
   full_path <- file.path(main_path, var)
