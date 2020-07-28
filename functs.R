@@ -1883,7 +1883,8 @@ pkgs <- c(
   'rsample',
   'tbl2xts',
   'tibbletime',
-  'xts'
+  'xts',
+  'tibble'
   )
 # fill pkgs with names of the packages to install
 
