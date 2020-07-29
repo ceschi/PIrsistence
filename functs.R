@@ -21,7 +21,7 @@ dir.create(graphs_dir)
 dir.create(models_dir)
 options(warn=0) # turns warnings back on
 
-
+##### II - general purpose functions ###########################################
 
 instant_pkgs <- function(pkgs) { 
   ## Function loading or installing packages in
@@ -57,7 +57,6 @@ instant_pkgs <- function(pkgs) {
     message("\n ...Packages were already loaded!\n")
   }
 }
-
 
 rollm <- function(df, formula){
   
@@ -164,9 +163,6 @@ lagger <- function(series, laag, na.cut=F){
   return(matrix)
 }
 
-# lagger_bis benchmarks better
-# roughly ten times faster
-
 lagger_bis <- function(series, lag, na.cut=F){
   # Takes a time series and creates a matrix with given number
   # of lags, also generating appropriate names
@@ -205,7 +201,6 @@ formula.maker <- function(df, y, intercept = T){
   return(fomu)
 }
 
-
 fm_apply <- function(foo, n){
   # shorthand to use in future_pmap
   # calls for atom foo
@@ -213,7 +208,7 @@ fm_apply <- function(foo, n){
 }
 
 
-############ PIRSISTENCE FUNCTIONS #############################################
+############ II - frequentist part #############################################
 
 auto.reg <- function(data, lags = 1, interc = T){
   
@@ -265,9 +260,6 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   return(coef_sum)
 }
 
-
-
-
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
   # remove troublesome NAs
@@ -288,10 +280,6 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
   #             order.by=index(df_na)[window:length(index(df_na))])
 }
 
-
-
-
-# TRACKING PERSISTENCE OVER TIME #
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
   if (!invisible(require(zoo)))    {install.packages('zoo');   invisible(library(zoo))}
@@ -371,7 +359,6 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
   
 }
 
-
 # Markov Switching model with optimal lags
 ms_aropti <- function(df, lags, states){
   # adapt the dataset creating lags
@@ -390,7 +377,6 @@ ms_aropti <- function(df, lags, states){
   return(estimate)
   
 }
-
 
 # plot rolling estimates for AR1
 plot_roller <- function(df, names, path){
@@ -491,7 +477,6 @@ plot_ridges <- function(df, nam, laags, path){
   return(out)
 }
 
-
 # plot Markov Switching results
 plot_msm <- function(ms_model, nam, laags, path){
   
@@ -521,8 +506,6 @@ plot_msm <- function(ms_model, nam, laags, path){
   return(plot_out)
 }
 
-
-
 # nicer names from human readable strings
 noms <- function(x){
   # if (!is.character(x)) stop('\nNot a string')
@@ -546,8 +529,7 @@ noms_tt <- function(x){
     return()
 }
 
-
-##### functions for data+lstm preds
+##### III - treat LSTM predictions output ######################################
 
 chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
@@ -1133,7 +1115,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
 
 
 
-# LSTM functions ----------------------------------------------------------
+##### IV - LSTM functions ######################################################
 
 data_prepper <- function(data, train = 1, test = NULL){
   # function to rescale data to normal values
@@ -1342,6 +1324,9 @@ k_fullsample_1l <- function(data,
     out[['time_index']] <- time_index
   }
   
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
   return(out)
 }
 
@@ -1493,10 +1478,11 @@ k_fullsample_2l <- function(data,
     out[['time_index']] <- time_index
   }
   
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
   return(out)
 }
-
-
 
 k_fullsample_nl <- function(data, 
                             n_steps, 
@@ -1765,6 +1751,10 @@ online_pred <- function(model_fitted,
   # reconversion to values
   forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
   # names(forecast)[1] <- va
+  
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
   return(forecast)
 }
 
@@ -1858,6 +1848,10 @@ multi_online <- function(model_fitted,
   # reconversion to values
   forecast$value <- forecast$value*data_train$train[['sd']] + data_train$train[['mean']]
   # names(forecast)[1] <- va
+  
+  # wipe out mem from previous runs
+  on.exit(keras::backend()$clear_session())
+  
   return(forecast)
   
 }
@@ -1891,7 +1885,7 @@ pkgs <- c(
 
 instant_pkgs(pkgs)
 
-# devtools::install_github('sboysel/fredr')
+devtools::install_github('sboysel/fredr')
 devtools::install_github('ceschi/urcabis')
 # devtools::install_version("readxl", version = "1.0.0")
 # library(urcabis) # for when the package will be duly updated (pull request)
