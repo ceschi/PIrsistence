@@ -234,7 +234,8 @@ auto.reg <- function(data, lags = 1, interc = T){
 
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
-  if (!require(broom)) {invisible(install.packages('broom')); invisible(library(broom))}
+  invisible(require(broom))
+  # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
   # not necessary as already in tidyverse
   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
@@ -293,8 +294,8 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 # TRACKING PERSISTENCE OVER TIME #
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
-  if (!require(zoo))    {install.packages('zoo');   invisible(library(zoo))}
-  if (!require(broom))  {install.packages('broom'); invisible(library(broom))}
+  if (!invisible(require(zoo)))    {install.packages('zoo');   invisible(library(zoo))}
+  if (!invisible(require(broom)))  {install.packages('broom'); invisible(library(broom))}
   
   # check out the nature of the input
   # throw an error if it's not time series class

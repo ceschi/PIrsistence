@@ -199,7 +199,7 @@ inflation[['aroptilm']] <- future_pmap(.l = list(data = sapply(pi, list),
                                           lags = inflation[['aropti']],
                                           interc = sapply(rep(intercep, n), list)
                                           ),
-                                .f = auto.reg.sum)
+                                       .f = auto.reg.sum)
 
 
 # rolling window estimate
@@ -210,14 +210,14 @@ inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
                                               lags = inflation[['aropti']],
                                               interc = sapply(rep(intercep, n), list)
                                               ),
-                                    .f = rolloop.sum)
+                                          .f = rolloop.sum)
 
 
 # ridges plot material
 inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
                                               window = sapply(rep(wind, n), list),
                                               lags = inflation[['aropti']]),
-                                    .f = persistence_ridges)
+                                           .f = persistence_ridges)
 
 
 
@@ -232,8 +232,8 @@ inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
 inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                             names = inflation[['names']] %>% noms,
                                             path = sapply(rep(graphs_dir, n), list)),
-                                  .f = plot_roller
-                                  )
+                                          .f = plot_roller
+                                          )
 
 
 # AR(k*) plots
@@ -242,8 +242,8 @@ inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                              names = inflation[['names']],
                                              laags = inflation[['aropti']],
                                              path = sapply(rep(graphs_dir, n), list)),
-                                   .f = plot_autoregsum
-                                   )
+                                           .f = plot_autoregsum
+                                           )
 
 # plotting ridges
 
@@ -252,8 +252,8 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
                                              laags = inflation[['aropti']],
                                              path = sapply(rep(graphs_dir, n), list)),
                                     
-                                   .f = plot_ridges
-                                   )
+                                           .f = plot_ridges
+                                           )
 
 
 
