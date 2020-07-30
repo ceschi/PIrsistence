@@ -71,7 +71,9 @@ plot_draws <- function(main_path, var, name){
               alpha = 1,
               colour = 'black') + 
     geom_ribbon(aes(ymin = q5,
-                    ymax = q95),
+                    ymax = q95,
+                    y = median,
+                    x = variable),
               colour = 'red', 
               alpha = .2,
               size = .5) +

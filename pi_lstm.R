@@ -220,3 +220,11 @@ toc()
 tic('Increasing samples')
 source('pi_lstm_increm.R')
 toc()
+
+# save all elements to disk: needs to be adapted
+# saveRDS(mylist, file = "MYLIST.Rds")
+# read.all <- readRDS("MYLIST.Rds")
+
+##### Save results to disk #####################################################
+saveRDS(object = inflation$lstm,
+        file = './lstm_list')

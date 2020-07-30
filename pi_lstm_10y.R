@@ -177,3 +177,6 @@ rm(chunks, len_chunks)
 # scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 
+##### Save results to disk #####################################################
+saveRDS(object = inflation$lstm$chunks,
+        file = './lstm_chunks_10y_list')

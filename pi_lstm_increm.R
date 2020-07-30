@@ -189,3 +189,7 @@ for (i in 1:n){
 
 
 rm(incre_win, len_chunks)
+
+##### Save results to disk #####################################################
+saveRDS(object = inflation$lstm$increm_chunks,
+        file = './lstm_increm_chunks_list')

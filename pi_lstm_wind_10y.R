@@ -169,3 +169,8 @@ for (i in 1:n){
 
 
 rm(incre_win, len_chunks)
+
+
+##### Save results to disk #####################################################
+saveRDS(object = inflation$lstm$rolling_wind,
+        file = './lstm_rolling_wind_list')
