@@ -651,7 +651,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt <- chunk_regs_obj$ar1 %>% 
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = chunk, y = estimate, group = chunk))+
-    geom_col() +
+    geom_col(alpha = .5) +
     geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
     theme(plot.title = element_text(hjust = 0.5))
@@ -685,7 +685,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
-    geom_col() + theme_minimal() + ylab(labely) + xlab('Time periods') + 
+    geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
   
   ggsave(plot = plt_sum, 
@@ -715,27 +715,29 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
     unlist() 
   
   # create file name 
-  filename <- name %>% noms %>% paste0('_chunkreg_tab.tex')
+  filename <- name %>% noms() %>% paste0('_chunkreg_tab.tex')
+  name_tt <- name %>% noms_tt()
   
   # turn into appropriate path
   destination <- file.path(pathout, filename)
   
   # regex stuff
   strin <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name, '\\}')
-  repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{p\\{1cm\\}\\}\\{', name, '\\}')
+  repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name_tt, '\\}')
   
   # produce table and suppress console output
   sink('nul')
   # stargazer formatting
   tabtex <- stargazer::stargazer(ar1, 
                                  type = 'latex', 
-                                 covariate.labels = c('first lag', NA), 
+                                 covariate.labels = c('\\nth{1} lag', NA), 
                                  dep.var.labels = name,
-                                 ci = T,
+                                 ci = F,
                                  header = F, 
                                  model.numbers = F,
                                  column.sep.width = '2pt',
-                                 style = 'qje') %>% 
+                                 style = 'qje',
+                                 omit.stat = c('ser', 'res.dev')) %>% 
     # regex replace to fix cell width
     gsub(pattern = strin,
          replacement = repla,
@@ -1862,7 +1864,9 @@ multi_online <- function(model_fitted,
 ##### Packages Loader #####
 
 pkgs <- c(
-  'ggplot',
+  'ggplot2',
+  'magrittr',
+  'dplyr',
   'broom',
   'devtools',
   'furrr', 
