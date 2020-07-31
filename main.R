@@ -268,11 +268,8 @@ if (flag___lstm){
     fore_epochs <- 2000
     fore_horiz <- 40
   }
-  # 
-  # fit_epochs <- 15
-  # fore_epochs <- 5
-  # fore_horiz <- 4
-  # 
+
+  
   tic('Machine learning fit and forecasts.\n')
   
   # workaround to limit CPUs usage @PSE to 5*4 threads

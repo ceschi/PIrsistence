@@ -1059,7 +1059,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   
   ar1_plt <- data_tbltime %>% 
     ggplot(aes(x = date, y = Var.1, group = chunk_id))+
-    geom_line(colour = 'red', size = 2, alpha = 1)+
+    geom_line(colour = 'red', size = .8, alpha = 1)+
     geom_ribbon(aes(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
                 colour = 'grey', alpha = .01)+
     theme_minimal() + ggtitle(tt) + 
@@ -1092,7 +1092,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   
   ark_plt <- ark_tbltime %>% 
     ggplot(aes(x = date, y = ark_sum, group = chunk_id))+
-    geom_line(size = 1, alpha = .3)+ theme_minimal() + 
+    geom_line(size = .8, alpha = .3)+ theme_minimal() + 
     ylab('Sum of coefficients') + xlab(element_blank())+
     theme(plot.title = element_text(hjust = .5))+
     ggtitle(tt)
@@ -1862,6 +1862,7 @@ multi_online <- function(model_fitted,
 ##### Packages Loader #####
 
 pkgs <- c(
+  'ggplot',
   'broom',
   'devtools',
   'furrr', 
