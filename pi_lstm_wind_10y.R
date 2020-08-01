@@ -132,7 +132,7 @@ for (i in 1:n){
   
   # save plots
   ggsave(filename = file.path(graphs_dir, tt),
-         plot = inflation$rolling_wind[[i]]$plot_hair, 
+         plot = inflation$lstm$rolling_wind[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
          height = 9*8/16, 
