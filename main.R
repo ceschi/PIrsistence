@@ -255,8 +255,8 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
                                            .f = plot_ridges
                                            )
 
-
-
+####' *TIME SAVING BACKSTOP*'
+n <- 5 # only pch series
 ##### LSTM #####################################################################
 if (flag___lstm){
   if (flag___epochs){

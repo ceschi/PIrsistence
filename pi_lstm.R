@@ -60,9 +60,6 @@ inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
                                                  .f = rsample::rolling_origin)
 
 
-####' *TIME SAVING BACKSTOP*'
-n <- 5
-
 # safety check for keras
 library(keras)
 if (!keras::is_keras_available()){
