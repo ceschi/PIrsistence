@@ -91,12 +91,8 @@ for (i in 1:n){
                                                      '_1l_fullsample.h5'))
   )
   
-  # todo improvements:
-  #   - let batch size depend on highest prime factor in n_sample - done but critical
-  #   - critical error when using validation set and prime factor batch size:
-  #       it's possible to def outside fit() the validation data w/ size of 
-  #       precisely one batch, but still there is some dimensions mismatch + it's
-  #       really a lot of data that the model does not see and fit on..
+  # cleanup stuff
+  invisible(gc())
 }
 toc()
 sink(NULL)
@@ -123,19 +119,12 @@ for (i in 1:n){
                                               '_2l_fullsample.h5')
                   )
   )
+  # cleanup stuff
+  invisible(gc())
 }
 toc()
 sink(NULL)
 
-##### If models are fitted externally, load in those files
-
-# for (i in 1:n){
-#   inflation[['lstm_fullsample']][[i]]$model_fitted <-
-#     keras::load_model_hdf5(filepath = file.path(paste0(models_dir,'_4k_n75/'),
-#                                                 paste0(inflation[['names']][[i]],
-#                                                        ' fullsample.h5')),
-#                                                 compile = T)
-# }
 
 
 
@@ -197,6 +186,8 @@ for (i in 1:n){
   plot(inflation$lstm$plots[['full_1l']][[i]])
   plot(inflation$lstm$plots[['full_2l']][[i]])
   
+  # cleanup stuff
+  invisible(gc())
 }
 
 
