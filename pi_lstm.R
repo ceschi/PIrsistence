@@ -97,6 +97,9 @@ for (i in 1:n){
 toc()
 sink(NULL)
 
+saveRDS(object = inflation$lstm$fullsample_1l,
+        file = './lstm_fullsample_1l_list.rds')
+
 
 ##### TWO layer LSTM on full sample ############################################
 sink(file = './log_lstm_2l.txt', split = T, append = F)
@@ -125,6 +128,8 @@ for (i in 1:n){
 toc()
 sink(NULL)
 
+saveRDS(object = inflation$lstm$fullsample_2l,
+        file = './lstm_fullsample_2l_list.rds')
 
 
 
