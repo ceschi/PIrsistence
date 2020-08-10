@@ -726,7 +726,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
   repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name_tt, '\\}')
   
   # produce table and suppress console output
-  sink('nul')
+  sink(NULL)
   # stargazer formatting
   tabtex <- stargazer::stargazer(ar1, 
                                  type = 'latex', 
