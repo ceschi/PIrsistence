@@ -66,6 +66,9 @@ if (!keras::is_keras_available()){
   keras::install_keras()
 }
 
+####' *TIME SAVING BACKSTOP*'
+n <- 5 # only pch series
+
 ##### ONE layer LSTM on full sample ############################################
 tic('Full Loop: 1 layer LSTM')
 sink(file = './log_lstm_full.txt', split = T, append = F)

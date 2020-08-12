@@ -255,8 +255,7 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
                                            .f = plot_ridges
                                            )
 
-####' *TIME SAVING BACKSTOP*'
-n <- 5 # only pch series
+
 ##### LSTM #####################################################################
 if (flag___lstm){
   if (flag___epochs){
@@ -290,3 +289,12 @@ if (flag___lstm){
 tic('Plotting')
 source('plotte.R')
 toc()
+
+
+##### TODO #####################################################################
+
+# + lstm plots in separate folders as in TeX file
+# + reformat huge inflation list
+# + plots in general in different folders within 'plot' folder
+# + chop out matlab part in separate script
+#   - possibly in Julia

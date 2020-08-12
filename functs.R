@@ -287,7 +287,7 @@ persistence_ridges <- function(tseries, window = 24, lags = 8){
   
   # check out the nature of the input
   # throw an error if it's not time series class
-  if (!(class(tseries)=='ts' || class(tseries)=='xts' || class(tseries) == 'zoo')) error('Wrong object, please provide a time series object (ts, zoo, xts).')
+  if (!(class(tseries)=='ts' || class(tseries)=='xts' || class(tseries) == 'zoo')) warning('Wrong object, please provide a time series object (ts, zoo, xts).')
   if (window<=lags*2) warning('\nWrong window/lag sizes: \nto get meaningful estimates window width should be at least twice the lags.')
   
   # define function to be applied rolling over
@@ -1689,7 +1689,7 @@ online_pred <- function(model_fitted,
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) error('\nProvide list from "data_prepper" function')
+  if (!is.list(data_train)) warning('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, 1))
@@ -1782,7 +1782,7 @@ multi_online <- function(model_fitted,
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) error('\nProvide list from "data_prepper" function')
+  if (!is.list(data_train)) warning('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, reps))
