@@ -115,7 +115,7 @@ for (i in 1:n){
                     n_feat = 1, 
                     nodes = 750, 
                     size_batch = 'auto', 
-                    epochs = fit_epochs, 
+                    epochs = fit_epochs*2, 
                     ES = F, 
                     keepBest = T)
   # save model somewhere on disk
@@ -155,18 +155,20 @@ for (i in 1:n){
   inflation$lstm$plots[['full_1l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_1l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 1L: online forecasts')) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 1L: online forecasts')) + 
     theme(legend.position = 'bottom', 
-          legend.title = element_blank())+
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
   inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ' 2L: online forecasts')) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 2L: online forecasts')) + 
     theme(legend.position = 'bottom', 
-          legend.title = element_blank())+
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
