@@ -55,7 +55,7 @@ instant_pkgs <- function(pkgs) {
   ## Function loading or installing packages in
   ## current R instance.
   ## Developed by Jaime M. Montana Doncel - V1
-
+  
   
   pkgs_miss <- pkgs[which(!pkgs %in% installed.packages()[, 1])]
   if (length(pkgs_miss) > 0) {
@@ -103,7 +103,7 @@ rollm <- function(df, formula){
                                             t() %>% ncol()),1] %>% t(),
                     .name_repair = 'minimal')
   SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-                                            t() %>% ncol()),2] %>% t(),
+                                             t() %>% ncol()),2] %>% t(),
                    .name_repair = 'minimal')
   
   # adds suffix for bands
@@ -142,7 +142,7 @@ rolloop <- function(df, window=8, lags=1, interc = T){
   regs <- xts(regs, frequency=4, 
               order.by=index(df)[window:length(index(df))])
   
- return(regs)
+  return(regs)
 }
 
 make_stars <- function(x){
@@ -150,7 +150,7 @@ make_stars <- function(x){
   # printing stars alongside
   # with converted parameters
   
-
+  
   # pre-allocate 
   signif <- NULL
   
@@ -216,13 +216,13 @@ formula.maker <- function(df, y, intercept = T){
   
   if (intercept){
     fomu <- as.formula(paste(y, 
-                           paste(names(df)[names(df)!=y], collapse='+'),
-                           sep='~'))
+                             paste(names(df)[names(df)!=y], collapse='+'),
+                             sep='~'))
   } else {
     fomu <- as.formula(paste(y,
                              paste(c(0,names(df)[names(df)!=y]), collapse='+'),
                              sep='~'))
-                }
+  }
   
   
   attr(fomu, which='.Environment') <- .GlobalEnv
@@ -264,12 +264,12 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
   
   # function to estimate AR(lags) and sum over parameters
-
+  
   transf_data <- lagger(series = data,
                         laag = lags,
                         na.cut = F)
   
-
+  
   
   model_formula <- formula.maker(df = transf_data,
                                  y = first(names(transf_data)),
@@ -637,10 +637,10 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
-                                              ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
-                                              fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-                                              regs_list_sum = regs_list_sum), 
-                                    .f = tidyout_sum) %>% 
+                                       ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
+                                       fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                       regs_list_sum = regs_list_sum), 
+                             .f = tidyout_sum) %>% 
     dplyr::bind_rows()
   
   
@@ -754,7 +754,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
   repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name_tt, '\\}')
   
   # produce table and suppress console output
-  sink(NULL)
+  sink('oo')
   # stargazer formatting
   tabtex <- stargazer::stargazer(ar1, 
                                  type = 'latex', 
@@ -773,7 +773,8 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
     # write output
     write(x = ., 
           file = destination) %>% capture.output()
-  sink()
+  sink(NULL)
+  unlink(x = 'oo')
 }
 
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -836,10 +837,10 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
-                                              ar_lags_sum = ar_lags_sum, 
-                                              fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-                                              regs_list_sum = regs_list_sum), 
-                                    .f = tidyout_sum) %>% 
+                                       ar_lags_sum = ar_lags_sum, 
+                                       fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                       regs_list_sum = regs_list_sum), 
+                             .f = tidyout_sum) %>% 
     dplyr::bind_rows()
   
   out <- list(ar1_roll = out_ar1, 
@@ -872,8 +873,8 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt <- chunk_regs_obj$ar1_roll %>% 
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = enddate, y = estimate))+
-    geom_line(size = 2) +
-    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .2)+
+    geom_line(size = .75) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5))
   
@@ -906,7 +907,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
     ggplot(aes(x = enddate, y = ar_sum)) + 
-    geom_line(size = 2) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
+    geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
   
   ggsave(plot = plt_sum, 
@@ -1014,8 +1015,8 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt <- chunk_regs_obj$ar1_roll %>% 
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = enddate, y = estimate))+
-    geom_line(size = 2) +
-    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .2)+
+    geom_line(size = .75) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5))
   
@@ -1048,7 +1049,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
     ggplot(aes(x = enddate, y = ar_sum)) + 
-    geom_line(size = 2) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
+    geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
   
   ggsave(plot = plt_sum, 
@@ -1089,9 +1090,9 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   
   ar1_plt <- data_tbltime %>% 
     ggplot(aes(x = date, y = Var.1, group = chunk_id))+
-    geom_line(colour = 'red', size = .8, alpha = 1)+
     geom_ribbon(aes(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
-                colour = 'grey', alpha = .01)+
+                colour = 'grey', alpha = .01, size = .5)+
+    geom_line(colour = 'red', size = .8, alpha = 1)+
     theme_minimal() + ggtitle(tt) + 
     ylab('AR(1) coefficient') + xlab(element_blank())
   theme(plot.title = element_text(hjust = .5))
@@ -1214,14 +1215,14 @@ data_prepper <- function(data, train = 1, test = NULL){
 }
 
 k_fullsample_1l <- function(data, 
-                         n_steps, 
-                         n_feat = 1, 
-                         # model_compiled,
-                         nodes = 50,
-                         size_batch = 1,
-                         epochs = 2000,
-                         ES = F,
-                         keepBest = F){
+                            n_steps, 
+                            n_feat = 1, 
+                            # model_compiled,
+                            nodes = 50,
+                            size_batch = 1,
+                            epochs = 2000,
+                            ES = F,
+                            keepBest = F){
   
   # Function to fit a model on the whole sample of data;
   # it takes care of lagging & reshaping the data according to parameters
@@ -1294,7 +1295,7 @@ k_fullsample_1l <- function(data,
                stateful = T,
                kernel_regularizer = regularizer_l2(l = 0.01),
                batch_size = size_batch
-              ) %>% 
+    ) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -1305,7 +1306,7 @@ k_fullsample_1l <- function(data,
                return_sequences = F,
                stateful = T,
                batch_size = 1
-              ) %>% 
+    ) %>% 
     layer_dense(units = 1) %>% 
     compile(optimizer = 'adam',
             loss = 'mse')
@@ -1843,9 +1844,9 @@ multi_online <- function(model_fitted,
       last_row <- nrow(input_arr)
       
       pred[h, i] <- predict(model_online,
-                           x = array(data = input_arr[last_row, , ],
-                                     dim = in_shape),
-                           batch_size = 1)
+                            x = array(data = input_arr[last_row, , ],
+                                      dim = in_shape),
+                            batch_size = 1)
       input <- rbind(input, pred[h,i])
     }
     pred_out <- bind_rows(pred_out, 
@@ -1855,7 +1856,7 @@ multi_online <- function(model_fitted,
                                        date = time_preds) %>% 
                             rename(value = V1) %>% 
                             mutate(value = as.numeric(value))
-                          )
+    )
   }
   
   va <- names(data_train$train[['train_norm']])
@@ -1914,7 +1915,7 @@ pkgs <- c(
   'xts',
   'tibble',
   'cowplot'
-  )
+)
 # fill pkgs with names of the packages to install
 
 instant_pkgs(pkgs)
