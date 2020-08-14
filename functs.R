@@ -40,7 +40,7 @@ dir.create(data_dir)
 dir.create(graphs_dir)
 dir.create(models_dir)
 
-dir.create(file.path(graphs_dir, lstm))
+dir.create(file.path(graphs_dir, lstm_dir))
 dir.create(l1_dir)
 dir.create(l2_dir)
 dir.create(chunks_dir)
