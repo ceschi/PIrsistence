@@ -161,7 +161,7 @@ for (i in 1:n){
   # save and print plots
   inflation$lstm$increm_chunks[[i]][['plots_freq_stats']] <- 
     plot_increm_lines(chunk_regs_obj = inflation$lstm$increm_chunks[[i]][['freq_stats']],
-                        graphs_dir. = graphs_dir, 
+                        graphs_dir. = increm_dir, 
                         name = inflation$names[[i]])
   
   # should these functions be adapted to rolling windows format as above?
@@ -173,7 +173,7 @@ for (i in 1:n){
     chunk_increm_window(ar1 = inflation$lstm$increm_chunks[[i]][['ar1_wind']],
                         ark = inflation$lstm$increm_chunks[[i]][['ar3_wind']],
                         lags = 3,
-                        graphs_dir. = graphs_dir,
+                        graphs_dir. = increm_dir,
                         name = inflation$names[[i]])
   
   

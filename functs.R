@@ -9,16 +9,44 @@ data_dir <- 'processed_data'
 graphs_dir <- 'plots'
 models_dir <- 'models'
 
+# detailed folders for LSTM
+lstm_dir <- 'plots_lstm'
+l1_dir <- 'plots_1lfore'
+l2_dir <- 'plots_2lfore'
+chunks_dir <- 'plots_chunks'
+tables <- 'tables'
+increm_dir <- 'plots_increm'
+rolling_dir <- 'plots_rollwind'
+
+
+
+
+
 temp_dir <- file.path(working_directory, temp_dir)
 data_dir <- file.path(working_directory, data_dir)
 graphs_dir <- file.path(working_directory, graphs_dir)
 models_dir <- file.path(working_directory, models_dir)
+l1_dir <- file.path(graphs_dir, lstm_dir, l1_dir)
+l2_dir <- file.path(graphs_dir, lstm_dir, l2_dir)
+chunks_dir <- file.path(graphs_dir, lstm_dir, chunks_dir)
+rolling_dir <- file.path(graphs_dir, lstm_dir, rolling_dir)
+tables <- file.path(graphs_dir, lstm_dir, tables)
+increm_dir <- file.path(graphs_dir, lstm_dir, increm_dir)
+
 
 options(warn=-1) # turns off warnings momentarily
 dir.create(temp_dir)
 dir.create(data_dir)
 dir.create(graphs_dir)
 dir.create(models_dir)
+
+dir.create(file.path(graphs, lstm))
+dir.create(l1_dir)
+dir.create(l2_dir)
+dir.create(chunks_dir)
+dir.create(rolling_dir)
+dir.create(tables)
+dir.create(increm_dir)
 options(warn=0) # turns warnings back on
 
 ##### II - general purpose functions ###########################################
@@ -638,7 +666,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     nrow()
   
   # setup title
-  tt <- paste0(name,
+  tt <- paste0(name %>% noms_tt(),
                ': ',
                len,
                ' chunks with forecasts')
@@ -833,7 +861,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     nrow()
   
   # setup title
-  tt <- paste0(name,
+  tt <- paste0(name %>% noms_tt(),
                ': rolling window with forecasts')
   
   jj <- name %>% 
@@ -867,7 +895,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     unique() %>% 
     paste0('sum of AR(', ., ') coefficients')
   
-  tt <- paste0(name,
+  tt <- paste0(name %>% noms_tt(),
                ': rolling window with forecasts - ',
                labely)
   
@@ -975,7 +1003,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     nrow()
   
   # setup title
-  tt <- paste0(name,
+  tt <- paste0(name %>% noms_tt(),
                ': increasing sample with forecasts')
   
   jj <- name %>% 
@@ -1056,7 +1084,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
                                                    chunk_id = ids),
                                          .f = tibble::add_column)
   
-  tt <- name %>% paste0(., ' - AR(1) rolling window on increasing sample')
+  tt <- name %>% noms_tt() %>%  paste0(., ' - AR(1) rolling window on increasing sample')
   jj <- name %>% noms %>% paste0(., '_ar1_rolling_within_increm.pdf')
   
   ar1_plt <- data_tbltime %>% 
@@ -1089,7 +1117,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   
   
   
-  tt <- name %>% paste0(., ' - AR(',lags, ') sum rolling window on increasing sample')
+  tt <- name %>% noms_tt() %>%  paste0(., ' - AR(',lags, ') sum rolling window on increasing sample')
   jj <- name %>% noms %>% paste0(., '_ark_sum_rolling_within_increm.pdf')
   
   ark_plt <- ark_tbltime %>% 
@@ -1899,4 +1927,4 @@ devtools::install_github('ceschi/urcabis')
 
 
 #### housekeeping ####
-rm(pkgs)
+rm(pkgs,lstm_dir)

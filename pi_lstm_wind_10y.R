@@ -116,7 +116,7 @@ for (i in 1:n){
     inflation$lstm$rolling_wind[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk), alpha = label))+
     theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on 10y rolling window' )) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on 10y rolling window' )) + 
     theme(legend.position = 'bottom',
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
@@ -131,7 +131,7 @@ for (i in 1:n){
                '_rolling_forecasts.pdf')
   
   # save plots
-  ggsave(filename = file.path(graphs_dir, tt),
+  ggsave(filename = file.path(rolling_dir, tt),
          plot = inflation$lstm$rolling_wind[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
@@ -156,7 +156,7 @@ for (i in 1:n){
   # save and print plots
   inflation$lstm$rolling_wind[[i]][['plots_freq_stats']] <- 
     plot_rollregs_lines(chunk_regs_obj = inflation$lstm$rolling_wind[[i]][['freq_stats']],
-                        graphs_dir. = graphs_dir, 
+                        graphs_dir. = rolling_dir, 
                         name = inflation$names[[i]])
   
   # some housekeeping
@@ -168,7 +168,7 @@ for (i in 1:n){
 }
 
 
-rm(incre_win, len_chunks)
+rm(rolling_wind, len_chunks)
 
 
 ##### Save results to disk #####################################################

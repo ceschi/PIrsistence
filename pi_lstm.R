@@ -172,7 +172,7 @@ for (i in 1:n){
   
   
   # write out plots
-  ggsave(filename = file.path(graphs_dir, 
+  ggsave(filename = file.path(l1_dir, 
                               paste0(inflation$names[[i]] %>% noms,
                                      '_1l_forecast.pdf')),
          plot = inflation$lstm$plots[['full_1l']][[i]],
@@ -181,7 +181,7 @@ for (i in 1:n){
          height = 9*8/16,
          units = 'in')
   
-  ggsave(filename = file.path(graphs_dir, 
+  ggsave(filename = file.path(l2_dir, 
                               paste0(inflation$names[[i]] %>% noms,
                                      '_2l_forecast.pdf')),
          plot = inflation$lstm$plots[['full_2l']][[i]],

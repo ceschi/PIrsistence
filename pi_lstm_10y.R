@@ -118,7 +118,7 @@ for (i in 1:n){
     inflation$lstm$chunks[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk)))+
     theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]], ': forecasts on ',len_chunks, ' chunks' )) + 
+    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on ',len_chunks, ' chunks' )) + 
     theme(legend.position = 'bottom', 
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
@@ -154,14 +154,14 @@ for (i in 1:n){
                                                            fore_horiz = fore_horiz)
   # save and print plots
   inflation$lstm$chunks[[i]][['plots_freq_stats']] <- plot_chunkregs_bar(chunk_regs_obj = inflation$lstm$chunks[[i]][['freq_stats']],
-                                                                         graphs_dir. = graphs_dir, 
+                                                                         graphs_dir. = chunks_dir, 
                                                                          name = inflation$names[[i]])
   
   # save and print tables in TeX
   chunk_stargazer(ar1 = inflation[['lstm']][['chunks']][[i]][['ar1']], 
                   chunk_out = inflation$lstm$chunks[[i]][['freq_stats']], 
                   name = inflation$names[[i]], 
-                  pathout = graphs_dir)
+                  pathout = tables)
   
   # some housekeeping
   rm(tt, prepped_data, predictions, id, d_vline)
