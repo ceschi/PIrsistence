@@ -259,9 +259,9 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
 ##### LSTM #####################################################################
 if (flag___lstm){
   if (flag___epochs){
-    fit_epochs <- 4
-    fore_epochs <- 3
-    fore_horiz <- 4
+    fit_epochs <- 10
+    fore_epochs <- 10
+    fore_horiz <- 40
   } else {
     fit_epochs <- 5000
     fore_epochs <- 2000
@@ -272,10 +272,10 @@ if (flag___lstm){
   tic('Machine learning fit and forecasts.\n')
   
   # workaround to limit CPUs usage @PSE to 5*4 threads
-  library(tensorflow)
-  tf$config$threading$set_intra_op_parallelism_threads(5L)
-  tf$config$threading$set_inter_op_parallelism_threads(5L)
-  tf$executing_eagerly()
+  # library(tensorflow)
+  # tf$config$threading$set_intra_op_parallelism_threads(5L)
+  # tf$config$threading$set_inter_op_parallelism_threads(5L)
+  # tf$executing_eagerly()
   
   source('pi_lstm.R')
   toc()

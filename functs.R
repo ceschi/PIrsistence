@@ -1884,7 +1884,8 @@ pkgs <- c(
   'tbl2xts',
   'tibbletime',
   'xts',
-  'tibble'
+  'tibble',
+  'cowplot'
   )
 # fill pkgs with names of the packages to install
 

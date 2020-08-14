@@ -179,4 +179,4 @@ rm(chunks, len_chunks)
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm$chunks,
-        file = './lstm_chunks_10y_list')
+        file = './lstm_chunks_10y_list.rds')
