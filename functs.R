@@ -1015,7 +1015,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt <- chunk_regs_obj$ar1_roll %>% 
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = enddate, y = estimate))+
-    geom_line(size = .75) +
+    geom_line(size = .5) +
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5))
@@ -1038,7 +1038,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     unique() %>% 
     paste0('sum of AR(', ., ') coefficients')
   
-  tt <- paste0(name,
+  tt <- paste0(name %>% noms_tt(),
                ': increasing sample with forecasts - ',
                labely)
   
@@ -1049,7 +1049,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
     ggplot(aes(x = enddate, y = ar_sum)) + 
-    geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
+    geom_line(size = .5) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
   
   ggsave(plot = plt_sum, 
