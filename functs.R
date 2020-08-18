@@ -875,9 +875,10 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .75) +
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
-    geom_line(aes(yintercept = 0:1), size = .25, linetype = 2, colour = 'black') +
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    geom_smooth(method = 'loess')
   
   
   
@@ -909,8 +910,9 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
-    geom_line(aes(yintercept = 0:1), size = .25, linetype = 2, colour = 'black') +
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
+    geom_smooth(method = 'loess')
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -1019,8 +1021,10 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .5) +
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5)) + 
+    geom_smooth(method = 'loess')
   
   
   
@@ -1052,7 +1056,9 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .5) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
+    geom_smooth(method = 'loess')
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -1093,9 +1099,9 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   ar1_plt <- data_tbltime %>% 
     ggplot(aes(x = date, y = Var.1, group = chunk_id))+
     geom_ribbon(aes(ymin = Var.1 - .SD2, ymax = Var.1 + .SD2, group = chunk_id),
-                colour = 'grey', alpha = .01, size = .25)+
-    geom_line(colour = 'red', size = .5, alpha = 1)+
-    geom_line(aes(yintercept = 0:1), size = .25, linetype = 2, colour = 'black')+
+                colour = 'grey', alpha = .01, size = .1)+
+    geom_line(colour = 'red', size = .5, alpha = .1)+
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     theme_minimal() + ggtitle(tt) + 
     ylab('AR(1) coefficient') + xlab(element_blank())
   theme(plot.title = element_text(hjust = .5))
@@ -1127,7 +1133,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   ark_plt <- ark_tbltime %>% 
     ggplot(aes(x = date, y = ark_sum, group = chunk_id))+
     geom_line(size = .5, alpha = .25)+ theme_minimal() + 
-    geom_line(aes(yintercept = 0:1), size = .25, linetype = 2, colour = 'black') +
+    geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ylab('Sum of coefficients') + xlab(element_blank())+
     theme(plot.title = element_text(hjust = .5))+
     ggtitle(tt)
