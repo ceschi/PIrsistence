@@ -136,7 +136,7 @@ for (i in 1:n){
                '_increm_chunks_forecasts.pdf')
   
   # save plots & files
-  ggsave(filename = file.path(graphs_dir, tt),
+  ggsave(filename = file.path(increm_dir, tt),
          plot = inflation$lstm$increm_chunks[[i]]$plot_hair, 
          device = 'pdf', 
          width = 8, 
