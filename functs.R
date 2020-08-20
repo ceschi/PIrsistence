@@ -426,7 +426,7 @@ plot_roller <- function(df, names, path){
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
-    ggtitle(paste0(names, ' - 1 exogenous lag'))+
+    ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
     theme(plot.title = element_text(hjust = 0.5))
   
   
@@ -456,7 +456,7 @@ plot_autoregsum <- function(df, names, path, laags){
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
-    ggtitle(paste0(names, ' - ', laags, ' optimal lags: sum of coefficients')) +
+    ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
     theme(plot.title = element_text(hjust = 0.5))
   
   
@@ -483,7 +483,7 @@ plot_ridges <- function(df, nam, laags, path){
                             min_height = -2) +
     scale_fill_viridis(name = 'P-values',option = "C", direction = 1) +
     ggtitle(paste0('Evolving persistence - ',
-                   nam,
+                   nam %>% noms_tt(),
                    ' ',
                    laags,
                    ' end. lags')) +
