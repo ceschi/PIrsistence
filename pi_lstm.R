@@ -1,19 +1,5 @@
 ##### LSTM part ################################################################
-
-# todo list
-# - function to prep data                                                 DONE
-# - function to fit model on whole sample                                 DONE
-# - predictions                                                           DONE
-# - function to slice data two ways                                       DONE
-#   + rolling window                                                      DONE
-#   + increasing width                                                    DONE
-#   + chunks with 0 offset                                                DONE
-# - reuse function to fit models                                          DONE
-# - use stored models to make predictions two ways
-#   + indirectly, by iterating on previous forecasts                      DONE
-#   + directly, by specifying an appropriate model
-# - compute persistence                                                   DONE
-# - plot all of the above                                                 DONE
+# add description
 
 
 
@@ -94,6 +80,10 @@ for (i in 1:n){
                                                      '_1l_fullsample.h5'))
   )
   
+  plot(inflation$lstm$fullsample_1l[[i]]$history)
+  cat('\nJust done with ', inflation$names[[i]] %>% noms_tt(),
+       ' model on iteration ', i,' of one-layer LSTM.\n\n')
+  
   # cleanup stuff
   invisible(gc())
 }
@@ -125,6 +115,10 @@ for (i in 1:n){
                                               '_2l_fullsample.h5')
                   )
   )
+  
+  plot(inflation$lstm$fullsample_2l[[i]]$history)
+  cat('\nJust done with ', inflation$names[[i]] %>% noms_tt(),
+      ' model on iteration ', i,' of two-layer LSTM.\n\n')
   # cleanup stuff
   invisible(gc())
 }
@@ -217,14 +211,17 @@ toc()
 
 
 ##### increasing samples #######################################################
-tic('Increasing samples')
-source('pi_lstm_increm.R')
-toc()
+#' *to date it does not provide meaningful output on persistence!*
+# tic('Increasing samples')
+# source('pi_lstm_increm.R')
+# toc()
 
 # save all elements to disk: needs to be adapted
 # saveRDS(mylist, file = "MYLIST.Rds")
 # read.all <- readRDS("MYLIST.Rds")
+#' *a bit problematic for keras output!*
+
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm,
-        file = './lstm_list')
+        file = './lstm_list.Rds')
