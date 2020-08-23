@@ -195,7 +195,12 @@ for (i in 1:n){
 }
 
 
-
+# just for fun: store all losses values across iterations and build a giganticly
+# long dataset: then plot it at the end of each single series run similarly to
+# ACF in the main part of the code, with ggridges
+# store losses with number of chunk/rolling run + id for the epoch
+# stack horizontally and just plot it with ggdensity
+# could provide nice insights into erratic losses
 
 
 ##### LSTM on 10y of data ######################################################

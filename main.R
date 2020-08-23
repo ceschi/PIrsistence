@@ -65,7 +65,10 @@ plan(multiprocess)
 pi <- merge(
   # qoq percentage change
   db_US$rev_cpi_pch,
-  db_US$rev_cpi_fe_pch,
+  # observations before 1966 are dropped
+  # as they display unrealistic, step-like
+  # rates
+  db_US$rev_cpi_fe_pch["1966-01-01/"],
   db_US$rev_defl_pch,
   db_US$rev_pce_pch,
   db_US$rev_pce_fe_pch,
@@ -83,6 +86,10 @@ rm(db_US)
 
 # reproducibility with Reis&Pivetta
 # pi <- pi["/2002-12-31"]
+
+# drop CoViD19 obs?
+pi <- pi["/2020-02-29"]
+
 
 # reshape data in long format
 pi_long <- pi %>% 
