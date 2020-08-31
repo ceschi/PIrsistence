@@ -1,7 +1,8 @@
 ##### LSTM on rolling samples of 10y ###########################################
 
-rolling_wind <- list()
 
+
+rolling_wind <- list()
 
 for (i in 1:n){
   # preallocate for results
@@ -76,30 +77,14 @@ for (i in 1:n){
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg)
   
-  # # AR(1) w rolling window
-  # inflation$lstm$rolling_wind[[i]][['ar1_wind']] <- 
-  #   future_pmap(.l = list(df = rolling_wind[[i]]$predictions_xts,
-  #                         window = fm_apply(20, len_chunks),
-  #                         lags = fm_apply(1, len_chunks),
-  #                         interc = fm_apply(intercep, len_chunks)),
-  #               .f = rolloop)
-  
-  # simple AR(3) - SOC
+# simple AR(3) - SOC
   inflation$lstm$rolling_wind[[i]][['ar3']] <- 
     future_pmap(.l = list(data = rolling_wind[[i]]$predictions_xts,
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg.sum)
   
-  # # AR(3) - rolling SOC
-  # inflation$lstm$rolling_wind[[i]][['ar3_wind']] <- 
-  #   future_pmap(.l = list(df = rolling_wind[[i]]$predictions_xts,
-  #                         window = fm_apply(20, len_chunks),
-  #                         lags = fm_apply(3, len_chunks),
-  #                         interc = fm_apply(intercep, len_chunks)),
-  #               .f = rolloop.sum)
-  
-  # stitch all chunks back together with forecasts
+# stitch all chunks back together with forecasts
   inflation$lstm$rolling_wind[[i]]$predictions <- bind_rows(rolling_wind[[i]]$selected_predictions)
   
   # some patchwork for the plot
@@ -166,7 +151,6 @@ for (i in 1:n){
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])
   
 }
-
 
 rm(rolling_wind, len_chunks)
 

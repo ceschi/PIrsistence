@@ -1,11 +1,27 @@
-# new file for inflation analysis
-# start anew with different structure
-# each step is run in vectorised way
-# on each series.
-
-
-#' *MAIN SERIES ARE Q-O-Q ANNUALISED!*
-
+#' *Inflation persistence analyses*
+#' 
+#' This scripts runs analyses on inflation persistence
+#' in the US economy from the eponymous paper.
+#' After setting up some flags that prevents parts to run and
+#' detail some operations, it first fetch all necessary data 
+#' to run the analyses. Importantly, some observations are dropped 
+#' from the sample, eg those prior to 1966 for core CPI, since they
+#' are produced artificially by the data provider (BEA); optionally,
+#' also COVID-19 observations can be ditched, since they display
+#' largest, unprecedented swings in inflation.
+#' 
+#' After collecting the data and loading up custom functions, 
+#' the script compiles an 'inflation' list object that will collect 
+#' all the results and plots. Then, the script exports files for Matlab
+#' bayesian analysis.
+#' 
+#' First, frequentist analyses are run, importantly finding the optimal lag
+#' number for each series that will used subsequently.
+#' 
+#' Then, the Machine Learning operation is set up in a separate
+#' tree of scripts. This part does really take much time to complete.
+#' 
+#' Lastly, some more plots are produced in the last call to external script.
 
 
 #### 0 - Setup, data, flags ####
@@ -88,7 +104,7 @@ rm(db_US)
 # pi <- pi["/2002-12-31"]
 
 # drop CoViD19 obs?
-pi <- pi["/2020-02-29"]
+# pi <- pi["/2020-02-29"]
 
 
 # reshape data in long format
@@ -108,7 +124,7 @@ write_csv(x = pi_long,
           path = file.path(data_dir, 'PI_long.csv'))
 
 # scripts for further analysis in MATLAB
-# source('matlab_exp.R')
+source('matlab_exp.R')
 # source('matlab_plot.R')
 
 n=length(names(pi))
@@ -117,26 +133,20 @@ n=length(names(pi))
 # collect all results
 inflation <- list(
   names=list(
-    
-    # forecasts/nowcasts
-    # 'CPI nowcast',
-    # 'PCE nowcast',
-    # 'GDP deflator nowcast',
-    # 'GDP deflator forecast',
 
     # continously compounded annual rate of change
-    'Revised CPI pch',
-    'Revised CPI, no FE pch',
-    'Revised GDP deflator pch',
-    'Revised PCE pch',
-    'Revised PCE, no FE pch',
+    'CPI pch',
+    'CPI, no FE pch',
+    'GDP deflator pch',
+    'PCE pch',
+    'PCE, no FE pch',
     
     # percentage change from a year ago
-    'Revised CPI yoy',
-    'Revised CPI, no FE yoy',
-    'Revised GDP deflator yoy',
-    'Revised PCE yoy',
-    'Revised PCE, no FE yoy'
+    'CPI yoy',
+    'CPI, no FE yoy',
+    'GDP deflator yoy',
+    'PCE yoy',
+    'PCE, no FE yoy'
     ),
   
   # 1

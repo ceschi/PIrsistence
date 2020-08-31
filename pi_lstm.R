@@ -1,5 +1,17 @@
 ##### LSTM part ################################################################
-# add description
+
+# This subscript runs ML LSTM analyses in three parts:
+# - first, networks are trained on the whole sample lenghts in two flavours,
+#   with one or two layers; then predictions from those trained networks are
+#   produced and stored.
+# 
+# - secondly, LSTMs are trained and predictions made on non-overlapping subsamples
+#   of the data; these predictions are then used to compute metrics of inertia changes
+#   
+# - third, a rolling window framework is used to track inflation persistence changes
+#   over time, with the same approach as in bayesian analysis - that is train a model
+#   and use it to produce several forecasts ahead, stitch data and forecasts and
+#   compute some metrics 
 
 
 
@@ -47,6 +59,8 @@ inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
 
 
 # safety check for keras
+library(reticulate)
+reticulate::use_condaenv('r-reticulate', required = T)
 library(keras)
 if (!keras::is_keras_available()){
   keras::install_keras()
@@ -57,7 +71,7 @@ n <- 5 # only pch series
 
 ##### ONE layer LSTM on full sample ############################################
 tic('Full Loop: 1 layer LSTM')
-sink(file = './log_lstm_full.txt', split = T, append = F)
+sink(file = './log_lstm_1l_fullsample.txt', split = T, append = F)
 for (i in 1:n){
   inflation$lstm[['fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation$lstm[['data']][[i]]$train$train_norm,
                                                             # either twice the BIC lags or 9 quarters to prevent
@@ -95,7 +109,7 @@ saveRDS(object = inflation$lstm$fullsample_1l,
 
 
 ##### TWO layer LSTM on full sample ############################################
-sink(file = './log_lstm_2l.txt', split = T, append = F)
+sink(file = './log_lstm_2l_fullsample.txt', split = T, append = F)
 tic('Full loop: 2 layers LSTM')
 for (i in 1:n){
   # fit model

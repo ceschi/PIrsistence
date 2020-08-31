@@ -1,4 +1,4 @@
-# this section takes the data chuncks above, rescales, train an LSTM, makes
+# this section takes the data chuncks, rescales, train an LSTM, makes
 # predictions, computes persistence on train+forecast data. In addition it puts 
 # together the resulting dataframes for plotting. 
 
@@ -76,14 +76,6 @@ for (i in 1:n){
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg)
   
-  # # AR(1) w rolling window
-  # inflation$lstm$chunks[[i]][['ar1_wind']] <- 
-  #   future_pmap(.l = list(df = chunks[[i]]$predictions_xts,
-  #                         window = fm_apply(20, len_chunks),
-  #                         lags = fm_apply(1, len_chunks),
-  #                         interc = fm_apply(intercep, len_chunks)),
-  #               .f = rolloop)
-  
   # simple AR(3) - SOC
   inflation$lstm$chunks[[i]][['ar3']] <- 
     future_pmap(.l = list(data = chunks[[i]]$predictions_xts,
@@ -91,20 +83,8 @@ for (i in 1:n){
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg.sum)
   
-  # # AR(3) - rolling SOC
-  # inflation$lstm$chunks[[i]][['ar3_wind']] <- 
-  #   future_pmap(.l = list(df = chunks[[i]]$predictions_xts,
-  #                         window = fm_apply(20, len_chunks),
-  #                         lags = fm_apply(3, len_chunks),
-  #                         interc = fm_apply(intercep, len_chunks)),
-  #               .f = rolloop.sum)
-  
   # stitch all chunks back together with forecasts
   inflation$lstm$chunks[[i]]$predictions <- bind_rows(chunks[[i]]$predictions)
-  
-  # is this rogue code?? 
-  # inflation$lstm$chunks[[i]]$predictions_xts <- inflation$lstm$chunks[[i]]$predictions %>% 
-  #   group_by(data_chunk) %>% nest() %>% map(tbl_xts)
   
   d_vline <- inflation$lstm$chunks[[i]]$predictions %>% 
                 filter(label == 'train') %>% 
@@ -170,11 +150,8 @@ for (i in 1:n){
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])
 }
 
-
 rm(chunks, len_chunks)
-# plus change colours to red/black for all series in the ML part
-# + 
-# scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+
 
 
 ##### Save results to disk #####################################################
