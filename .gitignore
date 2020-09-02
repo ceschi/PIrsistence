@@ -12,6 +12,9 @@
 *.Rprofvis
 ts.xlsx
 matlab/*
+extra_material/
+*.rds
+plots_*/
 
 downloaded_files/
 plots/

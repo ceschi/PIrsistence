@@ -297,6 +297,54 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   return(coef_sum)
 }
 
+auto.reg.sum2 <- function(data, lags = 1, interc = T){
+  
+  invisible(require(broom))
+  # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
+  # not necessary as already in tidyverse
+  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
+  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+  
+  # function to estimate AR(lags) and sum over parameters
+  
+  transf_data <- lagger(series = data,
+                        laag = lags,
+                        na.cut = F)
+  
+  
+  
+  model_formula <- formula.maker(df = transf_data,
+                                 y = first(names(transf_data)),
+                                 intercept = interc)
+  
+  linear_model <- lm(formula = model_formula,
+                     data = transf_data)
+  
+  output <- broom::tidy(linear_model)
+  
+  coef_sum <- output %>% 
+    filter(term != '(Intercept)') %>% 
+    dplyr::select(estimate) %>%  
+    sum()
+  
+  if (interc){
+    coef_sum_se <- linear_model %>% 
+                    vcov() %>%
+                    .[-1,-1] %>% 
+                    sum() %>%
+                    sqrt()
+  }else{
+    coef_sum_se <- linear_model %>% 
+      vcov() %>%
+      sum() %>% 
+      sqrt()
+  }
+  
+  coef_sum <- cbind(coef_sum, coef_sum_se)
+  
+  return(coef_sum)
+}
+
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
   # remove troublesome NAs
@@ -418,19 +466,19 @@ ms_aropti <- function(df, lags, states){
 # plot rolling estimates for AR1
 plot_roller <- function(df, names, path){
   po <- ggplot(data=df,
-               aes(x=index(df),
+               aes(x=index(df) %>% as.yearqtr(),
                    y=df$Var.1))+
     # plot the above with line geom, in black
     geom_line(colour='black', size=1)+
-    # adds upper confidence band in red
-    geom_line(aes(y=(df$Var.1 + df$.SD2)),
-              colour='red')+
-    # adds lower confidence band in red
-    geom_line(aes(y=(df$Var.1 - df$.SD2)),
-              colour='red')+
+    # add confidence interval
+    geom_ribbon(aes(ymax = (df$Var.1 + df$.SD2),
+                    ymin = (df$Var.1 - df$.SD2)),
+                colour = 'red',
+                size = .25,
+                alpha = .1) +
     # adds unit root line
-    geom_line(aes(y=1), colour='black', size=.8)+
-    geom_line(aes(y=0), colour='black', size=.8)+
+    geom_line(aes(y=1), colour='black', size=.5)+
+    geom_line(aes(y=0), colour='black', size=.5)+
     # plot makeup
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
@@ -454,19 +502,27 @@ plot_roller <- function(df, names, path){
 # plots summed coefficients of optimal AR
 plot_autoregsum <- function(df, names, path, laags){
   po <- ggplot(data=df,
-               aes(x=index(df),
+               aes(x=index(df) %>% as.yearqtr(),
                    y=df[,1]))+
     # plot the above with line geom, in black
     geom_line(colour='black', size=1)+
     # adds unit root line
-    geom_line(aes(y=1), colour='black', size=.8)+
-    geom_line(aes(y=0), colour='black', size=.8)+
+    geom_line(aes(y=1), colour='black', size=.5)+
+    geom_line(aes(y=0), colour='black', size=.5)+
     # plot makeup
     geom_smooth(method='loess', colour='blue', formula = 'y~x')+
-    scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
+    # scale_x_yearqtr(format='%Y Q%q')+ 
+    # scale_x_date(date_labels = '%Y', breaks = '10 years') + 
+    scale_x_yearqtr(format = '%Y Q%q')+
+    theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0)) +
+    # add ribbon style standard errors
+    geom_ribbon(aes(ymin = (df[,1] - df[,2]),
+                    ymax = (df[,1] + df[,2])),
+                size = .25, colour = 'red', alpha = .1)
   
   
   # save plot
