@@ -17,9 +17,11 @@ chunks_dir <- 'plots_chunks'
 tables <- 'tables'
 increm_dir <- 'plots_increm'
 rolling_dir <- 'plots_rollwind'
+
 ar1_dir <- 'plots_ar1'
 ark_dir <- 'plots_ark'
 vars_dir <- 'plots_vars'
+acf_dir <- 'plots_acf'
 
 
 
@@ -38,6 +40,7 @@ increm_dir <- file.path(graphs_dir, lstm_dir, increm_dir)
 ar1_dir <- file.path(graphs_dir, ar1_dir)
 ark_dir <- file.path(graphs_dir, ark_dir)
 vars_dir <- file.path(graphs_dir, vars_dir)
+acf_dir <- file.path(graphs_dir, acf_dir)
 
 
 options(warn=-1) # turns off warnings momentarily
@@ -47,6 +50,7 @@ dir.create(graphs_dir)
 dir.create(models_dir)
 dir.create(ar1_dir)
 dir.create(ark_dir)
+dir.create(acf_dir)
 dir.create(vars_dir)
 
 dir.create(file.path(graphs_dir, lstm_dir))
@@ -616,6 +620,7 @@ noms_tt <- function(x){
   invisible(require(magrittr))
   
   x %>% 
+    gsub(x = ., '^[0-9]{1,2}y_', '') %>% 
     gsub(x = ., 'Revised ', '') %>% 
     gsub(x = ., ', no FE ', ' core ') %>% 
     gsub(x = ., 'pch', '') %>% 

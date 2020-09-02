@@ -247,7 +247,7 @@ inflation[['aroptiridges']] <- future_pmap(.l = list(tseries = sapply(pi, list),
 # AR(1) rolling
 
 inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
-                                            names = inflation[['names']] %>% noms,
+                                            names = inflation[['names']],
                                             path = sapply(rep(ar1_dir, n), list)),
                                           .f = plot_roller
                                           )
@@ -265,9 +265,9 @@ inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
 # plotting ridges
 
 inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
-                                             nam = inflation[['names']] %>% noms,
+                                             nam = inflation[['names']],
                                              laags = inflation[['aropti']],
-                                             path = sapply(rep(graphs_dir, n), list)),
+                                             path = sapply(rep(acf_dir, n), list)),
                                            .f = plot_ridges
                                            )
 
@@ -286,6 +286,10 @@ if (flag___lstm){
 
   
   tic('Machine learning fit and forecasts.\n')
+  
+  # make sure that keras finds proper conda env
+  library(reticulate)
+  reticulate::use_condaenv('r-reticulate', required = T)
   
   # workaround to limit CPUs usage @PSE to 5*4 threads
   # library(tensorflow)
