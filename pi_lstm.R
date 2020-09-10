@@ -216,6 +216,11 @@ for (i in 1:n){
 # stack horizontally and just plot it with ggdensity
 # could provide nice insights into erratic losses
 
+# TODO:
+# - in order to get halflife measures for pure persistence in NL models
+#   it's good to feed a [0, ..., 0, 1] array to the models, iterate with 
+#   a while loop until forecast gets to .5 and count iterations
+
 
 ##### LSTM on 10y of data ######################################################
 tic('\n10 years chunks (with lags)')

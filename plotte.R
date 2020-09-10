@@ -96,7 +96,8 @@ ggsave(filename = file.path(graphs_dir, 'pces_zoomed_plot.pdf'),
        units = 'in', 
        height = 9*8/16)
 
-inflation$plots[['headcores']] <- cowplot::plot_grid( # full cpi
+inflation$plots[['headcores']] <- cowplot::plot_grid( 
+  # full cpi
   inflation$plots[['cpis']],
   # full pce
   inflation$plots[['pces']],
@@ -193,7 +194,8 @@ inflation$plots$histo <- pi_long %>%
   theme(plot.title = element_text(hjust = .5))
 
 
-
+##### other windows width for robustness #######################################
+source('other_win.R')
 
 # housekeeping
 rm(oil_p, comms)

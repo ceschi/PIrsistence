@@ -23,6 +23,8 @@
 #' 
 #' Lastly, some more plots are produced in the last call to external script.
 
+#' *TODO:*
+#' - look into trend changes via the intercept moves.
 
 #### 0 - Setup, data, flags ####
 

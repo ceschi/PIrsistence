@@ -100,6 +100,7 @@ instant_pkgs <- function(pkgs) {
 }
 
 rollm <- function(df, formula){
+  #' *Add here storage of intercept with related SDs*
   
   # function to extract and store coefficients 
   # and double SD in a named row tibble
@@ -130,6 +131,8 @@ rollm <- function(df, formula){
 }
 
 rolloop <- function(df, window=8, lags=1, interc = T){
+  
+  #' *This should be already able to accomodate intercept*
   
   # width of the rolling window
   window <- as.integer(window)
@@ -293,6 +296,8 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   
   output <- broom::tidy(linear_model)
   
+  #' *hand this part for storing intecept*
+  
   coef_sum <- output %>% 
     filter(term != '(Intercept)') %>% 
     dplyr::select(estimate) %>%  
@@ -326,6 +331,7 @@ auto.reg.sum2 <- function(data, lags = 1, interc = T){
   
   output <- broom::tidy(linear_model)
   
+  #' *hand this part for storing intecept*
   coef_sum <- output %>% 
     filter(term != '(Intercept)') %>% 
     dplyr::select(estimate) %>%  
