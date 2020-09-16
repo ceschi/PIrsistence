@@ -277,8 +277,8 @@ inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridge
 ##### LSTM #####################################################################
 if (flag___lstm){
   if (flag___epochs){
-    fit_epochs <- 10
-    fore_epochs <- 10
+    fit_epochs <- 100
+    fore_epochs <- 100
     fore_horiz <- 40
   } else {
     fit_epochs <- 5000
@@ -310,6 +310,10 @@ if (flag___lstm){
 
 tic('Plotting')
 source('plotte.R')
+toc()
+
+tic('Robustness: other windows')
+source('./other_win.R')
 toc()
 
 

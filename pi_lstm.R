@@ -62,6 +62,7 @@ inflation$lstm[['increm_splits']] <- future_pmap(.l = list(data = sapply(pi, FUN
 library(reticulate)
 reticulate::use_condaenv('r-reticulate', required = T)
 library(keras)
+invisible(keras::is_keras_available())
 if (!keras::is_keras_available()){
   keras::install_keras()
 }
