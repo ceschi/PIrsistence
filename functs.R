@@ -490,7 +490,7 @@ plot_roller <- function(df, names, path){
     geom_line(aes(y=1), colour='black', size=.5)+
     geom_line(aes(y=0), colour='black', size=.5)+
     # plot makeup
-    geom_smooth(method='loess', colour='blue', formula = 'y~x')+
+    geom_smooth(method='loess', colour='blue', formula = 'y~x', se = F)+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
@@ -520,7 +520,7 @@ plot_autoregsum <- function(df, names, path, laags){
     geom_line(aes(y=1), colour='black', size=.5)+
     geom_line(aes(y=0), colour='black', size=.5)+
     # plot makeup
-    geom_smooth(method='loess', colour='blue', formula = 'y~x')+
+    geom_smooth(method='loess', colour='blue', formula = 'y~x', se = F)+
     # scale_x_yearqtr(format='%Y Q%q')+ 
     # scale_x_date(date_labels = '%Y', breaks = '10 years') + 
     scale_x_yearqtr(format = '%Y Q%q')+
@@ -954,7 +954,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5)) + 
-    geom_smooth(method = 'loess')
+    geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   
   
@@ -988,7 +988,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
-    geom_smooth(method = 'loess')
+    geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -1100,7 +1100,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
     theme(plot.title = element_text(hjust = 0.5)) + 
-    geom_smooth(method = 'loess')
+    geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   
   
@@ -1134,7 +1134,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_line(size = .5) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
-    geom_smooth(method = 'loess')
+    geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
