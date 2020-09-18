@@ -309,10 +309,7 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
 auto.reg.sum2 <- function(data, lags = 1, interc = T){
   
   invisible(require(broom))
-  # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
-  # not necessary as already in tidyverse
-  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
-  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+  invisible(require(tidyverse))
   
   # function to estimate AR(lags) and sum over parameters
   
@@ -698,8 +695,8 @@ chunk_regs2 <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
     
-    out <- tibble::tibble(ar_sum = regs_list_sum$coef_sum,
-                          ar_sum_se = regs_list_sum$coef_sum_se,
+    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
+                          ar_sum_se = regs_list_sum[,2],
                           chunk = labl,
                           k_lags = ar_lags_sum)
     
