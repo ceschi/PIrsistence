@@ -271,42 +271,42 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
-auto.reg.sum <- function(data, lags = 1, interc = T){
-  
-  invisible(require(broom))
-  # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
-  # not necessary as already in tidyverse
-  # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
-  # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
-  
-  # function to estimate AR(lags) and sum over parameters
-  
-  transf_data <- lagger(series = data,
-                        laag = lags,
-                        na.cut = F)
-  
-  
-  
-  model_formula <- formula.maker(df = transf_data,
-                                 y = first(names(transf_data)),
-                                 intercept = interc)
-  
-  linear_model <- lm(formula = model_formula,
-                     data = transf_data)
-  
-  output <- broom::tidy(linear_model)
-  
-  #' *hand this part for storing intecept*
-  
-  coef_sum <- output %>% 
-    filter(term != '(Intercept)') %>% 
-    dplyr::select(estimate) %>%  
-    sum()
-  
-  return(coef_sum)
-}
+#' auto.reg.sum <- function(data, lags = 1, interc = T){
+#'   
+#'   invisible(require(broom))
+#'   # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
+#'   # not necessary as already in tidyverse
+#'   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
+#'   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
+#'   
+#'   # function to estimate AR(lags) and sum over parameters
+#'   
+#'   transf_data <- lagger(series = data,
+#'                         laag = lags,
+#'                         na.cut = F)
+#'   
+#'   
+#'   
+#'   model_formula <- formula.maker(df = transf_data,
+#'                                  y = first(names(transf_data)),
+#'                                  intercept = interc)
+#'   
+#'   linear_model <- lm(formula = model_formula,
+#'                      data = transf_data)
+#'   
+#'   output <- broom::tidy(linear_model)
+#'   
+#'   #' *hand this part for storing intecept*
+#'   
+#'   coef_sum <- output %>% 
+#'     filter(term != '(Intercept)') %>% 
+#'     dplyr::select(estimate) %>%  
+#'     sum()
+#'   
+#'   return(coef_sum)
+#' }
 
-auto.reg.sum2 <- function(data, lags = 1, interc = T){
+auto.reg.sum <- function(data, lags = 1, interc = T){
   
   invisible(require(broom))
   invisible(require(tidyverse))
