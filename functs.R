@@ -1417,7 +1417,7 @@ k_fullsample_1l <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1427,7 +1427,7 @@ k_fullsample_1l <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   }
   tictoc::toc()
   
@@ -1571,7 +1571,7 @@ k_fullsample_2l <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1581,7 +1581,7 @@ k_fullsample_2l <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   }
   tictoc::toc()
   
@@ -1757,7 +1757,7 @@ k_fullsample_nl <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1767,7 +1767,7 @@ k_fullsample_nl <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = F)
+                   view_metrics = T)
   }
   tictoc::toc()
   
