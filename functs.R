@@ -483,7 +483,7 @@ plot_roller <- function(df, names, path){
     # add confidence interval
     geom_ribbon(aes(ymax = (df$Var.1 + df$.SD2),
                     ymin = (df$Var.1 - df$.SD2)),
-                colour = 'red',
+                colour = 'grey',
                 size = .25,
                 alpha = .1) +
     # adds unit root line
@@ -532,7 +532,7 @@ plot_autoregsum <- function(df, names, path, laags){
     # add ribbon style standard errors
     geom_ribbon(aes(ymin = (df[,1] - df[,2]),
                     ymax = (df[,1] + df[,2])),
-                size = .25, colour = 'red', alpha = .1)
+                size = .25, colour = 'grey', alpha = .1)
   
   
   # save plot
@@ -635,7 +635,7 @@ noms_tt <- function(x){
 
 ##### III - treat LSTM predictions output ######################################
 
-chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
+chunk_regs2 <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
   # and labels for start/end
   
@@ -698,7 +698,8 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
     
-    out <- tibble::tibble(ar_sum = regs_list_sum,
+    out <- tibble::tibble(ar_sum = regs_list_sum$coef_sum,
+                          ar_sum_se = regs_list_sum$coef_sum_se,
                           chunk = labl,
                           k_lags = ar_lags_sum)
     
@@ -727,7 +728,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   
 }
 
-plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
+plot_chunkregs_bar2 <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # bar plot/save for the AR1 models on chunks of data
   # can be used also for rolling windows and increasing windows
@@ -790,7 +791,8 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
+    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -2015,3 +2017,182 @@ devtools::install_github('ceschi/urcabis')
 
 #### housekeeping ####
 rm(pkgs,lstm_dir)
+
+
+
+
+
+
+
+
+chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
+  # create a tibble from chunks' regressions
+  # and labels for start/end
+  
+  invisible(require(magrittr))
+  
+  tidyout <- function(onereg, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    # start date
+    start <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      head(1) %>% 
+      as.Date()
+    # adjust for one lag
+    # true only for this AR1 case
+    start <- start - months(3)
+    
+    end <- onereg %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
+    
+    out <- broom::tidy(onereg) %>% tibble::add_column(chunk = labl)
+    
+    return(out)
+  }
+  
+  
+  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  
+  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  
+  
+  # second part for regsum
+  tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
+    # extract results from lm and 
+    # add label. Does the heavy lifting.
+    
+    # start date
+    start <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      head(1) %>% 
+      as.Date()
+    # adjust for lags wrt ar1
+    start <- start - base::months(3)*(ar_lags_sum-1)
+    
+    end <- ar1 %>% 
+      model.frame() %>% 
+      rownames() %>% 
+      tail(fore_horiz + 1) %>% 
+      head(1) %>% 
+      as.Date()
+    
+    labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
+    
+    out <- tibble::tibble(ar_sum = regs_list_sum$coef_sum
+                          chunk = labl,
+                          k_lags = ar_lags_sum)
+    
+    return(out)
+  }
+  
+  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
+  #                                             ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
+  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+  #                                             regs_list_sum = regs_list_sum), 
+  #                                   .f = tidyout_sum) %>% 
+  #   dplyr::bind_rows()
+  
+  out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
+                                       ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
+                                       fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
+                                       regs_list_sum = regs_list_sum), 
+                             .f = tidyout_sum) %>% 
+    dplyr::bind_rows()
+  
+  
+  out <- list(ar1 = out_ar1,
+              ark_sum = out_ark_sum)
+  
+  return(out)
+  
+}
+
+plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
+  
+  # bar plot/save for the AR1 models on chunks of data
+  # can be used also for rolling windows and increasing windows
+  # but DOES require lm object - hence need adaptation for autosum fct
+  
+  # part 1: bar plot for AR1 on each chunk
+  
+  # number of chunks
+  len <- chunk_regs_obj$ar1 %>% 
+    select(chunk) %>% 
+    unique() %>% 
+    nrow()
+  
+  # setup title
+  tt <- paste0(name %>% noms_tt(),
+               ': ',
+               len,
+               ' chunks with forecasts')
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ar1_chunks.pdf')
+  
+  # make plot, filtering out intercept
+  plt <- chunk_regs_obj$ar1 %>% 
+    filter(term != '(Intercept)') %>% 
+    ggplot(aes(x = chunk, y = estimate, group = chunk))+
+    geom_col(alpha = .5) +
+    geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
+    ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  
+  
+  ggsave(plot = plt, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  
+  # Part 2: barplot for each chunk, sum of coefficients
+  
+  labely <- chunk_regs_obj$ark_sum %>% 
+    select(k_lags) %>% 
+    unique() %>% 
+    paste0('sum of AR(', ., ') coefficients')
+  
+  tt <- paste0(name %>% noms_tt(),
+               ': ', len, ' chunks with forecasts - ',
+               labely)
+  
+  jj <- name %>% 
+    noms() %>% 
+    paste0('_ark_sum_chunks.pdf')
+  
+  
+  plt_sum <- chunk_regs_obj$ark_sum %>% 
+    ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
+    geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt)
+  
+  ggsave(plot = plt_sum, 
+         filename = file.path(graphs_dir., 
+                              jj),
+         device = 'pdf', 
+         units = 'in', 
+         width = 8, 
+         height = 9*8/16)
+  
+  plt_list <- list(ar1 = plt, 
+                   ark_sum = plt_sum)
+  
+  
+  return(plt_list)
+}
