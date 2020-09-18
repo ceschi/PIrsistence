@@ -272,37 +272,37 @@ auto.reg <- function(data, lags = 1, interc = T){
 }
 
 #' auto.reg.sum <- function(data, lags = 1, interc = T){
-#'   
+#' 
 #'   invisible(require(broom))
 #'   # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
 #'   # not necessary as already in tidyverse
 #'   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
 #'   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
-#'   
+#' 
 #'   # function to estimate AR(lags) and sum over parameters
-#'   
+#' 
 #'   transf_data <- lagger(series = data,
 #'                         laag = lags,
 #'                         na.cut = F)
-#'   
-#'   
-#'   
+#' 
+#' 
+#' 
 #'   model_formula <- formula.maker(df = transf_data,
 #'                                  y = first(names(transf_data)),
 #'                                  intercept = interc)
-#'   
+#' 
 #'   linear_model <- lm(formula = model_formula,
 #'                      data = transf_data)
-#'   
+#' 
 #'   output <- broom::tidy(linear_model)
-#'   
+#' 
 #'   #' *hand this part for storing intecept*
-#'   
-#'   coef_sum <- output %>% 
-#'     filter(term != '(Intercept)') %>% 
-#'     dplyr::select(estimate) %>%  
+#' 
+#'   coef_sum <- output %>%
+#'     filter(term != '(Intercept)') %>%
+#'     dplyr::select(estimate) %>%
 #'     sum()
-#'   
+#' 
 #'   return(coef_sum)
 #' }
 
@@ -895,7 +895,8 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       head(1) %>% 
       as.Date()
     
-    out <- tibble::tibble(ar_sum = regs_list_sum,
+    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
+                          ar_sum_se = regs_list_sum[,2],
                           enddate = end,
                           k_lags = ar_lags_sum) %>% 
       tibbletime::as_tbl_time(index = enddate)
@@ -986,6 +987,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
+    geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .5) +
     theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
