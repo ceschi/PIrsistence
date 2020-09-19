@@ -1372,7 +1372,8 @@ k_fullsample_1l <- function(data,
   
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
+  
+  keras::k_clear_session()
   
   model_compiled <- keras_model_sequential()
   model_compiled %>%
@@ -1444,6 +1445,7 @@ k_fullsample_1l <- function(data,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   return(out)
 }
@@ -1520,6 +1522,7 @@ k_fullsample_2l <- function(data,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   model_compiled <- keras_model_sequential()
   model_compiled %>%
@@ -1598,6 +1601,7 @@ k_fullsample_2l <- function(data,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   return(out)
 }
@@ -1725,6 +1729,7 @@ k_fullsample_nl <- function(data,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   model_compiled <- extra_layers(nodes_list,
                                  options) %>% 
@@ -1872,6 +1877,7 @@ online_pred <- function(model_fitted,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   return(forecast)
 }
@@ -1969,6 +1975,7 @@ multi_online <- function(model_fitted,
   
   # wipe out mem from previous runs
   on.exit(keras::backend()$clear_session())
+  keras::k_clear_session()
   
   return(forecast)
   
