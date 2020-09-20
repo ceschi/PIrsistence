@@ -45,4 +45,4 @@ for (w in 1:length(windows)){
   
 }
 
-rm(other_wind, windows, lbl)
+rm(other_wind, windows, lbl, w)
