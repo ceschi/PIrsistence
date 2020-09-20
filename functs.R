@@ -309,7 +309,8 @@ auto.reg <- function(data, lags = 1, interc = T){
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
   invisible(require(broom))
-  invisible(require(tidyverse))
+  invisible(require(dplyr))
+  invisible(require(magrittr))
   
   # function to estimate AR(lags) and sum over parameters
   
@@ -491,8 +492,8 @@ plot_roller <- function(df, names, path){
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(size = rel(2)))
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
+          text = element_text(size = rel(3.5)))
   
   
   
@@ -525,9 +526,9 @@ plot_autoregsum <- function(df, names, path, laags){
     theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
-    theme(plot.title = element_text(hjust = 0.5),
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
           axis.text.x = element_text(angle = 0),
-          text = element_text(size = rel(2))) +
+          text = element_text(size = rel(3.5))) +
     # add ribbon style standard errors
     geom_ribbon(aes(ymin = (df[,1] - df[,2]),
                     ymax = (df[,1] + df[,2])),
@@ -562,7 +563,7 @@ plot_ridges <- function(df, nam, laags, path){
                    laags,
                    ' end. lags')) +
     xlab('Lag order') + ylab(' ') + theme_minimal()+
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)))
   
   
   ggsave(paste0(nam %>% noms(), '_AR(',laags,')acf.pdf'),
@@ -758,8 +759,8 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_col(alpha = .5) +
     geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(size = rel(2)))
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
+          text = element_text(size = rel(3.5)))
   
   
   
@@ -791,8 +792,8 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(size = rel(2))) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
+          text = element_text(size = rel(3.5))) + ggtitle(tt) + 
     geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)
   
   ggsave(plot = plt_sum, 
@@ -957,7 +958,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5)) + 
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5))) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   
@@ -992,7 +993,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .5) +
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5))) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
@@ -1104,8 +1105,8 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(size = rel(2))) + 
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
+          text = element_text(size = rel(3.5))) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   
@@ -1139,8 +1140,8 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .5) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
-    theme(plot.title = element_text(hjust = 0.5),
-          text = element_text(size = rel(2))) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
+          text = element_text(size = rel(3.5))) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
@@ -1188,7 +1189,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
     theme_minimal() + ggtitle(tt) + 
     ylab('AR(1) coefficient') + xlab(element_blank())
   theme(plot.title = element_text(hjust = .5),
-        text = element_text(size = rel(2)))
+        text = element_text(size = rel(3.5)))
   
   ggsave(plot = ar1_plt,
          filename = file.path(graphs_dir., jj),
@@ -1220,7 +1221,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ylab('Sum of coefficients') + xlab(element_blank())+
     theme(plot.title = element_text(hjust = .5),
-          text = element_text(size = rel(2)))+
+          text = element_text(size = rel(3.5)))+
     ggtitle(tt)
   
   ggsave(plot = ark_plt,
