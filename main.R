@@ -312,10 +312,6 @@ tic('Plotting')
 source('plotte.R')
 toc()
 
-tic('Robustness: other windows')
-source('./other_win.R')
-toc()
-
 
 ##### TODO #####################################################################
 

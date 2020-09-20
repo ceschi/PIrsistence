@@ -14,7 +14,7 @@ inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2
     axis.text.x = element_text(angle = 45),
     plot.title = element_text(hjust = 0.5, size = rel(3.5)))
 
-ggsave(filename = file.path(graphs_dir, 'ts_plot.pdf'),
+ggsave(filename = fvars_dir, 'ts_plot.pdf'),
        plot = inflation$plots[['plot_ts']], 
        device = 'pdf',
        width = 8,
@@ -34,7 +34,7 @@ inflation$plots[['cpis']] <- pi_long %>%
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 
-ggsave(filename = file.path(graphs_dir, 'cpis_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'cpis_plot.pdf'),
        plot = inflation$plots[['cpis']], 
        device = 'pdf',
        width = 8,
@@ -52,7 +52,7 @@ inflation$plots[['pces']] <- pi_long %>%
     plot.title = element_text(hjust = 0.5, size = rel(3.5)))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
-ggsave(filename = file.path(graphs_dir, 'pces_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'pces_plot.pdf'),
        plot = inflation$plots[['pces']], 
        device = 'pdf',
        width = 8,
@@ -71,7 +71,7 @@ inflation$plots[['cpis_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
 
-ggsave(filename = file.path(graphs_dir, 'cpis_zoomed_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'cpis_zoomed_plot.pdf'),
        plot = inflation$plots[['cpis_zoom']], 
        device = 'pdf',
        width = 8,
@@ -89,7 +89,7 @@ inflation$plots[['pces_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
     plot.title = element_text(hjust = 0.5, size = rel(3.5)))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
-ggsave(filename = file.path(graphs_dir, 'pces_zoomed_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'pces_zoomed_plot.pdf'),
        plot = inflation$plots[['pces_zoom']], 
        device = 'pdf',
        width = 8,
@@ -109,7 +109,7 @@ inflation$plots[['headcores']] <- cowplot::plot_grid(
   ncol = 2, nrow = 2
 )
 
-ggsave(filename = file.path(graphs_dir, 'headcores_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'headcores_plot.pdf'),
        plot = inflation$plots[['headcores']], 
        device = 'pdf',
        width = 8,
@@ -143,7 +143,7 @@ inflation$plots[['oil_grid']] <- cowplot::plot_grid(inflation$plots[['oil']],
                                                     inflation$plots[['oil_p']],
                                                     nrow = 2)
 
-ggsave(filename = file.path(graphs_dir, 'wti_pi_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'wti_pi_plot.pdf'),
        plot = inflation$plots[['oil_grid']], 
        device = 'pdf',
        width = 8,
@@ -177,7 +177,7 @@ inflation$plots[['comm_grid']] <- cowplot::plot_grid(inflation$plots[['comm']],
                                                     inflation$plots[['comm_p']],
                                                     nrow = 2)
 
-ggsave(filename = file.path(graphs_dir, 'comm_pi_plot.pdf'),
+ggsave(filename = file.path(vars_dir, 'comm_pi_plot.pdf'),
        plot = inflation$plots[['comm_grid']], 
        device = 'pdf',
        width = 8,
