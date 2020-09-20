@@ -1372,7 +1372,6 @@ k_fullsample_1l <- function(data,
   
   
   # wipe out mem from previous runs
-  
   keras::k_clear_session()
   
   model_compiled <- keras_model_sequential()
@@ -1444,7 +1443,6 @@ k_fullsample_1l <- function(data,
   }
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
   return(out)
@@ -1521,7 +1519,6 @@ k_fullsample_2l <- function(data,
                       dim = c(n_sample, n_steps, n_feat))
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
   model_compiled <- keras_model_sequential()
@@ -1600,7 +1597,6 @@ k_fullsample_2l <- function(data,
   }
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
   return(out)
@@ -1660,16 +1656,16 @@ k_fullsample_nl <- function(data,
             input_shape = options$input_shape,
             batch_size = options$size_batch,
             units = nodes_list[[l]],
-            return_sequences = options$ret_sequences[[i]],
-            stateful = options$stateful[[i]]
+            return_sequences = options$ret_sequences[[l]],
+            stateful = options$stateful[[l]]
           )
         
       }else{
         model %>% 
           layer_lstm(
             units = nodes_list[[l]],
-            return_sequences = options$ret_sequences[[i]],
-            stateful = options$stateful[[i]],
+            return_sequences = options$ret_sequences[[l]],
+            stateful = options$stateful[[l]],
             kernel_regularizer = regularizer_l2(l = 0.01)
           )
       }
@@ -1728,14 +1724,19 @@ k_fullsample_nl <- function(data,
                       dim = c(n_sample, n_steps, n_feat))
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
+  # set batch_size in options list
+  options$size_batch <- size_batch
+  options$input_shape <- c(n_steps, n_feat)
+  
+  # setup and compile main model
   model_compiled <- extra_layers(nodes_list,
                                  options) %>% 
     compile(optimizer = 'adam', 
             loss = 'mse')
   
+  # setup and compile online model
   options_online <- options
   options_online$size_batch <- 1
   model_online <- extra_layers(nodes_list,
@@ -1743,7 +1744,7 @@ k_fullsample_nl <- function(data,
     compile(optimizer = 'adam',
             loss = 'mse')
   
-  
+  # train model
   tictoc::tic('\n\nModel estimation')
   if (ES){
     # estimate with early stopping
@@ -1786,6 +1787,7 @@ k_fullsample_nl <- function(data,
   if (is.xts(data)){
     out[['time_index']] <- time_index
   }
+  
   
   return(out)
 }
@@ -1876,7 +1878,6 @@ online_pred <- function(model_fitted,
   # names(forecast)[1] <- va
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
   return(forecast)
@@ -1974,7 +1975,6 @@ multi_online <- function(model_fitted,
   # names(forecast)[1] <- va
   
   # wipe out mem from previous runs
-  on.exit(keras::backend()$clear_session())
   keras::k_clear_session()
   
   return(forecast)
