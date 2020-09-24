@@ -30,7 +30,7 @@ for (i in 1:n){
                                  nodes = 500, 
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
-                                 keepBest = F,
+                                 keepBest = T,
                                  size_batch = 'auto')                           # 'auto' is also an alternative but needs testing
     # make predictions: horizon small to avoid overestimates
     # see paper and make point clear for flatlining preds
