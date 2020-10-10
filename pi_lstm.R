@@ -72,7 +72,6 @@ n <- 5 # only pch series
 
 ##### ONE layer LSTM on full sample ############################################
 tic('Full Loop: 1 layer LSTM')
-sink(file = './log_lstm_1l_fullsample.txt', split = T, append = F)
 for (i in 1:n){
   inflation$lstm[['fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation$lstm[['data']][[i]]$train$train_norm,
                                                             # either twice the BIC lags or 9 quarters to prevent
@@ -103,14 +102,12 @@ for (i in 1:n){
   invisible(gc())
 }
 toc()
-sink(NULL)
 
 saveRDS(object = inflation$lstm$fullsample_1l,
-        file = './lstm_fullsample_1l_list.rds')
+        file = file.path(rds_dir,'lstm_fullsample_1l_list.rds'))
 
 
 ##### TWO layer LSTM on full sample ############################################
-sink(file = './log_lstm_2l_fullsample.txt', split = T, append = F)
 tic('Full loop: 2 layers LSTM')
 for (i in 1:n){
   # fit model
@@ -138,10 +135,9 @@ for (i in 1:n){
   invisible(gc())
 }
 toc()
-sink(NULL)
 
 saveRDS(object = inflation$lstm$fullsample_2l,
-        file = './lstm_fullsample_2l_list.rds')
+        file = file.path(rds_dir,'lstm_fullsample_2l_list.rds'))
 
 
 
@@ -167,7 +163,7 @@ for (i in 1:n){
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 1L: online forecasts')) + 
     theme(legend.position = 'bottom', 
           legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5, size = rel(3.5)))+
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
@@ -177,7 +173,7 @@ for (i in 1:n){
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 2L: online forecasts')) + 
     theme(legend.position = 'bottom', 
           legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5, size = rel(3.5)))+
+          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
   
@@ -249,4 +245,4 @@ toc()
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm,
-        file = './lstm_list.Rds')
+        file = file.path(rds_dir,'lstm_list.Rds'))
