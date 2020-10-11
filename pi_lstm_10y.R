@@ -27,7 +27,8 @@ for (i in 1:n){
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = 10,                                  #inflation[['aropti']][[n]],  # here, 10q lags but this could vary
-                                 nodes = 500, 
+                                 # nodes = 500, 
+                                 nodes = 5,
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
                                  keepBest = T,
@@ -150,7 +151,7 @@ for (i in 1:n){
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])
 }
 
-rm(chunks, len_chunks)
+rm(chunks, len_chunks, prepped_chunks)
 
 
 

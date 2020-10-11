@@ -1,5 +1,8 @@
 ###### Plotting script ########################################################
 
+# set n back to all variables
+n <- length(names(pi))
+
 # general plot with raw data
 inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2020"]))) + 
   geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
