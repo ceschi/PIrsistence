@@ -24,6 +24,9 @@ ark_dir <- 'plots_ark'
 vars_dir <- 'plots_vars'
 acf_dir <- 'plots_acf'
 
+# bayes
+lines_dir <- 'plots_lines'
+distro_dir <- 'plots_distro'
 
 
 
@@ -43,7 +46,8 @@ ark_dir <- file.path(graphs_dir, ark_dir)
 vars_dir <- file.path(graphs_dir, vars_dir)
 acf_dir <- file.path(graphs_dir, acf_dir)
 rds_dir <- file.path(working_directory, rds_dir)
-
+lines_dir <- file.path(graphs_dir, lines_dir)
+distro_dir <- file.path(graphs_dir, distro_dir)
 
 options(warn=-1) # turns off warnings momentarily
 dir.create(temp_dir)
@@ -63,6 +67,8 @@ dir.create(chunks_dir)
 dir.create(rolling_dir)
 dir.create(tables)
 dir.create(increm_dir)
+dir.create(lines_dir)
+dir.create(distro_dir)
 options(warn=0) # turns warnings back on
 
 ##### II - general purpose functions ###########################################

@@ -11,7 +11,7 @@ inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2
   geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
   geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
   theme_minimal() + theme(legend.title = element_blank()) +
-  ggtitle('Inflation series') + xlab(' ') + ylab(' ') +
+  xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
     axis.text.x = element_text(angle = 45),
@@ -31,7 +31,7 @@ inflation$plots[['cpis']] <- pi_long %>%
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', 
+  theme(legend.position = 'none', 
     axis.text.x = element_text(angle = 45),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
@@ -50,7 +50,7 @@ inflation$plots[['pces']] <- pi_long %>%
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
-  theme(legend.position = 'bottom', 
+  theme(legend.position = 'none', 
     axis.text.x = element_text(angle = 45),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
@@ -190,9 +190,10 @@ ggsave(filename = file.path(vars_dir, 'comm_pi_plot.pdf'),
 
 
 ##### histograms ###############################################################
-inflation$plots$histo <- pi_long %>%
-  filter(str_detect(index, 'pch')) %>% 
+inflation$plots$histo <- pi_long %>% 
+  filter(str_detect(index, 'pch')) %>% group_by(index) %>% mutate(mean = mean(rate), median = median(rate)) %>% ungroup() %>% 
   ggplot(data = ., aes(x = rate, group = index)) + geom_density(fill = 'grey') + 
+  geom_vline(xintercept = 0) + 
   facet_wrap(~index) + theme_minimal() + ggtitle('Kernel densities') + 
   theme(plot.title = element_text(hjust = .5))
 

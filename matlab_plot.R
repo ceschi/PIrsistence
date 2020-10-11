@@ -42,7 +42,7 @@ plot_draws <- function(main_path, var, name){
     dplyr::select(-value) %>% 
     dplyr::distinct() 
   
-  # test chunck
+  # test chunk
   # bsum <- bsum[sample(1:nrow(bsum), 10000),]
   
   p <- bsum %>% 
@@ -58,8 +58,9 @@ plot_draws <- function(main_path, var, name){
     geom_vline(xintercept = 0, colour = 'black', size = .75) +
     scale_fill_viridis(option = 'C') + theme_ridges() + 
     theme(legend.position = 'bottom', 
-    	legend.justification = 'center',
-    	plot.title = element_text(hjust = 0.5)) +
+        	legend.justification = 'center',
+        	plot.title = element_text(hjust = 0.5),
+        	legend.key.width = unit(1, 'inches'))  +
     guides(colour=guide_legend(nrow = 1, byrow = T))
   
   
@@ -82,7 +83,8 @@ plot_draws <- function(main_path, var, name){
     theme_ridges() + ggtitle(name) + labs(colour = 'Qtls') + 
     theme(axis.text.x = element_text(angle = 0),
           legend.position = 'none',
-    	  plot.title = element_text(hjust = 0.5)) +
+      	  plot.title = element_text(hjust = 0.5), 
+      	  axis.title = element_blank()) +
     ylab(' ') + xlab(' ')
   
   
@@ -90,7 +92,7 @@ plot_draws <- function(main_path, var, name){
   ggsave(paste0(var, '_distro.pdf'),
          plot = p,
          device='pdf',
-         path = graphs_dir,
+         path = distro_dir,
          width = 8,
          height = 8*9/16, 
          units='in')
@@ -99,7 +101,7 @@ plot_draws <- function(main_path, var, name){
   ggsave(paste0(var, '_lines.pdf'),
          plot = p2,
          device='pdf',
-         path = graphs_dir,
+         path = lines_dir,
          width = 8,
          height = 8*9/16, 
          units='in')
@@ -114,6 +116,7 @@ plot_draws <- function(main_path, var, name){
 var <- names(pi) %>% grep(pattern = '_pch', x = ., value = T)
 main_path <- 'C:/Users/emanu/Desktop'
 main_path <- 'D:/emanu/OneDrive/R/pirsistence/matlab/'
+main_path <- 'D:/emanu/OneDrive/Matlab/infl_pers_07/brute_force/'
 names <- c(
   'Revised CPI pch',
   'Revised CPI, no FE pch',
@@ -123,7 +126,7 @@ names <- c(
 )
 
 mega_plots <- list()
-names <- names %>% gsub('Revised ', '', .) %>% gsub(', no FE pch', ' core', .) %>% gsub(' pch', ' headline', .)
+names <- names %>% noms_tt()
 
 
 pb <- txtProgressBar(min = 0, 
