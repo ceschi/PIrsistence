@@ -736,8 +736,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     paste0('sum of AR(', ., ') coefficients')
   
   tt <- paste0(name %>% noms_tt(),
-               ': ', len, ' chunks - ',
-               labely)
+               ': ', len, ' chunks')
   
   jj <- name %>% 
     noms() %>% 
