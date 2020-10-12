@@ -567,6 +567,7 @@ noms <- function(x){
     gsub(x = ., 'rev_', '') %>% 
     gsub(x = ., ',', '') %>% 
     gsub(x = ., ' ', '_') %>% 
+    trimws() %>% 
     return()
 }
 
@@ -578,6 +579,7 @@ noms_tt <- function(x){
     gsub(x = ., 'Revised ', '') %>% 
     gsub(x = ., ', no FE ', ' core ') %>% 
     gsub(x = ., 'pch', '') %>% 
+    trimws() %>% 
     return()
 }
 
