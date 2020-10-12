@@ -717,11 +717,12 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
                       ymax = (estimate + std.error)), 
                   width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
-    theme(axis.text = element_text(size = rel(1)), 
+    theme(axis.text = element_text(size = rel(1.5)), 
           legend.text = element_text(size = rel(1.5)), 
           title = element_text(size = rel(1.5)),
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 45))
+          axis.text.x = element_text(angle = 0,
+                                     size = rel(.65)))
   
   
   
@@ -758,8 +759,8 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
           legend.text = element_text(size = rel(1.5)), 
           title = element_text(size = rel(1.5)),
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 45,
-                                     size = rel(.5)))
+          axis.text.x = element_text(angle = 0,
+                                     size = rel(.65)))
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
