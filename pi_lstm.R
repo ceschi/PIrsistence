@@ -163,23 +163,27 @@ for (i in 1:n){
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 1L: online forecasts')) + 
-    theme(legend.position = 'bottom', 
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5),
+          legend.position = 'bottom', 
+          legend.title = element_blank())
   
   inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ' 2L: online forecasts')) + 
-    theme(legend.position = 'bottom', 
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          legend.position = 'bottom', 
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))
   
   
   # write out plots

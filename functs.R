@@ -466,8 +466,10 @@ plot_roller <- function(df, names, path){
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
-    theme(plot.title = element_text(hjust = 0.5)) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5))
   
   
   
@@ -502,12 +504,14 @@ plot_autoregsum <- function(df, names, path, laags){
     theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
-    theme(plot.title = element_text(hjust = 0.5)) +
     # add ribbon style standard errors
     geom_ribbon(aes(ymin = (df[,1] - df[,2]),
                     ymax = (df[,1] + df[,2])),
                 size = .25, colour = 'grey', alpha = .1)+
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5))
   
   
   # save plot
@@ -713,9 +717,11 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
                       ymax = (estimate + std.error)), 
                   width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 45)) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 45))
   
   
   
@@ -746,11 +752,14 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 45)) + 
     ggtitle(tt) + 
     geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)+
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 45,
+                                     size = rel(.5)))
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -793,10 +802,17 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
   # notes <- paste0('(', 1:ll, '): ', mod_labels) %>%
   #   paste(collapse = '; ')
   
-  # mod_labels <- gsub(pattern = ' - ', replacement = '\\\\',  x = mod_labels, fixed = T) %>% 
-  #   paste0('{', ., '}')
+  mod_labels <- gsub(pattern = ' - ', 
+                     replacement = ' ',  
+                     x = mod_labels)
   
-  # mod_labels <- paste0('\\multirow{3}{2cm}{', mod_labels, '}')
+  mod_num <- paste0('& (', 1:length(mod_labels), ') ')%>% 
+    paste0(collapse = '') %>% trimws(which = 'right')
+  patt_mod_num <- paste0('\\[-1.8ex] ', mod_num, '\\') 
+  
+  mod_labels <- paste0('\\multirow{2}{1cm}{', mod_labels, '}')
+  repl_mod_labels <- paste0('\\[-1.8ex] ', rep('& ', length(mod_labels)) %>% paste0(collapse = ''), '\\') 
+  
   
   # produce table and suppress console output
   sink('oo')
@@ -809,7 +825,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
                                  ci = F,
                                  font.size = 'small',
                                  initial.zero = F,
-                                 # column.labels = mod_labels,
+                                 column.labels = mod_labels,
                                  # notes = notes,
                                  header = F, 
                                  model.numbers = T,
@@ -819,11 +835,17 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
     gsub(pattern = strin,
          replacement = repla,
          x = .) %>% 
-    # write output
-    write(x = ., 
-          file = destination) %>% capture.output()
+    gsub(pattern = patt_mod_num,
+         replacement = repl_mod_labels, 
+         x = ., 
+         fixed = T) %>% 
+    write(x = .,
+          file = destination) %>% 
+    capture.output()
+  
   sink(NULL)
   unlink(x = 'oo')
+
 }
 
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -913,7 +935,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # setup title
   tt <- paste0(name %>% noms_tt(),
-               ': rolling window with forecasts')
+               ': rolling window')
   
   jj <- name %>% 
     noms() %>% 
@@ -924,11 +946,15 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .75) +
-    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25)+
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5)) + 
+    theme(plot.title = element_text(hjust = 0.5,
+                                    size = rel(1.5)),
+          axis.title = element_text(size = rel(1.5)),
+          axis.text = element_text(size = rel(1.5))) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
   
   
   
@@ -949,8 +975,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     paste0('sum of AR(', ., ') coefficients')
   
   tt <- paste0(name %>% noms_tt(),
-               ': rolling window with forecasts - ',
-               labely)
+               ': rolling window')
   
   jj <- name %>% 
     noms() %>% 
@@ -962,7 +987,9 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .5) +
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5,
+                                    size = rel(1.5)), 
+          axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
@@ -1202,9 +1229,6 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   return(out)
   
 }
-
-
-
 
 
 ##### IV - LSTM functions ######################################################
@@ -1993,13 +2017,6 @@ devtools::install_github('ceschi/urcabis')
 # devtools::install_version("readxl", version = "1.0.0")
 # library(urcabis) # for when the package will be duly updated (pull request)
 
-
-##### Themes for plots #########################################################
-
-theme_ts <- theme(axis.text = element_text(size = rel(1.5)), 
-                  legend.text = element_text(size = rel(1.5)), 
-                  title = element_text(size = rel(1.5)),
-                  plot.title = element_text(hjust = 0.5))
 
 
 #### housekeeping ####

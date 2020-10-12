@@ -100,13 +100,15 @@ for (i in 1:n){
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk)))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on ',len_chunks, ' chunks' )) + 
-    theme(legend.position = 'bottom', 
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
     geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5), 
+          legend.position = 'bottom', 
+          legend.title = element_blank())
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,

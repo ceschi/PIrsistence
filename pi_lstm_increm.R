@@ -128,7 +128,10 @@ for (i in 1:n){
     guides(colour = guide_legend(nrow = 1))+
     scale_alpha_discrete(range = c(.12, 1))+
     scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
-    theme_ts
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5))
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,
