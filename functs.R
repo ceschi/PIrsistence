@@ -694,7 +694,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   tt <- paste0(name %>% noms_tt(),
                ': ',
                len,
-               ' chunks with forecasts')
+               ' chunks')
   
   jj <- name %>% 
     noms() %>% 
@@ -712,7 +712,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
                   width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
     theme(plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 0)) +
+          axis.text.x = element_text(angle = 45)) +
     theme_ts
   
   
@@ -734,7 +734,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     paste0('sum of AR(', ., ') coefficients')
   
   tt <- paste0(name %>% noms_tt(),
-               ': ', len, ' chunks with forecasts - ',
+               ': ', len, ' chunks - ',
                labely)
   
   jj <- name %>% 
