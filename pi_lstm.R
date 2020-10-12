@@ -167,7 +167,8 @@ for (i in 1:n){
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
+    theme_ts
   
   inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
@@ -177,7 +178,8 @@ for (i in 1:n){
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))+
     guides(colour = guide_legend(nrow = 1))+
-    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
+    theme_ts
   
   
   # write out plots

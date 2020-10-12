@@ -14,8 +14,8 @@ inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2
   xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
-    axis.text.x = element_text(angle = 45),
-    plot.title = element_text(hjust = 0.5))
+        axis.text.x = element_text(angle = 45),
+        plot.title = element_text(hjust = 0.5))
 
 ggsave(filename = file.path(vars_dir, 'ts_plot.pdf'),
        plot = inflation$plots[['plot_ts']], 

@@ -466,7 +466,8 @@ plot_roller <- function(df, names, path){
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5)) +
+    theme_ts
   
   
   
@@ -505,7 +506,8 @@ plot_autoregsum <- function(df, names, path, laags){
     # add ribbon style standard errors
     geom_ribbon(aes(ymin = (df[,1] - df[,2]),
                     ymax = (df[,1] + df[,2])),
-                size = .25, colour = 'grey', alpha = .1)
+                size = .25, colour = 'grey', alpha = .1)+
+    theme_ts
   
   
   # save plot
@@ -709,7 +711,9 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
                       ymax = (estimate + std.error)), 
                   width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0)) +
+    theme_ts
   
   
   
@@ -741,8 +745,11 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
-    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)
+    theme(plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 45)) + 
+    ggtitle(tt) + 
+    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)+
+    theme_ts
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -781,6 +788,15 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
   strin <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name, '\\}')
   repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name_tt, '\\}')
   
+  # ll <- length(mod_labels)
+  # notes <- paste0('(', 1:ll, '): ', mod_labels) %>%
+  #   paste(collapse = '; ')
+  
+  # mod_labels <- gsub(pattern = ' - ', replacement = '\\\\',  x = mod_labels, fixed = T) %>% 
+  #   paste0('{', ., '}')
+  
+  # mod_labels <- paste0('\\multirow{3}{2cm}{', mod_labels, '}')
+  
   # produce table and suppress console output
   sink('oo')
   # stargazer formatting
@@ -788,9 +804,14 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
                                  type = 'latex', 
                                  covariate.labels = c('\\nth{1} lag', NA), 
                                  dep.var.labels = name,
+                                 no.space = T,
                                  ci = F,
+                                 font.size = 'small',
+                                 initial.zero = F,
+                                 # column.labels = mod_labels,
+                                 # notes = notes,
                                  header = F, 
-                                 model.numbers = F,
+                                 model.numbers = T,
                                  column.sep.width = '1pt',
                                  omit.stat = c('ser', 'res.dev')) %>% 
     # regex replace to fix cell width
@@ -1971,6 +1992,13 @@ devtools::install_github('ceschi/urcabis')
 # devtools::install_version("readxl", version = "1.0.0")
 # library(urcabis) # for when the package will be duly updated (pull request)
 
+
+##### Themes for plots #########################################################
+
+theme_ts <- theme(axis.text = element_text(size = rel(1.5)), 
+                  legend.text = element_text(size = rel(1.5)), 
+                  title = element_text(size = rel(1.5)),
+                  plot.title = element_text(hjust = 0.5))
 
 
 #### housekeeping ####
