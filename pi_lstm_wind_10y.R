@@ -25,6 +25,7 @@ for (i in 1:n){
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = 10,                                  #inflation[['aropti']][[n]], 
                                  nodes = 500,                                    # tune he nodes to max 75
+                                 # nodes = 3,
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
                                  keepBest = T,
@@ -100,14 +101,20 @@ for (i in 1:n){
   inflation$lstm$rolling_wind[[i]]$plot_hair <- 
     inflation$lstm$rolling_wind[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk), alpha = label))+
-    theme_minimal() + xlab(label = element_blank()) + 
-    ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on 10y rolling window' )) + 
-    theme(legend.position = 'bottom',
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5, size = rel(3.5)))+
+    theme_minimal() + 
+    xlab(label = element_blank()) + 
+    ylab(element_blank()) + 
+    ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), 
+                   ': forecasts on 10y rolling window')) + 
     guides(colour = guide_legend(nrow = 1))+
-    scale_alpha_discrete(range = c(.12, 1))+
-    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
+    scale_alpha_discrete(range = c(.12, 1),)+
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          legend.position = 'bottom',
+          legend.title = element_blank(),
+          plot.title = element_text(hjust = 0.5))
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,
@@ -157,4 +164,4 @@ rm(rolling_wind, len_chunks)
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm$rolling_wind,
-        file = './lstm_rolling_wind_list.rds')
+        file = file.path(rds_dir, 'lstm_rolling_wind_list.rds'))

@@ -27,7 +27,8 @@ for (i in 1:n){
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = 10,                                  #inflation[['aropti']][[n]],  # here, 10q lags but this could vary
-                                 nodes = 500, 
+                                 nodes = 500,
+                                 # nodes = 5,
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
                                  keepBest = T,
@@ -99,12 +100,15 @@ for (i in 1:n){
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk)))+
     theme_minimal() + xlab(label = element_blank()) + 
     ylab(element_blank()) + ggtitle(paste0(inflation$names[[i]] %>% noms_tt(), ': forecasts on ',len_chunks, ' chunks' )) + 
-    theme(legend.position = 'bottom', 
-          legend.title = element_blank(),
-          plot.title = element_text(hjust = 0.5, size = rel(3.5)))+
     guides(colour = guide_legend(nrow = 1))+
     geom_vline(xintercept = d_vline$ll, linetype = 'dashed', alpha = .5)+
-    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black'))
+    scale_colour_manual(labels = c('Forecast', 'Data'), values = c('red', 'black')) +
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5), 
+          legend.position = 'bottom', 
+          legend.title = element_blank())
   
   # filename title
   tt <- paste0(inflation$names[[i]] %>% noms,
@@ -150,10 +154,10 @@ for (i in 1:n){
   cat('\n\n\n\nDone with model on ', inflation$names[[i]])
 }
 
-rm(chunks, len_chunks)
+rm(chunks, len_chunks, prepped_chunks)
 
 
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm$chunks,
-        file = './lstm_chunks_10y_list.rds')
+        file = file.path(rds_dir,'/lstm_chunks_10y_list.rds'))

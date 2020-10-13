@@ -8,6 +8,7 @@ temp_dir <- 'downloaded_files'
 data_dir <- 'processed_data'
 graphs_dir <- 'plots'
 models_dir <- 'models'
+rds_dir <- 'rds_files'
 
 # detailed folders for LSTM
 lstm_dir <- 'plots_lstm'
@@ -23,6 +24,9 @@ ark_dir <- 'plots_ark'
 vars_dir <- 'plots_vars'
 acf_dir <- 'plots_acf'
 
+# bayes
+lines_dir <- 'plots_lines'
+distro_dir <- 'plots_distro'
 
 
 
@@ -41,7 +45,9 @@ ar1_dir <- file.path(graphs_dir, ar1_dir)
 ark_dir <- file.path(graphs_dir, ark_dir)
 vars_dir <- file.path(graphs_dir, vars_dir)
 acf_dir <- file.path(graphs_dir, acf_dir)
-
+rds_dir <- file.path(working_directory, rds_dir)
+lines_dir <- file.path(graphs_dir, lines_dir)
+distro_dir <- file.path(graphs_dir, distro_dir)
 
 options(warn=-1) # turns off warnings momentarily
 dir.create(temp_dir)
@@ -52,6 +58,7 @@ dir.create(ar1_dir)
 dir.create(ark_dir)
 dir.create(acf_dir)
 dir.create(vars_dir)
+dir.create(rds_dir)
 
 dir.create(file.path(graphs_dir, lstm_dir))
 dir.create(l1_dir)
@@ -60,6 +67,8 @@ dir.create(chunks_dir)
 dir.create(rolling_dir)
 dir.create(tables)
 dir.create(increm_dir)
+dir.create(lines_dir)
+dir.create(distro_dir)
 options(warn=0) # turns warnings back on
 
 ##### II - general purpose functions ###########################################
@@ -271,41 +280,6 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
-#' auto.reg.sum <- function(data, lags = 1, interc = T){
-#' 
-#'   invisible(require(broom))
-#'   # if (!invisible(require(broom))) {invisible(install.packages('broom')); invisible(library(broom))}
-#'   # not necessary as already in tidyverse
-#'   # if (!require(dplyr)) {install.packages('dplyr'); library(dplyr)}
-#'   # if (!require(magrittr)) {install.packages('magrittr'); library(magrittr)}
-#' 
-#'   # function to estimate AR(lags) and sum over parameters
-#' 
-#'   transf_data <- lagger(series = data,
-#'                         laag = lags,
-#'                         na.cut = F)
-#' 
-#' 
-#' 
-#'   model_formula <- formula.maker(df = transf_data,
-#'                                  y = first(names(transf_data)),
-#'                                  intercept = interc)
-#' 
-#'   linear_model <- lm(formula = model_formula,
-#'                      data = transf_data)
-#' 
-#'   output <- broom::tidy(linear_model)
-#' 
-#'   #' *hand this part for storing intecept*
-#' 
-#'   coef_sum <- output %>%
-#'     filter(term != '(Intercept)') %>%
-#'     dplyr::select(estimate) %>%
-#'     sum()
-#' 
-#'   return(coef_sum)
-#' }
-
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
   invisible(require(broom))
@@ -492,8 +466,10 @@ plot_roller <- function(df, names, path){
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          text = element_text(size = rel(3.5)))
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5))
   
   
   
@@ -502,7 +478,9 @@ plot_roller <- function(df, names, path){
          plot = po,
          device='pdf',
          path = path,
-         height=8/2, width=14.16/2, units='in')
+         units='in',
+         width = 8,
+         height = 8*9/16)
   
   
   return(po)
@@ -526,13 +504,14 @@ plot_autoregsum <- function(df, names, path, laags){
     theme_minimal()+
     scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
     ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          axis.text.x = element_text(angle = 0),
-          text = element_text(size = rel(3.5))) +
     # add ribbon style standard errors
     geom_ribbon(aes(ymin = (df[,1] - df[,2]),
                     ymax = (df[,1] + df[,2])),
-                size = .25, colour = 'grey', alpha = .1)
+                size = .25, colour = 'grey', alpha = .1)+
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5))
   
   
   # save plot
@@ -541,7 +520,9 @@ plot_autoregsum <- function(df, names, path, laags){
          plot = po,
          device='pdf',
          path = path,
-         height=8/2, width=14.16/2, units='in')
+         units='in',
+         width = 8,
+         height = 8*9/16)
   
   return(po)
   
@@ -563,7 +544,7 @@ plot_ridges <- function(df, nam, laags, path){
                    laags,
                    ' end. lags')) +
     xlab('Lag order') + ylab(' ') + theme_minimal()+
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)))
+    theme(plot.title = element_text(hjust = 0.5))
   
   
   ggsave(paste0(nam %>% noms(), '_AR(',laags,')acf.pdf'),
@@ -580,35 +561,6 @@ plot_ridges <- function(df, nam, laags, path){
   return(out)
 }
 
-# plot Markov Switching results
-plot_msm <- function(ms_model, nam, laags, path){
-  
-  # setting device size
-  # mar sets margings
-  # cex.main scales title to 70%
-  par(mar = c(1,1,2.85,1), cex.main = .70)
-  
-  # store actual plot
-  # it's automatically printed
-  plot_out <- plotProb(ms_model, which = 2)
-  
-  # fix title
-  title(paste0(flag___ms, '-state MS regimes for ', nam, ' with ', laags, ' lags'), line = 2.3)
-  
-  # copy dev output to file (pdf)
-  dev.copy(pdf, height=8/1.5, width=14.6/1.5,
-           file.path(path,
-                     paste0(nam, ' ', flag___ms, '-state MSM.pdf')
-           )
-  ) %>% invisible() # just to remove annoying output
-  
-  # shut down device, comment for keeping the plot
-  invisible(dev.off())
-  
-  # output
-  return(plot_out)
-}
-
 # nicer names from human readable strings
 noms <- function(x){
   # if (!is.character(x)) stop('\nNot a string')
@@ -619,6 +571,7 @@ noms <- function(x){
     gsub(x = ., 'rev_', '') %>% 
     gsub(x = ., ',', '') %>% 
     gsub(x = ., ' ', '_') %>% 
+    trimws() %>% 
     return()
 }
 
@@ -630,6 +583,7 @@ noms_tt <- function(x){
     gsub(x = ., 'Revised ', '') %>% 
     gsub(x = ., ', no FE ', ' core ') %>% 
     gsub(x = ., 'pch', '') %>% 
+    trimws() %>% 
     return()
 }
 
@@ -746,7 +700,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   tt <- paste0(name %>% noms_tt(),
                ': ',
                len,
-               ' chunks with forecasts')
+               ' chunks')
   
   jj <- name %>% 
     noms() %>% 
@@ -755,12 +709,20 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   # make plot, filtering out intercept
   plt <- chunk_regs_obj$ar1 %>% 
     filter(term != '(Intercept)') %>% 
-    ggplot(aes(x = chunk, y = estimate, group = chunk))+
+    ggplot(aes(x = chunk, 
+               y = estimate, 
+               group = chunk))+
     geom_col(alpha = .5) +
-    geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
+    geom_errorbar(aes(ymin = (estimate - std.error), 
+                      ymax = (estimate + std.error)), 
+                  width = .2)+
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          text = element_text(size = rel(3.5)))
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0,
+                                     size = rel(.65)))
   
   
   
@@ -781,8 +743,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     paste0('sum of AR(', ., ') coefficients')
   
   tt <- paste0(name %>% noms_tt(),
-               ': ', len, ' chunks with forecasts - ',
-               labely)
+               ': ', len, ' chunks')
   
   jj <- name %>% 
     noms() %>% 
@@ -792,9 +753,14 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_sum <- chunk_regs_obj$ark_sum %>% 
     ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          text = element_text(size = rel(3.5))) + ggtitle(tt) + 
-    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)
+    ggtitle(tt) + 
+    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)+
+    theme(axis.text = element_text(size = rel(1.5)), 
+          legend.text = element_text(size = rel(1.5)), 
+          title = element_text(size = rel(1.5)),
+          plot.title = element_text(hjust = 0.5),
+          axis.text.x = element_text(angle = 0,
+                                     size = rel(.65)))
   
   ggsave(plot = plt_sum, 
          filename = file.path(graphs_dir., 
@@ -833,6 +799,22 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
   strin <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name, '\\}')
   repla <- paste0('\\multicolumn\\{', length(mod_labels), '\\}\\{c\\}\\{', name_tt, '\\}')
   
+  # ll <- length(mod_labels)
+  # notes <- paste0('(', 1:ll, '): ', mod_labels) %>%
+  #   paste(collapse = '; ')
+  
+  mod_labels <- gsub(pattern = ' - ', 
+                     replacement = ' ',  
+                     x = mod_labels)
+  
+  mod_num <- paste0('& (', 1:length(mod_labels), ') ')%>% 
+    paste0(collapse = '') %>% trimws(which = 'right')
+  patt_mod_num <- paste0('\\[-1.8ex] ', mod_num, '\\') 
+  
+  mod_labels <- paste0('\\multirow{2}{1cm}{', mod_labels, '}')
+  repl_mod_labels <- paste0('\\[-1.8ex] ', rep('& ', length(mod_labels)) %>% paste0(collapse = ''), '\\') 
+  
+  
   # produce table and suppress console output
   sink('oo')
   # stargazer formatting
@@ -840,21 +822,31 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
                                  type = 'latex', 
                                  covariate.labels = c('\\nth{1} lag', NA), 
                                  dep.var.labels = name,
+                                 no.space = T,
                                  ci = F,
+                                 font.size = 'small',
+                                 initial.zero = F,
+                                 column.labels = mod_labels,
+                                 # notes = notes,
                                  header = F, 
-                                 model.numbers = F,
-                                 column.sep.width = '2pt',
-                                 style = 'qje',
+                                 model.numbers = T,
+                                 column.sep.width = '1pt',
                                  omit.stat = c('ser', 'res.dev')) %>% 
     # regex replace to fix cell width
     gsub(pattern = strin,
          replacement = repla,
          x = .) %>% 
-    # write output
-    write(x = ., 
-          file = destination) %>% capture.output()
+    gsub(pattern = patt_mod_num,
+         replacement = repl_mod_labels, 
+         x = ., 
+         fixed = T) %>% 
+    write(x = .,
+          file = destination) %>% 
+    capture.output()
+  
   sink(NULL)
   unlink(x = 'oo')
+
 }
 
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -944,7 +936,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # setup title
   tt <- paste0(name %>% noms_tt(),
-               ': rolling window with forecasts')
+               ': rolling window')
   
   jj <- name %>% 
     noms() %>% 
@@ -955,11 +947,15 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     filter(term != '(Intercept)') %>% 
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .75) +
-    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25)+
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5))) + 
+    theme(plot.title = element_text(hjust = 0.5,
+                                    size = rel(1.5)),
+          axis.title = element_text(size = rel(1.5)),
+          axis.text = element_text(size = rel(1.5))) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
   
   
   
@@ -980,8 +976,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     paste0('sum of AR(', ., ') coefficients')
   
   tt <- paste0(name %>% noms_tt(),
-               ': rolling window with forecasts - ',
-               labely)
+               ': rolling window')
   
   jj <- name %>% 
     noms() %>% 
@@ -993,7 +988,9 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .5) +
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5))) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5,
+                                    size = rel(1.5)), 
+          axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
@@ -1105,8 +1102,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .5)+
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ggtitle(tt) + theme_minimal() + ylab('AR(1) coefficient') + xlab('Sample end date') + 
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          text = element_text(size = rel(3.5))) + 
+    theme(plot.title = element_text(hjust = 0.5)) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   
@@ -1140,8 +1136,7 @@ plot_increm_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .5) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
-    theme(plot.title = element_text(hjust = 0.5, size = rel(3.5)),
-          text = element_text(size = rel(3.5))) + ggtitle(tt) + 
+    theme(plot.title = element_text(hjust = 0.5)) + ggtitle(tt) + 
     geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
   
   ggsave(plot = plt_sum, 
@@ -1188,8 +1183,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     theme_minimal() + ggtitle(tt) + 
     ylab('AR(1) coefficient') + xlab(element_blank())
-  theme(plot.title = element_text(hjust = .5),
-        text = element_text(size = rel(3.5)))
+  theme(plot.title = element_text(hjust = .5))
   
   ggsave(plot = ar1_plt,
          filename = file.path(graphs_dir., jj),
@@ -1220,8 +1214,7 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
     geom_line(size = .5, alpha = .25)+ theme_minimal() + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
     ylab('Sum of coefficients') + xlab(element_blank())+
-    theme(plot.title = element_text(hjust = .5),
-          text = element_text(size = rel(3.5)))+
+    theme(plot.title = element_text(hjust = .5))+
     ggtitle(tt)
   
   ggsave(plot = ark_plt,
@@ -1237,9 +1230,6 @@ chunk_increm_window <- function(ar1, ark, lags, name, graphs_dir. = graphs_dir){
   return(out)
   
 }
-
-
-
 
 
 ##### IV - LSTM functions ######################################################
