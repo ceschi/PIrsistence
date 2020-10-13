@@ -24,8 +24,8 @@ for (i in 1:n){
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = 10,                                  #inflation[['aropti']][[n]], 
-                                 # nodes = 500,                                    # tune he nodes to max 75
-                                 nodes = 3,
+                                 nodes = 500,                                    # tune he nodes to max 75
+                                 # nodes = 3,
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
                                  keepBest = T,
@@ -164,4 +164,4 @@ rm(rolling_wind, len_chunks)
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm$rolling_wind,
-        file = './lstm_rolling_wind_list.rds')
+        file = file.path(rds_dir, 'lstm_rolling_wind_list.rds'))

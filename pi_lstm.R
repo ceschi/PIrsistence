@@ -79,8 +79,8 @@ for (i in 1:n){
                                                             n_steps = 15,
                                                             n_feat = 1,
                                                             # baseline for one single layer
-                                                            nodes = 2,
-                                                            # nodes = 1000,
+                                                            # nodes = 2,
+                                                            nodes = 1000,
                                                             # online model with one batch, workaround needed
                                                             size_batch = 'auto',
                                                             # either the max epochs or patience
@@ -116,8 +116,8 @@ for (i in 1:n){
     k_fullsample_2l(data = inflation$lstm[['data']][[i]]$train$train_norm, 
                     n_steps = 15, 
                     n_feat = 1, 
-                    nodes = 7,
-                    # nodes = 750, 
+                    # nodes = 7,
+                    nodes = 750,
                     size_batch = 'auto', 
                     epochs = fit_epochs*2, 
                     ES = F, 

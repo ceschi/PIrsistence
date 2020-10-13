@@ -27,8 +27,8 @@ for (i in 1:n){
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
                                  n_steps = 10,                                  #inflation[['aropti']][[n]],  # here, 10q lags but this could vary
-                                 # nodes = 500, 
-                                 nodes = 5,
+                                 nodes = 500,
+                                 # nodes = 5,
                                  epochs = fore_epochs, 
                                  ES = F,                                        # F: because there's so little data 
                                  keepBest = T,
@@ -160,4 +160,4 @@ rm(chunks, len_chunks, prepped_chunks)
 
 ##### Save results to disk #####################################################
 saveRDS(object = inflation$lstm$chunks,
-        file = './lstm_chunks_10y_list.rds')
+        file = file.path(rds_dir,'/lstm_chunks_10y_list.rds'))

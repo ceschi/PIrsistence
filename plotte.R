@@ -27,7 +27,7 @@ ggsave(filename = file.path(vars_dir, 'ts_plot.pdf'),
 ##### CPI & PCE headline vs core ##############################################
 inflation$plots[['cpis']] <- pi_long %>% 
   filter(index == 'rev_cpi_pch' | index == 'rev_cpi_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index))+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
@@ -46,7 +46,7 @@ ggsave(filename = file.path(vars_dir, 'cpis_plot.pdf'),
 
 inflation$plots[['pces']] <- pi_long %>% 
   filter(index == 'rev_pce_pch' | index == 'rev_pce_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index))+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
@@ -64,7 +64,7 @@ ggsave(filename = file.path(vars_dir, 'pces_plot.pdf'),
 
 inflation$plots[['cpis_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31')) %>% 
   filter(index == 'rev_cpi_pch' | index == 'rev_cpi_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index))+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
@@ -83,7 +83,7 @@ ggsave(filename = file.path(vars_dir, 'cpis_zoomed_plot.pdf'),
 
 inflation$plots[['pces_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31')) %>% 
   filter(index == 'rev_pce_pch' | index == 'rev_pce_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index))+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
