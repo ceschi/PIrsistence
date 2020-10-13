@@ -23,7 +23,7 @@ for (i in 1:n){
     prepped_data <- prepped_chunks[[s]]
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
-                                 n_steps = 10,                                  #inflation[['aropti']][[n]], 
+                                 n_steps = 15,                                  #inflation[['aropti']][[n]], 
                                  nodes = 500,                                    # tune he nodes to max 75
                                  # nodes = 3,
                                  epochs = fore_epochs, 

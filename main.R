@@ -145,10 +145,6 @@ if (flag___lstm){
     fore_horiz <- 40
   }
   
-  fit_epochs <- 1
-  fore_epochs <- 1
-  fore_horiz <- 10
-  
   tic('Machine learning fit and forecasts.\n')
   
   # make sure that keras finds proper conda env
