@@ -147,7 +147,7 @@ if (flag___lstm){
   
   fit_epochs <- 1
   fore_epochs <- 1
-  fore_horiz <- 24
+  fore_horiz <- 10
   
   tic('Machine learning fit and forecasts.\n')
   

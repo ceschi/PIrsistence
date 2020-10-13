@@ -136,6 +136,6 @@ write.zoo(x=pi,
           row.names=F, 
           index.name='date')
 
-write_csv(x = pi_long,
-          path = file.path(data_dir, 'PI_long.csv'))
+write.csv(x = pi_long,
+          file = file.path(data_dir, 'PI_long.csv'))
 
