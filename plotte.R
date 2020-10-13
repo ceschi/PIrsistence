@@ -197,6 +197,32 @@ inflation$plots$histo <- pi_long %>%
   facet_wrap(~index) + theme_minimal() + ggtitle('Kernel densities') + 
   theme(plot.title = element_text(hjust = .5))
 
+##### Plots for frequentist part ###############################################
+
+# AR(1) rolling
+inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
+                                                   names = inflation[['names']],
+                                                   path = sapply(rep(ar1_dir, n), list)),
+                                         .f = plot_roller
+)
+
+
+# AR(k*) plots
+inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
+                                                    names = inflation[['names']],
+                                                    laags = inflation[['aropti']],
+                                                    path = sapply(rep(ark_dir, n), list)),
+                                          .f = plot_autoregsum
+)
+
+# plotting ridges
+inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
+                                                    nam = inflation[['names']],
+                                                    laags = inflation[['aropti']],
+                                                    path = sapply(rep(acf_dir, n), list)),
+                                          .f = plot_ridges
+)
+
 
 ##### other windows width for robustness #######################################
 source('other_win.R')
