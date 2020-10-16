@@ -1308,7 +1308,8 @@ k_fullsample_1l <- function(data,
                             size_batch = 1,
                             epochs = 2000,
                             ES = F,
-                            keepBest = F){
+                            keepBest = F,
+                            view_loss = F){
   
   # Function to fit a model on the whole sample of data;
   # it takes care of lagging & reshaping the data according to parameters
@@ -1416,7 +1417,7 @@ k_fullsample_1l <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1426,7 +1427,7 @@ k_fullsample_1l <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   }
   tictoc::toc()
   
@@ -1455,7 +1456,8 @@ k_fullsample_2l <- function(data,
                             size_batch = 1,
                             epochs = 2000,
                             ES = F,
-                            keepBest = F){
+                            keepBest = F,
+                            view_loss = F){
   
   # Function to fit a model on the whole sample of data;
   # it takes care of lagging & reshaping the data according to parameters
@@ -1570,7 +1572,7 @@ k_fullsample_2l <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1580,7 +1582,7 @@ k_fullsample_2l <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   }
   tictoc::toc()
   
@@ -1611,7 +1613,8 @@ k_fullsample_nl <- function(data,
                             ES = F,
                             keepBest = F,
                             nodes_list,
-                            options){
+                            options,
+                            view_loss = F){
   
   # Function to fit a model on the whole sample of data;
   # it takes care of lagging & reshaping the data according to parameters
@@ -1762,7 +1765,7 @@ k_fullsample_nl <- function(data,
                    epochs = epochs,
                    validation_split = .1,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   } else {
     # estimate with given number of epochs
     history <- fit(object = model_compiled, 
@@ -1772,7 +1775,7 @@ k_fullsample_nl <- function(data,
                    verbose = 2,
                    shuffle = F,
                    batch_size = size_batch,
-                   view_metrics = T)
+                   view_metrics = view_loss)
   }
   tictoc::toc()
   
