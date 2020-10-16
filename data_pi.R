@@ -139,3 +139,5 @@ write.zoo(x=pi,
 write.csv(x = pi_long,
           file = file.path(data_dir, 'PI_long.csv'))
 
+##### housekeeping
+rm(rev_hist_pch, rev_hist_yoy)
