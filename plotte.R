@@ -191,7 +191,7 @@ ggsave(filename = file.path(vars_dir, 'comm_pi_plot.pdf'),
 
 ##### histograms ###############################################################
 inflation$plots$histo <- pi_long %>% 
-  filter(str_detect(index, 'pch')) %>% group_by(index) %>% mutate(mean = mean(rate), median = median(rate)) %>% ungroup() %>% 
+  filter(stringe::str_detect(index, 'pch')) %>% group_by(index) %>% mutate(mean = mean(rate), median = median(rate)) %>% ungroup() %>% 
   ggplot(data = ., aes(x = rate, group = index)) + geom_density(fill = 'grey') + 
   geom_vline(xintercept = 0) + 
   facet_wrap(~index) + theme_minimal() + ggtitle('Kernel densities') + 
