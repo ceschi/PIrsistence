@@ -607,7 +607,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       as.Date()
     # adjust for one lag
     # true only for this AR1 case
-    start <- start - months(3, F)
+    start <- start - base::months(3, F)
     
     end <- onereg %>% 
       model.frame() %>% 
