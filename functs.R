@@ -987,7 +987,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
     ggplot(aes(x = enddate, y = ar_sum)) + 
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
-    geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .5) +
+    geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .25) +
     theme(plot.title = element_text(hjust = 0.5,
                                     size = rel(1.5)), 
           axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
