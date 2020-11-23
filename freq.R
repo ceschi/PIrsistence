@@ -41,8 +41,8 @@ inflation[['rollark']] <- lapply(X = pi,
 inflation[['aroptilm']] <- future_pmap(.l = list(data = sapply(pi, list),
                                                  lags = inflation[['aropti']],
                                                  interc = sapply(rep(intercep, n), list)
-),
-.f = auto.reg.sum)
+                                                 ),
+                                       .f = auto.reg.sum)
 
 
 # rolling window estimate
@@ -52,8 +52,8 @@ inflation[['aroptirollm']] <- future_pmap(.l = list(df = sapply(pi, list),
                                                     window = sapply(rep(wind, n), list),
                                                     lags = inflation[['aropti']],
                                                     interc = sapply(rep(intercep, n), list)
-),
-.f = rolloop.sum)
+                                                    ),
+                                           .f = rolloop.sum)
 
 
 # ridges plot material

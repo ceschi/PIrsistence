@@ -139,6 +139,29 @@ rollm <- function(df, formula){
   return(estim)
 }
 
+rollmbis <- function(.df, .formula){
+  invisible(require(dplyr))
+  invisible(require(broom))
+  
+  lmod <- broom::tidy(lm(data = .data,
+                         formula = .formula))
+  
+  # check whether .formula has intercept (T=1)
+  attr(terms(ff), 'intercept')
+  
+  out <- lmod %>% 
+    dplyr::select(term, estimate, std.error) %>%
+    dplyr::mutate(term = tolower(gsub(pattern = '(',
+                                      replacement =  '', 
+                                      x = gsub(')', '', term)
+                                      ))) %>% 
+    tidyr::pivot_wider(id_cols = term,
+                       names_from = term,
+                       values_from = c('estimate', 'std.error'),
+                       names_sort = T)
+  
+}
+
 rolloop <- function(df, window=8, lags=1, interc = T){
   
   #' *This should be already able to accomodate intercept*
