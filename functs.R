@@ -138,8 +138,7 @@ rollm <- function(df, formula){
   # outputs
   return(estim)
 }
-
-rollmbis <- function(.df, .formula){
+rollm2 <- function(.df, .formula){
   invisible(require(dplyr))
   invisible(require(broom))
   
@@ -160,7 +159,12 @@ rollmbis <- function(.df, .formula){
                        values_from = c('estimate', 'std.error'),
                        names_sort = T)
   
-  return(out)
+  outlist <- list(intercept = out %>% select(contains('intercept')),
+                  regressors = out %>% select(-contains('intercept'))
+                  )
+  
+  
+  return(outlist)
   
 }
 
@@ -193,6 +197,93 @@ rolloop <- function(df, window=8, lags=1, interc = T){
               order.by=index(df)[window:length(index(df))])
   
   return(regs)
+}
+rolloop2 <- function(df, window=8, lags=1, interc = T){
+  # This function updates on a previous 'rolloop' version to
+  # keep information on the intercept of the regressions.
+  # It takes a single series, runs rolling regressions on 'lags'
+  # for 'window's observations and returns a series of coefficients
+  # as formatted by local function 'rollm2'.
+  # ALWAYS returns a list with [['regressors']] in the first slot,
+  # if there's an intercept it also has [['intercept']]
+  
+  # pkgs
+  invisible(require(tidyr))
+  invisible(require(xts))
+  
+  # local function
+  rollm2 <- function(.df, .formula){
+    
+    # nice output for a lm regression
+    
+    lmod <- broom::tidy(lm(data = .df,
+                           formula = .formula))
+    
+    out <- lmod %>% 
+      dplyr::select(term, estimate, std.error) %>%
+      dplyr::mutate(term = tolower(gsub(pattern = '\\(',
+                                        replacement =  '', 
+                                        x = gsub('\\)', '', term)
+      ))) %>% 
+      tidyr::pivot_wider(id_cols = term,
+                         names_from = term,
+                         values_from = c('estimate', 'std.error'),
+                         names_sort = T)
+    return(out)
+  }
+  
+  
+  # width of the rolling window
+  window <- as.integer(window)
+  
+  # select lags 
+  k <- as.integer(lags)
+  
+  # store index
+  indx <- index(na.omit(df))
+  
+  # lags the time series, names it, cuts out NAs
+  dfl <- df %>% lagger(laag=k, na.cut=T)
+  # and creates related formula
+  formulae <- formula.maker(dfl, 
+                            dfl %>%  names(.) %>% first(),
+                            intercept = interc)
+  
+  # computes point estimates and 2SD
+  # stocks in a dataframe for convenience
+  regs <-rollapply(as.data.frame(dfl),
+                   width=window,
+                   by.column = F,
+                   FUN=function(x, formula) rollm2(.df=as.data.frame(x), .formula=formulae))
+  
+  # converts and dates the regressions
+  # regs <- xts(regs, frequency=4,
+  #             order.by=index(df)[window:length(index(df))])
+  if (interc){
+    # if there's an intercept keep it, separately
+    regs_out <- list(
+      regressors = regs %>% 
+        as_tibble() %>% 
+        select(-contains('intercept'))%>% 
+        xts(order.by = indx[(window+1):length(indx)],
+            frequency = 4),
+      
+      intercept = regs %>% 
+        as_tibble() %>% 
+        select(contains('intercept')) %>% 
+        xts(order.by = indx[(window+1):length(indx)],
+            frequency = 4)
+      
+    )
+  }else{
+    # if not, go ahead fast
+    regs_out <- list(regressors = xts(regs, 
+                                      order.by = indx[(window+1):length(indx)],
+                                      frequency = 4)
+    )
+  }
+  
+  return(regs_out)
 }
 
 make_stars <- function(x){
@@ -351,6 +442,90 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   
   return(coef_sum)
 }
+auto.reg.sum2 <- function(data, lags = 1, interc = T){
+  
+  
+  # function to estimate AR(lags) and sum over parameters;
+  # outputs list with coefficients' est+sd in first place always
+  # if there's an intercept, it's stored in second place
+  #' *dealing with xts and dates!*
+  
+  # import pkgs  
+  invisible(require(broom))
+  invisible(require(xts))
+  
+  # get rid of NAs properly
+  datana <- na.omit(data)
+  
+  linear_model <- auto.reg(data = datana,
+                           lags = lags,
+                           interc = interc)
+  
+  output <- broom::tidy(linear_model)
+  
+  if (interc){
+    # LM includes intercept, thus it's stored separately
+    
+    coef_sum <- tibble(
+      # select only coefficients
+      coef_sum = output %>% 
+        filter(term != '(Intercept)') %>% 
+        select(estimate) %>% 
+        sum(),
+      
+      # compute SE (single!) dropping upper left col/row
+      coef_sum_se = linear_model %>% 
+        vcov() %>% 
+        .[-1,-1] %>% 
+        sum() %>% 
+        sqrt()
+    )
+    
+    intercept <- tibble(
+      # pick only relevant row and col
+      output %>% 
+        filter(term == '(Intercept)') %>% 
+        select(estimate, std.error) %>% 
+        rename(interc = estimate,
+               se = std.error)
+    )
+    
+    outlist <- list(coef_sum = coef_sum,
+                    intercept = intercept)
+    
+  }else if (interc == F){
+    # model without trend in this case, so straight
+    coef_sum <- tibble(
+      # select only coefficients
+      coef_sum = output %>% 
+        # just in case of errors
+        filter(term != '(Intercept)') %>% 
+        select(estimate) %>% 
+        sum(),
+      
+      # compute SE (single!) dropping upper left col/row
+      coef_sum_se = linear_model %>% 
+        vcov() %>% 
+        sum() %>% 
+        sqrt()
+    )
+    
+    outlist <- list(coef_sum = coef_sum)
+  }else if (!is.logical(interc)){
+    outlist <- NULL
+    stop('\nIntercept option must be either TRUE or FALSE, defaults to TRUE')
+  }
+  
+  if (is.zoo(datana)){
+    dd <- last(time(datana))
+    outlist <- lapply(X = outlist, 
+                      FUN = function(x) add_column(x, date = dd)
+    )
+  }
+  
+  
+  return(outlist)
+}
 
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
@@ -370,6 +545,61 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
   # # converts and dates the regressions
   # regs <- xts(regs, frequency=4, 
   #             order.by=index(df_na)[window:length(index(df_na))])
+  
+  return(regs)
+}
+rolloop.sum2 <- function(df, window, lags = 1, interc = T){
+  
+  # remove troublesome NAs
+  df_na <- na.omit(df)
+  
+  # preserve index if xts
+  if (is.zoo(df_na)){
+    idx <- time(df_na)
+  }
+  
+  # maybe custom version of autoregsum
+  loc_ARS <- function(.data, .lags, .interc, .slot){
+    
+    # pkgs
+    invisible(require(tbl2xts))
+    
+    list_reg <- auto.reg.sum2(data = .data,
+                              lags = .lags,
+                              interc = .interc)
+    
+    out <- tbl_xts(list_reg[[.slot]])
+    
+    
+    
+    return(out)
+  }
+  out <- list()
+  # computes point estimates for coefs
+  # stocks in a dataframe for convenience
+  out$coefficients <- rollapply(df_na,
+                                width=window,
+                                by.column = F,
+                                FUN = loc_ARS,
+                                .lags = lags,
+                                .interc = interc,
+                                .slot = 1)
+  
+  
+  
+  if (interc){
+    # same as above, inefficient
+    # but recomputes and stores intercept if any
+    out$intercept <- rollapply(df_na,
+                               width = window, 
+                               by.column = F, 
+                               FUN = loc_ARS, 
+                               .lags = lags, 
+                               .interc = interc, 
+                               .slot = 2)  
+  }
+  
+  return(out)
 }
 
 persistence_ridges <- function(tseries, window = 24, lags = 8){
