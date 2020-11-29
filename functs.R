@@ -108,37 +108,37 @@ instant_pkgs <- function(pkgs) {
   }
 }
 
-rollm <- function(df, formula){
-  #' *Add here storage of intercept with related SDs*
-  
-  # function to extract and store coefficients 
-  # and double SD in a named row tibble
-  
-  
-  # estimates the linear model
-  lmod <- summary(lm(data=df, formula=formula))
-  
-  # extracts point estimates and 2*SD (+- 95%),
-  # put info in named row tibble dropping 
-  # intercept info from first column
-  
-  cofs <- as_tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-                                            t() %>% ncol()),1] %>% t(),
-                    .name_repair = 'minimal')
-  SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-                                             t() %>% ncol()),2] %>% t(),
-                   .name_repair = 'minimal')
-  
-  # adds suffix for bands
-  names(SD2) <- paste0(names(SD2), '.SD2')
-  
-  # merges in one row with names
-  estim <- cbind(cofs, SD2)
-  
-  # outputs
-  return(estim)
-}
-rollm2 <- function(.df, .formula){
+#' rollm <- function(df, formula){
+#'   #' *Add here storage of intercept with related SDs*
+#'   
+#'   # function to extract and store coefficients 
+#'   # and double SD in a named row tibble
+#'   
+#'   
+#'   # estimates the linear model
+#'   lmod <- summary(lm(data=df, formula=formula))
+#'   
+#'   # extracts point estimates and 2*SD (+- 95%),
+#'   # put info in named row tibble dropping 
+#'   # intercept info from first column
+#'   
+#'   cofs <- as_tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
+#'                                             t() %>% ncol()),1] %>% t(),
+#'                     .name_repair = 'minimal')
+#'   SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
+#'                                              t() %>% ncol()),2] %>% t(),
+#'                    .name_repair = 'minimal')
+#'   
+#'   # adds suffix for bands
+#'   names(SD2) <- paste0(names(SD2), '.SD2')
+#'   
+#'   # merges in one row with names
+#'   estim <- cbind(cofs, SD2)
+#'   
+#'   # outputs
+#'   return(estim)
+#' }
+rollm <- function(.df, .formula){
   invisible(require(dplyr))
   invisible(require(broom))
   
@@ -168,37 +168,37 @@ rollm2 <- function(.df, .formula){
   
 }
 
+#' rolloop <- function(df, window=8, lags=1, interc = T){
+#'   
+#'   #' *This should be already able to accomodate intercept*
+#'   
+#'   # width of the rolling window
+#'   window <- as.integer(window)
+#'   
+#'   # select lags 
+#'   k <- as.integer(lags)
+#'   
+#'   # lags the time series, names it, cuts out NAs
+#'   df <- df %>% lagger(laag=k, na.cut=T)
+#'   # and creates related formula
+#'   formulae <- formula.maker(df, 
+#'                             df %>%  names(.) %>% first(),
+#'                             intercept = interc)
+#'   
+#'   # computes point estimates and 2SD
+#'   # stocks in a dataframe for convenience
+#'   regs <-rollapply(as.data.frame(df),
+#'                    width=window,
+#'                    by.column = F,
+#'                    FUN=function(x, formula) rollm(df=as.data.frame(x), formula=formulae))
+#'   
+#'   # converts and dates the regressions
+#'   regs <- xts(regs, frequency=4, 
+#'               order.by=index(df)[window:length(index(df))])
+#'   
+#'   return(regs)
+#' }
 rolloop <- function(df, window=8, lags=1, interc = T){
-  
-  #' *This should be already able to accomodate intercept*
-  
-  # width of the rolling window
-  window <- as.integer(window)
-  
-  # select lags 
-  k <- as.integer(lags)
-  
-  # lags the time series, names it, cuts out NAs
-  df <- df %>% lagger(laag=k, na.cut=T)
-  # and creates related formula
-  formulae <- formula.maker(df, 
-                            df %>%  names(.) %>% first(),
-                            intercept = interc)
-  
-  # computes point estimates and 2SD
-  # stocks in a dataframe for convenience
-  regs <-rollapply(as.data.frame(df),
-                   width=window,
-                   by.column = F,
-                   FUN=function(x, formula) rollm(df=as.data.frame(x), formula=formulae))
-  
-  # converts and dates the regressions
-  regs <- xts(regs, frequency=4, 
-              order.by=index(df)[window:length(index(df))])
-  
-  return(regs)
-}
-rolloop2 <- function(df, window=8, lags=1, interc = T){
   # This function updates on a previous 'rolloop' version to
   # keep information on the intercept of the regressions.
   # It takes a single series, runs rolling regressions on 'lags'
@@ -396,53 +396,53 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
+#' auto.reg.sum <- function(data, lags = 1, interc = T){
+#'   
+#'   invisible(require(broom))
+#'   invisible(require(dplyr))
+#'   invisible(require(magrittr))
+#'   
+#'   # function to estimate AR(lags) and sum over parameters
+#'   
+#'   transf_data <- lagger(series = data,
+#'                         laag = lags,
+#'                         na.cut = F)
+#'   
+#'   
+#'   
+#'   model_formula <- formula.maker(df = transf_data,
+#'                                  y = first(names(transf_data)),
+#'                                  intercept = interc)
+#'   
+#'   linear_model <- lm(formula = model_formula,
+#'                      data = transf_data)
+#'   
+#'   output <- broom::tidy(linear_model)
+#'   
+#'   #' *hand this part for storing intecept*
+#'   coef_sum <- output %>% 
+#'     filter(term != '(Intercept)') %>% 
+#'     dplyr::select(estimate) %>%  
+#'     sum()
+#'   
+#'   if (interc){
+#'     coef_sum_se <- linear_model %>% 
+#'                     vcov() %>%
+#'                     .[-1,-1] %>% 
+#'                     sum() %>%
+#'                     sqrt()
+#'   }else{
+#'     coef_sum_se <- linear_model %>% 
+#'       vcov() %>%
+#'       sum() %>% 
+#'       sqrt()
+#'   }
+#'   
+#'   coef_sum <- cbind(coef_sum, coef_sum_se)
+#'   
+#'   return(coef_sum)
+#' }
 auto.reg.sum <- function(data, lags = 1, interc = T){
-  
-  invisible(require(broom))
-  invisible(require(dplyr))
-  invisible(require(magrittr))
-  
-  # function to estimate AR(lags) and sum over parameters
-  
-  transf_data <- lagger(series = data,
-                        laag = lags,
-                        na.cut = F)
-  
-  
-  
-  model_formula <- formula.maker(df = transf_data,
-                                 y = first(names(transf_data)),
-                                 intercept = interc)
-  
-  linear_model <- lm(formula = model_formula,
-                     data = transf_data)
-  
-  output <- broom::tidy(linear_model)
-  
-  #' *hand this part for storing intecept*
-  coef_sum <- output %>% 
-    filter(term != '(Intercept)') %>% 
-    dplyr::select(estimate) %>%  
-    sum()
-  
-  if (interc){
-    coef_sum_se <- linear_model %>% 
-                    vcov() %>%
-                    .[-1,-1] %>% 
-                    sum() %>%
-                    sqrt()
-  }else{
-    coef_sum_se <- linear_model %>% 
-      vcov() %>%
-      sum() %>% 
-      sqrt()
-  }
-  
-  coef_sum <- cbind(coef_sum, coef_sum_se)
-  
-  return(coef_sum)
-}
-auto.reg.sum2 <- function(data, lags = 1, interc = T){
   
   
   # function to estimate AR(lags) and sum over parameters;
@@ -527,28 +527,28 @@ auto.reg.sum2 <- function(data, lags = 1, interc = T){
   return(outlist)
 }
 
+# rolloop.sum <- function(df, window, lags = 1, interc = T){
+#   
+#   # remove troublesome NAs
+#   df_na <- na.omit(df)
+#   
+#   # computes point estimates
+#   # stocks in a dataframe for convenience
+#   regs <-rollapply(df_na,
+#                    # as.data.frame(df),
+#                    width=window,
+#                    by.column = F,
+#                    FUN = auto.reg.sum,
+#                    lags = lags,
+#                    interc = interc)
+#   
+#   # # converts and dates the regressions
+#   # regs <- xts(regs, frequency=4, 
+#   #             order.by=index(df_na)[window:length(index(df_na))])
+#   
+#   return(regs)
+# }
 rolloop.sum <- function(df, window, lags = 1, interc = T){
-  
-  # remove troublesome NAs
-  df_na <- na.omit(df)
-  
-  # computes point estimates
-  # stocks in a dataframe for convenience
-  regs <-rollapply(df_na,
-                   # as.data.frame(df),
-                   width=window,
-                   by.column = F,
-                   FUN = auto.reg.sum,
-                   lags = lags,
-                   interc = interc)
-  
-  # # converts and dates the regressions
-  # regs <- xts(regs, frequency=4, 
-  #             order.by=index(df_na)[window:length(index(df_na))])
-  
-  return(regs)
-}
-rolloop.sum2 <- function(df, window, lags = 1, interc = T){
   
   # remove troublesome NAs
   df_na <- na.omit(df)
@@ -564,7 +564,7 @@ rolloop.sum2 <- function(df, window, lags = 1, interc = T){
     # pkgs
     invisible(require(tbl2xts))
     
-    list_reg <- auto.reg.sum2(data = .data,
+    list_reg <- auto.reg.sum(data = .data,
                               lags = .lags,
                               interc = .interc)
     
@@ -701,26 +701,54 @@ ms_aropti <- function(df, lags, states){
 }
 
 # plot rolling estimates for AR1
-plot_roller <- function(df, names, path){
+plot_roller <- function(df, names, path, .slot = 1){
+  
+  # set up:
+  if (.slot == 1){
+    yy <- 'AR(1) coeff. estimates'
+    
+    tt <- paste0(names %>% noms_tt(),
+                 ' - 1 exogenous lag')
+    
+    nn <- paste0(names %>% noms(),
+                 '_AR(1)_coeff.pdf')
+    
+    hlin <- 0:1
+    
+  }else if (.slot == 2){
+    yy <- 'AR(1) intercept estimates'
+    
+    tt <- paste0(names %>% noms_tt(),
+                 ' - AR(1) trend')
+    
+    nn <- paste0(names %>% noms(),
+                 '_AR(1)_interc.pdf')
+    
+    hlin <- 0
+  }
+  
+  
+  df <- df[[.slot]]
+  
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
-                   y=df$Var.1))+
+                   y=df[,1]))+
     # plot the above with line geom, in black
     geom_line(colour='black', size=1)+
     # add confidence interval
-    geom_ribbon(aes(ymax = (df$Var.1 + df$.SD2),
-                    ymin = (df$Var.1 - df$.SD2)),
+    geom_ribbon(aes(ymax = (df[,1] + 2*df[,2]),
+                    ymin = (df[,1] - 2*df[,2])
+                    ),
                 colour = 'grey',
                 size = .25,
                 alpha = .1) +
     # adds unit root line
-    geom_line(aes(y=1), colour='black', size=.5)+
-    geom_line(aes(y=0), colour='black', size=.5)+
+    geom_line(aes(y=hlin), colour='black', size=.5)+
     # plot makeup
     geom_smooth(method='loess', colour='blue', formula = 'y~x', se = F)+
     scale_x_yearqtr(format='%Y Q%q')+theme_minimal()+
-    scale_y_continuous()+xlab(' ') + ylab(paste0('AR(1) coeff. estimates')) + 
-    ggtitle(paste0(names %>% noms_tt(), ' - 1 exogenous lag'))+
+    scale_y_continuous()+xlab(' ') + ylab(yy) + 
+    ggtitle(tt)+
     theme(axis.text = element_text(size = rel(1.5)), 
           legend.text = element_text(size = rel(1.5)), 
           title = element_text(size = rel(1.5)),
@@ -729,7 +757,7 @@ plot_roller <- function(df, names, path){
   
   
   # saves the plots in given path
-  ggsave(paste0(names %>% noms(), '_AR(1)_coeff.pdf'),
+  ggsave(nn,
          plot = po,
          device='pdf',
          path = path,
@@ -742,27 +770,64 @@ plot_roller <- function(df, names, path){
 }
 
 # plots summed coefficients of optimal AR
-plot_autoregsum <- function(df, names, path, laags){
+plot_autoregsum <- function(df, names, path, laags, .slot = 1){
+  
+  # set up:
+  if (.slot == 1){
+    yy <- paste0('AR(',
+                 laags,
+                 ') coeff. estimates sum')
+    
+    tt <- paste0(names %>% noms_tt(),
+                 ' - ', 
+                 laags, 
+                 ' optimal lags: sum of coefficients')
+    
+    nn <- paste0(names %>% noms(), 
+                 '_AR(',
+                 laags,
+                 ')_coeffsum.pdf')
+    
+    hlin <- 0:1
+    
+  }else if (.slot == 2){
+    yy <- 'AR(k) trend'
+    
+    tt <- paste0(names %>% noms_tt(), 
+                 ' - ', 
+                 laags, 
+                 ' optimal lags: trend')
+    
+    nn <- paste0(names %>% noms(),
+                 '_AR(',
+                 laags,
+                 ')_interct.pdf')
+    
+    hlin <- 0
+  }
+  
+  
+  df <- df[[.slot]]
+  
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
                    y=df[,1]))+
     # plot the above with line geom, in black
     geom_line(colour='black', size=1)+
     # adds unit root line
-    geom_line(aes(y=1), colour='black', size=.5)+
-    geom_line(aes(y=0), colour='black', size=.5)+
+    geom_hline(yintercept = hlin, colour='black', size=.5) +
     # plot makeup
     geom_smooth(method='loess', colour='blue', formula = 'y~x', se = F)+
-    # scale_x_yearqtr(format='%Y Q%q')+ 
-    # scale_x_date(date_labels = '%Y', breaks = '10 years') + 
     scale_x_yearqtr(format = '%Y Q%q')+
     theme_minimal()+
-    scale_y_continuous()+xlab(' ') + ylab(paste0('AR(',laags,') coeff. estimates sum')) + 
-    ggtitle(paste0(names %>% noms_tt(), ' - ', laags, ' optimal lags: sum of coefficients')) +
+    scale_y_continuous()+xlab(' ') + ylab(yy) + 
+    ggtitle(tt) +
     # add ribbon style standard errors
-    geom_ribbon(aes(ymin = (df[,1] - df[,2]),
-                    ymax = (df[,1] + df[,2])),
-                size = .25, colour = 'grey', alpha = .1)+
+    geom_ribbon(aes(ymin = (df[,1] - 2*df[,2]),
+                    ymax = (df[,1] + 2*df[,2])),
+                size = .25, 
+                colour = 'grey', 
+                alpha = .1) +
     theme(axis.text = element_text(size = rel(1.5)), 
           legend.text = element_text(size = rel(1.5)), 
           title = element_text(size = rel(1.5)),
@@ -771,7 +836,7 @@ plot_autoregsum <- function(df, names, path, laags){
   
   # save plot
   
-  ggsave(paste0(names %>% noms(), '_AR(',laags,')_coeffsum.pdf'),
+  ggsave(nn,
          plot = po,
          device='pdf',
          path = path,
