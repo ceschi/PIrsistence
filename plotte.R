@@ -204,14 +204,14 @@ inflation$plots$histo <- pi_long %>%
 ##### Plots for frequentist part ###############################################
 
 # AR(1) rolling
-inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                    names = inflation[['names']],
                                                    path = sapply(rep(ar1_dir, n), list)),
                                          .f = plot_roller
                                          )
 
 # AR(1) trend rolling
-inflation[['plot_rollm_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_rollm_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                    names = inflation[['names']],
                                                    path = sapply(rep(ar1_dir, n), list),
                                                    .slot = fm_apply(2, n)),
@@ -220,7 +220,7 @@ inflation[['plot_rollm_trend']] <- future_pmap(.l = list(df = inflation[['rollar
 
 
 # AR(k*) plots
-inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                     names = inflation[['names']],
                                                     laags = inflation[['aropti']],
                                                     path = sapply(rep(ark_dir, n), list)),
@@ -228,7 +228,7 @@ inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                           )
 
 # AR(k*) plots trend
-inflation[['plot_aropti_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_aropti_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                           names = inflation[['names']],
                                                           laags = inflation[['aropti']],
                                                           path = sapply(rep(ark_dir, n), list),
@@ -237,7 +237,7 @@ inflation[['plot_aropti_trend']] <- future_pmap(.l = list(df = inflation[['rolla
                                                 )
 
 # plotting ridges
-inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
+inflation$plots[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
                                                     nam = inflation[['names']],
                                                     laags = inflation[['aropti']],
                                                     path = sapply(rep(acf_dir, n), list)),

@@ -36,7 +36,13 @@ for (i in 1:n){
                                                          data_train = inflation$lstm[['data']][[i]],
                                                          horizon = fore_horiz)
   
-  
+  # compute RW-ARk on extended series
+  inflation$lstm$ark_2l[[i]] <- inflation$lstm[['online_pred_2l']][[i]] %>% 
+    select(-label) %>% 
+    tbl_xts() %>% 
+    rolloop.sum(window = wind,
+                lags = inflation[['aropti']][[i]], 
+                interc = intercep)
   
   inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+
@@ -50,6 +56,19 @@ for (i in 1:n){
           legend.position = 'bottom', 
           legend.title = element_blank(),
           plot.title = element_text(hjust = 0.5))
+  
+  inflation$lstm$plots[['full_2l_rwark_coef']][[i]] <- 
+    plot_autoregsum(df = inflation$lstm$ark_2l[[i]],
+                    names = inflation$names[[i]], 
+                    path = l2_dir, 
+                    laags = inflation$aropti[[i]])
+  
+  inflation$lstm$plots[['full_2l_rwark_trend']][[i]] <- 
+    plot_autoregsum(df = inflation$lstm$ark_2l[[i]],
+                    names = inflation$names[[i]], 
+                    path = l2_dir, 
+                    laags = inflation$aropti[[i]], 
+                    .slot = 2)
   
   # save plot
   ggsave(filename = file.path(l2_dir, 
