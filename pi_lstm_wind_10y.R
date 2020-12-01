@@ -97,7 +97,6 @@ for (i in 1:n){
                                                             )
   
   # hairplot 
-  #' *needs fixing labels*
   inflation$lstm$rolling_wind[[i]]$plot_hair <- 
     inflation$lstm$rolling_wind[[i]]$predictions %>% ggplot() + 
     geom_line(aes(x = date, y = value, colour = label, group = interaction(label, data_chunk), alpha = label))+
