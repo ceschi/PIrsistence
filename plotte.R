@@ -191,7 +191,11 @@ ggsave(filename = file.path(vars_dir, 'comm_pi_plot.pdf'),
 
 ##### histograms ###############################################################
 inflation$plots$histo <- pi_long %>% 
-  filter(stringe::str_detect(index, 'pch')) %>% group_by(index) %>% mutate(mean = mean(rate), median = median(rate)) %>% ungroup() %>% 
+  filter(stringr::str_detect(index, 'pch')) %>% 
+  group_by(index) %>% 
+  mutate(mean = mean(rate),
+         median = median(rate)) %>% 
+  ungroup() %>% 
   ggplot(data = ., aes(x = rate, group = index)) + geom_density(fill = 'grey') + 
   geom_vline(xintercept = 0) + 
   facet_wrap(~index) + theme_minimal() + ggtitle('Kernel densities') + 
@@ -200,28 +204,45 @@ inflation$plots$histo <- pi_long %>%
 ##### Plots for frequentist part ###############################################
 
 # AR(1) rolling
-inflation[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_rollm']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                    names = inflation[['names']],
                                                    path = sapply(rep(ar1_dir, n), list)),
                                          .f = plot_roller
-)
+                                         )
+
+# AR(1) trend rolling
+inflation$plots[['plot_rollm_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
+                                                   names = inflation[['names']],
+                                                   path = sapply(rep(ar1_dir, n), list),
+                                                   .slot = fm_apply(2, n)),
+                                         .f = plot_roller
+                                         )
 
 
 # AR(k*) plots
-inflation[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
+inflation$plots[['plot_aropti']] <- future_pmap(.l = list(df = inflation[['rollark']],
                                                     names = inflation[['names']],
                                                     laags = inflation[['aropti']],
                                                     path = sapply(rep(ark_dir, n), list)),
                                           .f = plot_autoregsum
-)
+                                          )
+
+# AR(k*) plots trend
+inflation$plots[['plot_aropti_trend']] <- future_pmap(.l = list(df = inflation[['rollark']],
+                                                          names = inflation[['names']],
+                                                          laags = inflation[['aropti']],
+                                                          path = sapply(rep(ark_dir, n), list),
+                                                          .slot = fm_apply(2, n)),
+                                                .f = plot_autoregsum
+                                                )
 
 # plotting ridges
-inflation[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
+inflation$plots[["plot_ridges"]] <- future_pmap(.l = list(df = inflation[['aroptiridges']],
                                                     nam = inflation[['names']],
                                                     laags = inflation[['aropti']],
                                                     path = sapply(rep(acf_dir, n), list)),
                                           .f = plot_ridges
-)
+                                          )
 
 
 ##### other windows width for robustness #######################################

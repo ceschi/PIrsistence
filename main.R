@@ -125,7 +125,7 @@ inflation <- list(
 )
 
 # parallel
-plan(multiprocess)
+plan(multisession)
 
 ##### I - ADF, optilags, AR1, ARk  #############################################
 tic('Frequentist part')

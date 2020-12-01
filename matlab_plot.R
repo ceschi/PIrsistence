@@ -140,3 +140,10 @@ for (i in 1:length(var)){
 }
 
 rm(pb)
+
+# this gets all directories in path as char vec
+# list.dirs(recursive = F)
+#' TODO:
+#' - preprocess data only once, save smaller dataframe
+#' - separate two plots, the distro ones are less useful
+#' - names and whatnot are a disgrace now
