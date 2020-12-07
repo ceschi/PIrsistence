@@ -42,7 +42,8 @@ for (i in 1:n){
     tbl_xts() %>% 
     rolloop.sum(window = wind,
                 lags = inflation[['aropti']][[i]], 
-                interc = intercep)
+                interc = intercep) %>% 
+    na.omit(.)
   
   inflation$lstm$plots[['full_2l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_2l']][[i]])+
     geom_line(aes(x = date, y = value, colour = label))+

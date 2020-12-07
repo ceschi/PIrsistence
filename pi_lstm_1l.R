@@ -44,7 +44,8 @@ for (i in 1:n){
     tbl_xts() %>% 
     rolloop.sum(window = wind,
                 lags = inflation[['aropti']][[i]], 
-                interc = intercep)
+                interc = intercep) %>% 
+    na.omit(.)
   
   # prepare canvases for plots
   inflation$lstm$plots[['full_1l']][[i]] <- ggplot(data = inflation$lstm[['online_pred_1l']][[i]])+
