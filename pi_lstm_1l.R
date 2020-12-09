@@ -13,13 +13,13 @@ for (i in 1:n){
                                                             n_feat = 1,
                                                             # baseline for one single layer
                                                             # nodes = 2,
-                                                            nodes = 1000,
+                                                            nodes = 20,
                                                             # online model with one batch, workaround needed
                                                             size_batch = 'auto',
                                                             # either the max epochs or patience
                                                             epochs = fit_epochs,
                                                             ES = F,
-                                                            keepBest = T)
+                                                            keepBest = F)
   
   # save the fitted model (with max batch size optionally)
   keras::save_model_hdf5(object = inflation$lstm[['fullsample_1l']][[i]]$model_fitted,

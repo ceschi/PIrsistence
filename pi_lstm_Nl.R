@@ -1,24 +1,27 @@
-##### LSTM - 2L ################################################################
+# Little nodes, many layers
 
 # set series
 n <- 5
 
+# how many layers?
 
+
+#' *NEEDS ADAPTATION*
 
 ##### TWO layer LSTM on full sample ############################################
-tic('Full loop: 2 layers LSTM')
+tic('Full loop: n layers LSTM')
 for (i in 1:n){
   # fit model
   inflation$lstm[['fullsample_2l']][[i]] <- 
-    k_fullsample_2l(data = inflation$lstm[['data']][[i]]$train$train_norm, 
-                    n_steps = 25, 
+    k_fullsample_nl(data = inflation$lstm[['data']][[i]]$train$train_norm, 
+                    n_steps = 15, 
                     n_feat = 1, 
                     # nodes = 7,
-                    nodes = 25,
+                    nodes = 5,
                     size_batch = 'auto', 
                     epochs = fit_epochs*2, 
                     ES = F, 
-                    keepBest = F)
+                    keepBest = T)
   # save model somewhere on disk
   save_model_hdf5(object = inflation$lstm[['fullsample_2l']][[i]]$model_fitted, 
                   filepath = file.path(models_dir,
