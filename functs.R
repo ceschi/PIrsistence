@@ -2152,7 +2152,8 @@ online_pred <- function(model_fitted,
   }
   
   # retrieve input shape
-  in_shape <- get_input_shape_at(object = model_fitted[[model_type]],
+  # from the very first layer
+  in_shape <- get_input_shape_at(object = model_fitted[[model_type]]$layers[[1]],
                                  node_index = 0)
   in_shape <- sapply(in_shape, FUN = c)
   
