@@ -2152,10 +2152,9 @@ online_pred <- function(model_fitted,
   }
   
   # retrieve input shape
-  # for some reason not working, line below does tho
-  # in_shape <- get_input_shape_at(object = model_fitted[[model_type]],
-  #                                node_index = 0)
-  in_shape <- model_fitted[[model_type]]$layers[[1]]$get_config()$batch_input_shape
+  # from the very first layer
+  in_shape <- get_input_shape_at(object = model_fitted[[model_type]]$layers[[1]],
+                                 node_index = 0)
   in_shape <- sapply(in_shape, FUN = c)
   
   for (h in 1:horizon){
