@@ -139,8 +139,8 @@ instant_pkgs <- function(pkgs) {
 #'   return(estim)
 #' }
 rollm <- function(.df, .formula){
-  invisible(require(dplyr))
-  invisible(require(broom))
+  suppressWarnings(require(dplyr))
+  suppressWarnings(require(broom))
   
   lmod <- broom::tidy(lm(data = .df,
                          formula = .formula))
@@ -150,10 +150,10 @@ rollm <- function(.df, .formula){
   
   out <- lmod %>% 
     dplyr::select(term, estimate, std.error) %>%
-    dplyr::mutate(term = tolower(gsub(pattern = '\\(',
+    dplyr::mutate(term = tolower(gsub(pattern = '\\(|\\)',
                                       replacement =  '', 
-                                      x = gsub('\\)', '', term)
-                                      ))) %>% 
+                                      x = term)
+                                      )) %>% 
     tidyr::pivot_wider(id_cols = term,
                        names_from = term,
                        values_from = c('estimate', 'std.error'),
@@ -208,8 +208,8 @@ rolloop <- function(df, window=8, lags=1, interc = T){
   # if there's an intercept it also has [['intercept']]
   
   # pkgs
-  invisible(require(tidyr))
-  invisible(require(xts))
+  suppressWarnings(require(tidyr))
+  suppressWarnings(require(xts))
   
   # local function
   rollm2 <- function(.df, .formula){
@@ -398,9 +398,9 @@ auto.reg <- function(data, lags = 1, interc = T){
 
 #' auto.reg.sum <- function(data, lags = 1, interc = T){
 #'   
-#'   invisible(require(broom))
-#'   invisible(require(dplyr))
-#'   invisible(require(magrittr))
+#'   suppressWarnings(require(broom))
+#'   suppressWarnings(require(dplyr))
+#'   suppressWarnings(require(magrittr))
 #'   
 #'   # function to estimate AR(lags) and sum over parameters
 #'   
@@ -451,8 +451,8 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   #' *dealing with xts and dates!*
   
   # import pkgs  
-  invisible(require(broom))
-  invisible(require(xts))
+  suppressWarnings(require(broom))
+  suppressWarnings(require(xts))
   
   # get rid of NAs properly
   datana <- na.omit(data)
@@ -562,7 +562,7 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
   loc_ARS <- function(.data, .lags, .interc, .slot){
     
     # pkgs
-    invisible(require(tbl2xts))
+    suppressWarnings(require(tbl2xts))
     
     list_reg <- auto.reg.sum(data = .data,
                               lags = .lags,
@@ -604,8 +604,8 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
-  if (!invisible(require(zoo)))    {install.packages('zoo');   invisible(library(zoo))}
-  if (!invisible(require(broom)))  {install.packages('broom'); invisible(library(broom))}
+  if (!suppressWarnings(require(zoo)))    {install.packages('zoo');   suppressWarnings(library(zoo))}
+  if (!suppressWarnings(require(broom)))  {install.packages('broom'); suppressWarnings(library(broom))}
   
   # check out the nature of the input
   # throw an error if it's not time series class
@@ -728,7 +728,7 @@ plot_roller <- function(df, names, path, .slot = 1){
   }
   
   
-  df <- df[[.slot]]
+  df <- na.omit(df[[.slot]])
   
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
@@ -807,7 +807,7 @@ plot_autoregsum <- function(df, names, path, laags, .slot = 1){
   }
   
   
-  df <- df[[.slot]]
+  df <- na.omit(df[[.slot]])
   
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
@@ -884,7 +884,7 @@ plot_ridges <- function(df, nam, laags, path){
 # nicer names from human readable strings
 noms <- function(x){
   # if (!is.character(x)) stop('\nNot a string')
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   x %>% 
     tolower() %>% 
     gsub(x = ., 'revised ', '') %>% 
@@ -896,7 +896,7 @@ noms <- function(x){
 }
 
 noms_tt <- function(x){
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   
   x %>% 
     gsub(x = ., '^[0-9]{1,2}y_', '') %>% 
@@ -913,7 +913,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
   # and labels for start/end
   
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   
   tidyout <- function(onereg, fore_horiz){
     # extract results from lm and 
@@ -944,10 +944,23 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   }
   
   
-  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  tidycoefs <- lapply(X = regs_list, 
+                      FUN = tidyout, 
+                      fore_horiz)
   
-  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  out_ar1_temp <- tidycoefs %>% 
+    dplyr::bind_rows() %>% 
+    split(f = .$term)
   
+  # coefficients in the first slot
+  out_ar1 <- list(coefficients = out_ar1_temp$value.1)
+  
+  if (length(out_ar1_temp)>1){
+    out_ar1$intercept = out_ar1_temp$`(Intercept)` %>% 
+      mutate(term = tolower(gsub(x = term,
+                                 pattern = "\\)|\\(",
+                                 replacement = '')))
+  }
   
   # second part for regsum
   tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -972,20 +985,28 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
     
-    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
-                          ar_sum_se = regs_list_sum[,2],
-                          chunk = labl,
-                          k_lags = ar_lags_sum)
+    out <-  list()
     
-    return(out)
+    # add $coef_sum, $intercept and store appropriately
+    out$coefficients <- tibble::tibble(ar_sum = regs_list_sum$coef_sum$coef_sum,
+                                        ar_sum_se = regs_list_sum$coef_sum$coef_sum_se,
+                                        chunk = labl,
+                                        k_lags = ar_lags_sum,
+                                       term = 'coef_sum')
+    
+    if (attr(terms(ar1), 'intercept')){
+      out$intercept <- tibble::tibble(ar_int = regs_list_sum$intercept$interc,
+                                      ar_int_se = regs_list_sum$intercept$se,
+                                      chunk = labl,
+                                      k_lags = ar_lags_sum,
+                                      term = 'intercept')
+    }
+    
+    
+    
+    return(bind_rows(out))
   }
   
-  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
-  #                                             ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
-  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-  #                                             regs_list_sum = regs_list_sum), 
-  #                                   .f = tidyout_sum) %>% 
-  #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
                                        ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
@@ -1172,7 +1193,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -1195,7 +1216,9 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   }
   
   # apply extractor to all regressions
-  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  tidycoefs <- lapply(X = regs_list, 
+                      FUN = tidyout, 
+                      fore_horiz)
   
   # rowbind all different results
   out_ar1 <- tidycoefs %>% dplyr::bind_rows()
@@ -1332,7 +1355,7 @@ chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
   
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -1645,10 +1668,10 @@ k_fullsample_1l <- function(data,
   
   
   
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1795,10 +1818,10 @@ k_fullsample_2l <- function(data,
   
   
   
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1964,8 +1987,8 @@ k_fullsample_nl <- function(data,
     if (is.null(options$stateful)) stop('\nOptions must declare whether each layer is stateful (and in case set batch size accordingly).')
     
     
-    invisible(require(keras))
-    invisible(require(magrittr))
+    suppressWarnings(require(keras))
+    suppressWarnings(require(magrittr))
     
     model <- keras::keras_model_sequential()
     
@@ -2000,10 +2023,10 @@ k_fullsample_nl <- function(data,
   
   
   # packages required
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -2129,8 +2152,8 @@ online_pred <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  invisible(require(keras))
-  invisible(require(dplyr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(dplyr))
   
   
   # data_train is a list from data_prepper function!
@@ -2223,8 +2246,8 @@ multi_online <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  invisible(require(keras))
-  invisible(require(dplyr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(dplyr))
   
   
   # data_train is a list from data_prepper function!

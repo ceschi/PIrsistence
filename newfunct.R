@@ -15,6 +15,7 @@ k_fullsample_1l <- function(data,
   if (is.null(data_val)){
     # do something when user does not provide data val
     
+    #' *when n_sample is prime ditch oldest obs!*
     
     if (sad){ 
     }
