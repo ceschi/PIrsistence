@@ -108,36 +108,6 @@ instant_pkgs <- function(pkgs) {
   }
 }
 
-#' rollm <- function(df, formula){
-#'   #' *Add here storage of intercept with related SDs*
-#'   
-#'   # function to extract and store coefficients 
-#'   # and double SD in a named row tibble
-#'   
-#'   
-#'   # estimates the linear model
-#'   lmod <- summary(lm(data=df, formula=formula))
-#'   
-#'   # extracts point estimates and 2*SD (+- 95%),
-#'   # put info in named row tibble dropping 
-#'   # intercept info from first column
-#'   
-#'   cofs <- as_tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-#'                                             t() %>% ncol()),1] %>% t(),
-#'                     .name_repair = 'minimal')
-#'   SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-#'                                              t() %>% ncol()),2] %>% t(),
-#'                    .name_repair = 'minimal')
-#'   
-#'   # adds suffix for bands
-#'   names(SD2) <- paste0(names(SD2), '.SD2')
-#'   
-#'   # merges in one row with names
-#'   estim <- cbind(cofs, SD2)
-#'   
-#'   # outputs
-#'   return(estim)
-#' }
 rollm <- function(.df, .formula){
   suppressWarnings(require(dplyr))
   suppressWarnings(require(broom))
@@ -168,36 +138,6 @@ rollm <- function(.df, .formula){
   
 }
 
-#' rolloop <- function(df, window=8, lags=1, interc = T){
-#'   
-#'   #' *This should be already able to accomodate intercept*
-#'   
-#'   # width of the rolling window
-#'   window <- as.integer(window)
-#'   
-#'   # select lags 
-#'   k <- as.integer(lags)
-#'   
-#'   # lags the time series, names it, cuts out NAs
-#'   df <- df %>% lagger(laag=k, na.cut=T)
-#'   # and creates related formula
-#'   formulae <- formula.maker(df, 
-#'                             df %>%  names(.) %>% first(),
-#'                             intercept = interc)
-#'   
-#'   # computes point estimates and 2SD
-#'   # stocks in a dataframe for convenience
-#'   regs <-rollapply(as.data.frame(df),
-#'                    width=window,
-#'                    by.column = F,
-#'                    FUN=function(x, formula) rollm(df=as.data.frame(x), formula=formulae))
-#'   
-#'   # converts and dates the regressions
-#'   regs <- xts(regs, frequency=4, 
-#'               order.by=index(df)[window:length(index(df))])
-#'   
-#'   return(regs)
-#' }
 rolloop <- function(df, window=8, lags=1, interc = T){
   # This function updates on a previous 'rolloop' version to
   # keep information on the intercept of the regressions.
@@ -377,7 +317,7 @@ fm_apply <- function(foo, n){
 }
 
 
-############ II - frequentist part #############################################
+##### II - frequentist part #############################################
 
 auto.reg <- function(data, lags = 1, interc = T){
   
@@ -396,52 +336,6 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
-#' auto.reg.sum <- function(data, lags = 1, interc = T){
-#'   
-#'   suppressWarnings(require(broom))
-#'   suppressWarnings(require(dplyr))
-#'   suppressWarnings(require(magrittr))
-#'   
-#'   # function to estimate AR(lags) and sum over parameters
-#'   
-#'   transf_data <- lagger(series = data,
-#'                         laag = lags,
-#'                         na.cut = F)
-#'   
-#'   
-#'   
-#'   model_formula <- formula.maker(df = transf_data,
-#'                                  y = first(names(transf_data)),
-#'                                  intercept = interc)
-#'   
-#'   linear_model <- lm(formula = model_formula,
-#'                      data = transf_data)
-#'   
-#'   output <- broom::tidy(linear_model)
-#'   
-#'   #' *hand this part for storing intecept*
-#'   coef_sum <- output %>% 
-#'     filter(term != '(Intercept)') %>% 
-#'     dplyr::select(estimate) %>%  
-#'     sum()
-#'   
-#'   if (interc){
-#'     coef_sum_se <- linear_model %>% 
-#'                     vcov() %>%
-#'                     .[-1,-1] %>% 
-#'                     sum() %>%
-#'                     sqrt()
-#'   }else{
-#'     coef_sum_se <- linear_model %>% 
-#'       vcov() %>%
-#'       sum() %>% 
-#'       sqrt()
-#'   }
-#'   
-#'   coef_sum <- cbind(coef_sum, coef_sum_se)
-#'   
-#'   return(coef_sum)
-#' }
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
   
@@ -527,27 +421,6 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   return(outlist)
 }
 
-# rolloop.sum <- function(df, window, lags = 1, interc = T){
-#   
-#   # remove troublesome NAs
-#   df_na <- na.omit(df)
-#   
-#   # computes point estimates
-#   # stocks in a dataframe for convenience
-#   regs <-rollapply(df_na,
-#                    # as.data.frame(df),
-#                    width=window,
-#                    by.column = F,
-#                    FUN = auto.reg.sum,
-#                    lags = lags,
-#                    interc = interc)
-#   
-#   # # converts and dates the regressions
-#   # regs <- xts(regs, frequency=4, 
-#   #             order.by=index(df_na)[window:length(index(df_na))])
-#   
-#   return(regs)
-# }
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
   # remove troublesome NAs
@@ -1004,8 +877,7 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     
     
-    # return(bind_rows(out))
-    return(out)
+    return(bind_rows(out))
   }
   
   
@@ -1014,9 +886,11 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
                                        fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                        regs_list_sum = regs_list_sum), 
                              .f = tidyout_sum) %>% 
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>% 
+    split(f = .$term)
   
-  
+  # out is a list of lists of lists
+  # every tbl has same names tho
   out <- list(ar1 = out_ar1,
               ark_sum = out_ark_sum)
   
@@ -1246,12 +1120,6 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   }
   
   
-  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
-  #                                             ar_lags_sum = ar_lags_sum, 
-  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-  #                                             regs_list_sum = regs_list_sum), 
-  #                                   .f = tidyout_sum) %>% 
-  #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
                                        ar_lags_sum = ar_lags_sum, 
