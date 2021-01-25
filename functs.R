@@ -988,23 +988,24 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     out <-  list()
     
     # add $coef_sum, $intercept and store appropriately
-    out$coefficients <- tibble::tibble(ar_sum = regs_list_sum$coef_sum$coef_sum,
-                                        ar_sum_se = regs_list_sum$coef_sum$coef_sum_se,
-                                        chunk = labl,
-                                        k_lags = ar_lags_sum,
-                                       term = 'coef_sum')
+    out$coefficients <- tibble::tibble(term = 'coef_sum',
+                                       ar_sum = regs_list_sum$coef_sum$coef_sum,
+                                       ar_sum_se = regs_list_sum$coef_sum$coef_sum_se,
+                                       chunk = labl,
+                                       k_lags = ar_lags_sum)
     
     if (attr(terms(ar1), 'intercept')){
-      out$intercept <- tibble::tibble(ar_int = regs_list_sum$intercept$interc,
-                                      ar_int_se = regs_list_sum$intercept$se,
+      out$intercept <- tibble::tibble(term = 'intercept',
+                                      ar_sum = regs_list_sum$intercept$interc,
+                                      ar_sum_se = regs_list_sum$intercept$se,
                                       chunk = labl,
-                                      k_lags = ar_lags_sum,
-                                      term = 'intercept')
+                                      k_lags = ar_lags_sum)
     }
     
     
     
-    return(bind_rows(out))
+    # return(bind_rows(out))
+    return(out)
   }
   
   
