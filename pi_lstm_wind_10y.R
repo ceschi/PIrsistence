@@ -78,14 +78,14 @@ for (i in 1:n){
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg)
   
-# simple AR(3) - SOC
+  # simple AR(3) - SOC
   inflation$lstm$rolling_wind[[i]][['ar3']] <- 
     future_pmap(.l = list(data = rolling_wind[[i]]$predictions_xts,
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg.sum)
   
-# stitch all chunks back together with forecasts
+  # stitch all chunks back together with forecasts
   inflation$lstm$rolling_wind[[i]]$predictions <- bind_rows(rolling_wind[[i]]$selected_predictions)
   
   # some patchwork for the plot

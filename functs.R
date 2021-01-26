@@ -1166,18 +1166,20 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     # extract coefficients, add enddate, turn in time format
     out <- broom::tidy(onereg) %>% 
       tibble::add_column(enddate = end) %>% 
-      tibbletime::as_tbl_time(index = enddate)
+      tibbletime::as_tbl_time(index = enddate) %>% 
+      dplyr::mutate(term = case_when(term == '(Intercept)' ~ 'intercept',
+                                     term == 'value.1' ~ 'ar1_coef'))
     
     return(out)
   }
   
   # apply extractor to all regressions
-  tidycoefs <- lapply(X = regs_list, 
-                      FUN = tidyout, 
-                      fore_horiz)
-  
-  # rowbind all different results
-  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  out_ar1 <- lapply(X = regs_list, 
+                    FUN = tidyout, 
+                    fore_horiz) %>% 
+    dplyr::bind_rows() %>% 
+    arrange(term, enddate)
+
   
   ### For the ark rolling window results
   tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -1191,13 +1193,25 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       head(1) %>% 
       as.Date()
     
-    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
-                          ar_sum_se = regs_list_sum[,2],
-                          enddate = end,
-                          k_lags = ar_lags_sum) %>% 
+    out <- list()
+    
+    out$coefficients <- tibble::tibble(term = 'coef_sum',
+                                       estimate = regs_list_sum$coef_sum$coef_sum,
+                                       std.error = regs_list_sum$coef_sum$coef_sum_se,
+                                       enddate = end,
+                                       k_lags = ar_lags_sum) %>% 
       tibbletime::as_tbl_time(index = enddate)
     
-    return(out)
+    if (attr(terms(ar1), 'intercept')){
+      out$intercept <- tibble::tibble(term = 'intercept',
+                                      estimate = regs_list_sum$intercept$interc,
+                                      std.error = regs_list_sum$intercept$se,
+                                      enddate = end,
+                                      k_lags = ar_lags_sum) %>% 
+        tibbletime::as_tbl_time(index = enddate)
+    }
+    
+    return(bind_rows(out))
   }
   
   
@@ -1207,7 +1221,8 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
                                        fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                        regs_list_sum = regs_list_sum), 
                              .f = tidyout_sum) %>% 
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>% 
+    arrange(term, enddate)
   
   out <- list(ar1_roll = out_ar1, 
               ark_sum_roll = out_ark_sum)
@@ -1304,6 +1319,8 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
 chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
+  
+  #' *SUPERSEDED/DEPRECATED*
   
   suppressWarnings(require(magrittr))
   suppressWarnings(require(broom))
