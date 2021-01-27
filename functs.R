@@ -1252,7 +1252,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # make plot, filtering out intercept
   plt <- chunk_regs_obj$ar1_roll %>% 
-    filter(term != '(Intercept)') %>% 
+    filter(term != 'intercept') %>% 
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .75) +
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25)+
@@ -1292,10 +1292,11 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
-    ggplot(aes(x = enddate, y = ar_sum)) + 
+    filter(term != 'intercept') %>% 
+    ggplot(aes(x = enddate, y = estimate)) + 
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
-    geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .25) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25) +
     theme(plot.title = element_text(hjust = 0.5,
                                     size = rel(1.5)), 
           axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
@@ -1311,6 +1312,74 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   plt_list <- list(ar1 = plt, 
                    ark_sum = plt_sum)
+  
+  if ('intercept' %in% chunk_regs_obj$ar1$term){
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ar1_trend_rollwind.pdf')
+    
+    plt_trnd <- chunk_regs_obj$ar1_roll %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = enddate, y = estimate))+
+      geom_line(size = .75) +
+      geom_ribbon(aes(ymin = (estimate - std.error), 
+                      ymax = (estimate + std.error)), 
+                  alpha = .25)+
+      geom_hline(yintercept = 0, 
+                 size = .25, 
+                 linetype = 2, 
+                 colour = 'black') +
+      ggtitle(tt) + theme_minimal() + 
+      ylab('AR(1) - Trend') + xlab('Sample end date') + 
+      theme(plot.title = element_text(hjust = 0.5,
+                                      size = rel(1.5)),
+            axis.title = element_text(size = rel(1.5)),
+            axis.text = element_text(size = rel(1.5))) + 
+      geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
+    ggsave(plot = plt_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ar1_trend <- plt_trnd
+  }
+  
+  if ('intercept' %in% chunk_regs_obj$ark_sum$term){
+    
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ark_sum_trend_chunks.pdf')
+    
+    labelyt <- chunk_regs_obj$ark_sum %>% 
+      select(k_lags) %>% 
+      unique() %>% 
+      paste0('AR(', ., ') - Trend')
+    
+    plt_sum_trnd <- chunk_regs_obj$ark_sum_roll %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = enddate, y = estimate)) + 
+      geom_line(size = .75) + theme_minimal() + ylab(labelyt) + xlab('Sample end date') + 
+      geom_hline(yintercept = 0, size = .25, linetype = 2, colour = 'black') +
+      geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25) +
+      theme(plot.title = element_text(hjust = 0.5,
+                                      size = rel(1.5)), 
+            axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
+      geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
+    ggsave(plot = plt_sum_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ark_sum_trend <- plt_sum_trnd
+  }
   
   
   return(plt_list)
