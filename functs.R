@@ -1384,12 +1384,12 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   return(plt_list)
 }
-
+#' *SUPERSEDED/DEPRECATED*
 chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
   
-  #' *SUPERSEDED/DEPRECATED*
+  
   
   suppressWarnings(require(magrittr))
   suppressWarnings(require(broom))

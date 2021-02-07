@@ -2,6 +2,8 @@
 
 n <- 5 # only pch series
 
+l1_histories <- list()
+l1_net_weights <- list()
 
 ##### ONE layer LSTM on full sample ############################################
 tic('Full Loop: 1 layer LSTM')
@@ -27,6 +29,9 @@ for (i in 1:n){
                                               paste0(inflation[['names']][[i]] %>% noms,
                                                      '_1l_fullsample.h5'))
   )
+  
+  l1_histories[[i]] <- inflation$lstm$fullsample_1l[[i]]$history$metrics
+  l1_net_weights[[i]] <- inflation$lstm$fullsample_1l[[i]]$model_weights
   
   plot(inflation$lstm$fullsample_1l[[i]]$history)
   cat('\nJust done with ', inflation$names[[i]] %>% noms_tt(),

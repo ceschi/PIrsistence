@@ -6,6 +6,8 @@
 # way exists.
 
 chunks <- list()
+chunks_histories <- list()
+chunks_net_weights <- list()
 
 for (i in 1:n){
   # preallocate for results
@@ -47,7 +49,9 @@ for (i in 1:n){
     # store predictions
     chunks[[i]]$predictions[[s]] <- predictions
     
-    # checks
+    # storing
+    chunks_histories[[i]][[s]] <- lstm_list$history$metrics
+    chunks_net_weights[[i]][[s]] <- lstm_list$model_weights
     # plot(lstm_list$history)
     
     # dump model to avoid learning spillover

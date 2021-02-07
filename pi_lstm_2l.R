@@ -3,7 +3,8 @@
 # set series
 n <- 5
 
-
+l2_histories <- list()
+l2_net_weights <- list()
 
 ##### TWO layer LSTM on full sample ############################################
 tic('Full loop: 2 layers LSTM')
@@ -27,6 +28,8 @@ for (i in 1:n){
                   )
   )
   
+  l2_histories[[i]] <- inflation$lstm$fullsample_1l[[i]]$history$metrics
+  l2_net_weights[[i]] <- inflation$lstm$fullsample_1l[[i]]$model_weights
   
   cat('\nJust done with ', inflation$names[[i]] %>% noms_tt(),
       ' model on iteration ', i,' of two-layer LSTM.\n\n')

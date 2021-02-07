@@ -3,6 +3,8 @@
 
 
 rolling_wind <- list()
+wind10_histories <- list()
+wind10_net_weights <- list()
 
 for (i in 1:n){
   # preallocate for results
@@ -53,8 +55,9 @@ for (i in 1:n){
                                                        n = fore_horiz+1)
     }
     
-    # checks
-    # plot(lstm_list$history)
+    # storing
+    wind10_histories[[i]][[s]] <- lstm_list$history$metrics
+    wind10_net_weights[[i]][[s]] <- lstm_list$model_weights
     
     # dump model to avoid learning spillover
     rm(lstm_list)
