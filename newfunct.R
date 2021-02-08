@@ -1,29 +1,31 @@
 k_fullsample_1l <- function(data, 
-                            n_steps, 
+                            data_val = NULL,
                             n_feat = 1, 
-                            # model_compiled,
+                            n_steps, 
                             nodes = 50,
-                            size_batch = 1,
                             epochs = 2000,
+                            size_batch = 1,
+                            internal_validation = FALSE,
                             ES = F,
                             keepBest = F,
                             view_loss = F,
-                            internal_validation = FALSE,
-                            data_val = NULL){
+                            ){
   
   n_feat <- ncol(data)
   n_sample <- nrow(data) - n_steps
   
+  usr_batch <- (is.numeric(size_batch) &&
+                size_batch%%1 == 0 &&
+                size_batch != 1)
   
-  if (size_batch != 1 &&
-      is.numeric(size_batch) && 
-      (size_batch%%1==0) &&
+  
+  if (usr_batch &&
       !(n_sample%%size_batch == 0)){
     
     # user provided size_batch, check consistency
     stop('\nProvided incompatible {size_batch}, must evenly divide sample size less lags {n_steps}.\n')
   }
-
+  
     
   # batcher gates
   if (numbers::isPrime(n_sample)){
@@ -36,7 +38,7 @@ k_fullsample_1l <- function(data,
   
   
   # compute unique prime factors
-  prime_fs <- numbers::primeFactor(n_sample) %>% 
+  prime_fs <- numbers::primeFactors(n_sample) %>% 
     unique()
   batch_prime <- tail(prime_fs,1)
     
@@ -47,7 +49,7 @@ k_fullsample_1l <- function(data,
   }
       
     
-  
+  data_lagged <- embed(x = as.matrix(data), dimension = (n_steps+1))
   
   
   # major IF
@@ -58,9 +60,11 @@ k_fullsample_1l <- function(data,
       stop('\nProvide either compatible validation data {data_val} or activate {internal_validation = T}\n')
       
     }else if (internal_validation){
-      # internally determine validation data
+      # internally determine validation data,
+      # by construction sizes are consistent and evenly divide
+      # train and validation.
       
-      
+      #' *needs data_lagged first!*
       
       # n_sample to account val
       n_train <- n_sample - batch_prime
@@ -86,23 +90,37 @@ k_fullsample_1l <- function(data,
                          dim = c(batch_prime, n_steps, n_feat))
     }
 
-  }else{
+  }else if (!is.null(data_val)){
+    if (nrow(data_val)<=n_steps) stop('\n{data_val} is too short wtr lags {n_steps}, adjust either of them.\n')
     
     # user provides val data, need to check
     # consistent batch/sample/validation sizes
     # raise error consistently with other options
     # if batch size is not auto, 1 or else problematic, check if it mods val and train
     
+    data_val_n_sample <- nrow(data_val) - n_steps
+    
     # check consistency with val&train
-    if (is.numeric(size_batch) &&
-        size_batch%%1 == 0 &&
-        size_batch != 1){
+    if (usr_batch){
       
-      data_val_gate <- (nrow(data_val) - n_steps)%%size_batch == 0
+      # test
+      data_val_gate <- data_val_n_sample%%size_batch == 0
       if (!data_val_gate) stop('\nProvided incompatible {size_batch} or {data_val}, must evenly divide sample sizes less lags {n_steps}.\n')
       
       data_train_gate <- n_sample%%size_batch == 0
       if (!data_train_gate) stop('\nProvided incompatible {size_batch} or {data}, must evenly divide sample sizes less lags {n_steps}.\n')
+    }else if (size_batch == 'auto'){
+      
+      # test: even division with val data
+      val_test <- data_val_n_sample%%batch_prime==0
+      
+      # test: size_batch in both 
+      primes_cand <- intersect(numbers::primeFactors(n_sample),
+                               numbers::primeFactors(data_val_n_sample))
+      if (length(primes_cand)==0) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+      
+      if (!(batch_prime %in% primes_cand)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+      
     }
     
   }
