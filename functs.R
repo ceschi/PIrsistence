@@ -2194,7 +2194,7 @@ online_pred <- function(model_fitted,
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) warning('\nProvide list from "data_prepper" function')
+  if (!is.list(data_train)) stop('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, 1))
