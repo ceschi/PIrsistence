@@ -11,20 +11,23 @@ k_fullsample_1l <- function(data,
                             view_loss = F,
                             ){
   
+  # why even an option?
   n_feat <- ncol(data)
   n_sample <- nrow(data) - n_steps
   
+  # shorthand condition
   usr_batch <- (is.numeric(size_batch) &&
                   size_batch%%1 == 0 &&
                   size_batch != 1)
   
-  # when the sample is prime raise err,
-  # surgery on data
+  # when the sample is prime raise err
   if (numbers::isPrime(n_sample)){
-    warning('\n{data} and lags {n_steps} produce prime sample: ditching oldest observation.\nVary {n_steps} to avoid such behaviour.\n')
+    warning('\n{data} and lags {n_steps} produce prime effective sample: ditching oldest observation.\nVary {n_steps} to avoid such behaviour.\n')
     
-    # if n_sample is prime ditch oldest obs
-    data <- data[-1,]
+    # if n_sample is prime ditch oldest obs,
+    # preserve og data
+    data_og <- data
+    data <- data[-1,, drop = F]
     n_sample <- nrow(data) - n_steps
   }
   
@@ -44,6 +47,8 @@ k_fullsample_1l <- function(data,
   # check batch too big
   if (batch_prime>.25*n_sample){
     
+    # alternative:
+    # combn(primeFactors(204), 2, FUN = prod) %>% unique() %>% which(x = (./204<.25))
     # take second last prime factor
     batch_prime <- tail(prime_fs, 2) %>% head(1)
   }
@@ -66,101 +71,84 @@ k_fullsample_1l <- function(data,
       
       # n_sample to account val
       n_train <- n_sample - batch_prime
+      n_val <- batch_prime
       
       # this ensures that mod(val_sample)==mod(n_sample)
       val_sample <- tail(data_lagged, batch_prime)  
       train_sample <- data_lagged[-((n_train + 1):n_sample),]
       
-      
-      # recast in arrays:
-      # training target - 2d
-      y_data_arr <- array(data = train_sample[, 1],
-                          dim = c(n_train, n_feat))
-      # training features - 3d
-      x_data_arr <- array(data = train_sample[, -1],
-                          dim = c(n_train, n_steps, n_feat))
-      
-      # validation target
-      y_val_arr <- array(data = val_sample[, 1],
-                         dim = c(batch_prime, n_feat))
-      x_val_arr <- array(data = val_sample[, -1],
-                         dim = c(batch_prime, n_steps, n_feat))
     }
     
-  }else if (!is.null(data_val)){ # usr provides data: lagged or not? ASSUMING NOT LAGGED
-    if (nrow(data_val)<=n_steps) stop('\n{data_val} is too short wtr lags {n_steps}, adjust either of them.\n')
+  }else if (!is.null(data_val)){ # usr provides data
+    if (nrow(data_val)<=n_steps) stop('\n{data_val} is too short wrt lags {n_steps}, adjust either of them.\n')
     
     # user provides val data, need to check
     # consistent batch/sample/validation sizes
     # raise error consistently with other options
     # if batch size is not auto, 1 or else problematic, check if it mods val and train
     
-    val_n_sample <- nrow(data_val) - n_steps
+    n_val <- nrow(data_val) - n_steps
+    n_train <- n_sample
     
     # check consistency with val & train
-    #' when usr provides *val & batch*
     if (usr_batch){ # usr provided batch size, check compat, lag data
       
       # test on validation
-      data_val_gate <- val_n_sample%%size_batch == 0
+      data_val_gate <- n_val%%size_batch == 0
       if (!data_val_gate) stop('\nProvided incompatible {size_batch} or {data_val}, must evenly divide sample sizes less lags {n_steps}.\n')
       
       # test on train
       data_train_gate <- n_sample%%size_batch == 0
       if (!data_train_gate) stop('\nProvided incompatible {size_batch} or {data}, must evenly divide sample sizes less lags {n_steps}.\n')
       
+      # batch size ok, assign 
+      batch_prime <- size_batch
+      
       # lag validation
-      val_lagged <- embed(as.matrix(data_val), n_steps + 1)
-      
-      # validation target
-      y_val_arr <- array(val_lagged[,1],
-                          dim = c(val_n_sample, n_feat))
-      x_val_arr <- array(val_lagged[,-1],
-                         dim = c(val_n_sample, n_steps, n_feat))
-      
+      val_sample <- embed(as.matrix(data_val), n_steps + 1)
       
     }else if (size_batch == 'auto'){
       
       # test: even division with val data
-      val_test <- val_n_sample%%batch_prime==0
+      val_test <- n_val%%batch_prime==0
       
       # test: size_batch in both 
       primes_cand <- intersect(numbers::primeFactors(n_sample),
-                               numbers::primeFactors(val_n_sample))
-      if (length(primes_cand)==0) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+                               numbers::primeFactors(n_val))
+
+      if (length(primes_cand)==0 ||
+          !(batch_prime %in% primes_cand) ||
+          val_test 
+          ) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
       
-      if (!(batch_prime %in% primes_cand)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+      size_batch <- batch_prime <- tail(primes_cand, 1)
       
     }
     
   }
   
-
+  ##### data reshaping, inherits from previous gates
+  
+  ## train samples
+  # target: 2D array (nobs; covars)
+  y_data_arr <- array(train_sample[,1],
+                      dim = c(n_train, n_feat))
+  
+  # features: 3D array (nobs; lags; covars)
+  x_data_arr <- array(train_sample[,-1],
+                      dim = c(n_train, n_steps, n_feat))
+  
+  ## validation samples
+  # target
+  y_val_arr <- array(val_sample[,1],
+                     dim = c(n_val, n_feat))
+  # features
+  x_val_arr <- array(val_sample[,-1],
+                     dim = c(n_val, n_steps, n_feat))
+  
   
 }
 
-
-# # main structure for gates
-# 
-# declare batcher fn
-# 
-# if is null data_va 
-#   if internal_validation is F
-#     error!
-#   
-#   else
-#     gate on size_batch
-#     batcher
-#     
-# elseif data_val not null (user provides data)
-#   internal_validation <- F
-#   
-#   if batch_size is integer/is %in% primes(data)
-#     great, cool
-#   else if batch == auto
-#     full run of batcher
-#   else if batch == 1
-#     do nothing, carry on
 
 
 #TODO: HALFLIFE SHOCK DECAY ####################################################
