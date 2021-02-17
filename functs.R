@@ -1783,6 +1783,9 @@ k_fullsample_1l <- function(data,
       # this ensures that mod(val_sample)==mod(n_sample)
       val_sample <- tail(data_lagged, batch_prime)  
       train_sample <- data_lagged[-((n_train + 1):n_sample),] 
+      
+      # assign batch size
+      size_batch <- batch_prime
     }
     
   }else if (!is.null(data_val)){ # usr provides data
