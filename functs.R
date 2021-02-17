@@ -108,39 +108,9 @@ instant_pkgs <- function(pkgs) {
   }
 }
 
-#' rollm <- function(df, formula){
-#'   #' *Add here storage of intercept with related SDs*
-#'   
-#'   # function to extract and store coefficients 
-#'   # and double SD in a named row tibble
-#'   
-#'   
-#'   # estimates the linear model
-#'   lmod <- summary(lm(data=df, formula=formula))
-#'   
-#'   # extracts point estimates and 2*SD (+- 95%),
-#'   # put info in named row tibble dropping 
-#'   # intercept info from first column
-#'   
-#'   cofs <- as_tibble(coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-#'                                             t() %>% ncol()),1] %>% t(),
-#'                     .name_repair = 'minimal')
-#'   SD2 <- as_tibble(2*coefficients(lmod)[2:(lmod %>% coefficients() %>% 
-#'                                              t() %>% ncol()),2] %>% t(),
-#'                    .name_repair = 'minimal')
-#'   
-#'   # adds suffix for bands
-#'   names(SD2) <- paste0(names(SD2), '.SD2')
-#'   
-#'   # merges in one row with names
-#'   estim <- cbind(cofs, SD2)
-#'   
-#'   # outputs
-#'   return(estim)
-#' }
 rollm <- function(.df, .formula){
-  invisible(require(dplyr))
-  invisible(require(broom))
+  suppressWarnings(require(dplyr))
+  suppressWarnings(require(broom))
   
   lmod <- broom::tidy(lm(data = .df,
                          formula = .formula))
@@ -150,10 +120,10 @@ rollm <- function(.df, .formula){
   
   out <- lmod %>% 
     dplyr::select(term, estimate, std.error) %>%
-    dplyr::mutate(term = tolower(gsub(pattern = '\\(',
+    dplyr::mutate(term = tolower(gsub(pattern = '\\(|\\)',
                                       replacement =  '', 
-                                      x = gsub('\\)', '', term)
-                                      ))) %>% 
+                                      x = term)
+                                      )) %>% 
     tidyr::pivot_wider(id_cols = term,
                        names_from = term,
                        values_from = c('estimate', 'std.error'),
@@ -168,36 +138,6 @@ rollm <- function(.df, .formula){
   
 }
 
-#' rolloop <- function(df, window=8, lags=1, interc = T){
-#'   
-#'   #' *This should be already able to accomodate intercept*
-#'   
-#'   # width of the rolling window
-#'   window <- as.integer(window)
-#'   
-#'   # select lags 
-#'   k <- as.integer(lags)
-#'   
-#'   # lags the time series, names it, cuts out NAs
-#'   df <- df %>% lagger(laag=k, na.cut=T)
-#'   # and creates related formula
-#'   formulae <- formula.maker(df, 
-#'                             df %>%  names(.) %>% first(),
-#'                             intercept = interc)
-#'   
-#'   # computes point estimates and 2SD
-#'   # stocks in a dataframe for convenience
-#'   regs <-rollapply(as.data.frame(df),
-#'                    width=window,
-#'                    by.column = F,
-#'                    FUN=function(x, formula) rollm(df=as.data.frame(x), formula=formulae))
-#'   
-#'   # converts and dates the regressions
-#'   regs <- xts(regs, frequency=4, 
-#'               order.by=index(df)[window:length(index(df))])
-#'   
-#'   return(regs)
-#' }
 rolloop <- function(df, window=8, lags=1, interc = T){
   # This function updates on a previous 'rolloop' version to
   # keep information on the intercept of the regressions.
@@ -208,8 +148,9 @@ rolloop <- function(df, window=8, lags=1, interc = T){
   # if there's an intercept it also has [['intercept']]
   
   # pkgs
-  invisible(require(tidyr))
-  invisible(require(xts))
+  suppressWarnings(require(tidyr))
+  suppressWarnings(require(xts))
+  suppressWarnings(require(broom))
   
   # local function
   rollm2 <- function(.df, .formula){
@@ -377,7 +318,7 @@ fm_apply <- function(foo, n){
 }
 
 
-############ II - frequentist part #############################################
+##### II - frequentist part #############################################
 
 auto.reg <- function(data, lags = 1, interc = T){
   
@@ -396,52 +337,6 @@ auto.reg <- function(data, lags = 1, interc = T){
   return(linear_model)
 }
 
-#' auto.reg.sum <- function(data, lags = 1, interc = T){
-#'   
-#'   invisible(require(broom))
-#'   invisible(require(dplyr))
-#'   invisible(require(magrittr))
-#'   
-#'   # function to estimate AR(lags) and sum over parameters
-#'   
-#'   transf_data <- lagger(series = data,
-#'                         laag = lags,
-#'                         na.cut = F)
-#'   
-#'   
-#'   
-#'   model_formula <- formula.maker(df = transf_data,
-#'                                  y = first(names(transf_data)),
-#'                                  intercept = interc)
-#'   
-#'   linear_model <- lm(formula = model_formula,
-#'                      data = transf_data)
-#'   
-#'   output <- broom::tidy(linear_model)
-#'   
-#'   #' *hand this part for storing intecept*
-#'   coef_sum <- output %>% 
-#'     filter(term != '(Intercept)') %>% 
-#'     dplyr::select(estimate) %>%  
-#'     sum()
-#'   
-#'   if (interc){
-#'     coef_sum_se <- linear_model %>% 
-#'                     vcov() %>%
-#'                     .[-1,-1] %>% 
-#'                     sum() %>%
-#'                     sqrt()
-#'   }else{
-#'     coef_sum_se <- linear_model %>% 
-#'       vcov() %>%
-#'       sum() %>% 
-#'       sqrt()
-#'   }
-#'   
-#'   coef_sum <- cbind(coef_sum, coef_sum_se)
-#'   
-#'   return(coef_sum)
-#' }
 auto.reg.sum <- function(data, lags = 1, interc = T){
   
   
@@ -451,8 +346,8 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   #' *dealing with xts and dates!*
   
   # import pkgs  
-  invisible(require(broom))
-  invisible(require(xts))
+  suppressWarnings(require(broom))
+  suppressWarnings(require(xts))
   
   # get rid of NAs properly
   datana <- na.omit(data)
@@ -527,27 +422,6 @@ auto.reg.sum <- function(data, lags = 1, interc = T){
   return(outlist)
 }
 
-# rolloop.sum <- function(df, window, lags = 1, interc = T){
-#   
-#   # remove troublesome NAs
-#   df_na <- na.omit(df)
-#   
-#   # computes point estimates
-#   # stocks in a dataframe for convenience
-#   regs <-rollapply(df_na,
-#                    # as.data.frame(df),
-#                    width=window,
-#                    by.column = F,
-#                    FUN = auto.reg.sum,
-#                    lags = lags,
-#                    interc = interc)
-#   
-#   # # converts and dates the regressions
-#   # regs <- xts(regs, frequency=4, 
-#   #             order.by=index(df_na)[window:length(index(df_na))])
-#   
-#   return(regs)
-# }
 rolloop.sum <- function(df, window, lags = 1, interc = T){
   
   # remove troublesome NAs
@@ -562,7 +436,7 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
   loc_ARS <- function(.data, .lags, .interc, .slot){
     
     # pkgs
-    invisible(require(tbl2xts))
+    suppressWarnings(require(tbl2xts))
     
     list_reg <- auto.reg.sum(data = .data,
                               lags = .lags,
@@ -604,8 +478,8 @@ rolloop.sum <- function(df, window, lags = 1, interc = T){
 
 persistence_ridges <- function(tseries, window = 24, lags = 8){
   # requires zoo, broom
-  if (!invisible(require(zoo)))    {install.packages('zoo');   invisible(library(zoo))}
-  if (!invisible(require(broom)))  {install.packages('broom'); invisible(library(broom))}
+  suppressWarnings(require(zoo))
+  suppressWarnings(require(broom))
   
   # check out the nature of the input
   # throw an error if it's not time series class
@@ -728,7 +602,7 @@ plot_roller <- function(df, names, path, .slot = 1){
   }
   
   
-  df <- df[[.slot]]
+  df <- na.omit(df[[.slot]])
   
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
@@ -807,7 +681,7 @@ plot_autoregsum <- function(df, names, path, laags, .slot = 1){
   }
   
   
-  df <- df[[.slot]]
+  df <- na.omit(df[[.slot]])
   
   po <- ggplot(data=df,
                aes(x=index(df) %>% as.yearqtr(),
@@ -884,7 +758,7 @@ plot_ridges <- function(df, nam, laags, path){
 # nicer names from human readable strings
 noms <- function(x){
   # if (!is.character(x)) stop('\nNot a string')
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   x %>% 
     tolower() %>% 
     gsub(x = ., 'revised ', '') %>% 
@@ -896,7 +770,7 @@ noms <- function(x){
 }
 
 noms_tt <- function(x){
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
   
   x %>% 
     gsub(x = ., '^[0-9]{1,2}y_', '') %>% 
@@ -913,7 +787,8 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # create a tibble from chunks' regressions
   # and labels for start/end
   
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(broom))
   
   tidyout <- function(onereg, fore_horiz){
     # extract results from lm and 
@@ -938,16 +813,32 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
     
-    out <- broom::tidy(onereg) %>% tibble::add_column(chunk = labl)
+    out <- broom::tidy(onereg) %>% 
+      tibble::add_column(chunk = labl) %>% 
+      dplyr::mutate(term = case_when(term == '(Intercept)' ~ 'intercept',
+                                     term == 'value.1' ~ 'ar1_coef'))
     
     return(out)
   }
   
   
-  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
+  tidycoefs <- lapply(X = regs_list, 
+                      FUN = tidyout, 
+                      fore_horiz)
   
-  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  out_ar1_temp <- tidycoefs %>% 
+    dplyr::bind_rows() %>% 
+    split(f = .$term)
   
+  # coefficients in the first slot
+  out_ar1 <- list(coefficients = out_ar1_temp$ar1_coef)
+  
+  if (length(out_ar1_temp)>1){
+    out_ar1$intercept = out_ar1_temp$intercept %>% 
+      mutate(term = tolower(gsub(x = term,
+                                 pattern = "\\)|\\(",
+                                 replacement = '')))
+  }
   
   # second part for regsum
   tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -972,31 +863,41 @@ chunk_regs <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     
     labl <- paste0(lubridate::year(start), quarters(start), ' - ', lubridate::year(end), quarters(end))
     
-    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
-                          ar_sum_se = regs_list_sum[,2],
-                          chunk = labl,
-                          k_lags = ar_lags_sum)
+    out <-  list()
     
-    return(out)
+    # add $coef_sum, $intercept and store appropriately
+    out$coefficients <- tibble::tibble(term = 'coef_sum',
+                                       estimate = regs_list_sum$coef_sum$coef_sum,
+                                       std.error = regs_list_sum$coef_sum$coef_sum_se,
+                                       chunk = labl,
+                                       k_lags = ar_lags_sum)
+    
+    if (attr(terms(ar1), 'intercept')){
+      out$intercept <- tibble::tibble(term = 'intercept',
+                                      estimate = regs_list_sum$intercept$interc,
+                                      std.error = regs_list_sum$intercept$se,
+                                      chunk = labl,
+                                      k_lags = ar_lags_sum)
+    }
+    
+    
+    
+    return(bind_rows(out))
   }
   
-  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
-  #                                             ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
-  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-  #                                             regs_list_sum = regs_list_sum), 
-  #                                   .f = tidyout_sum) %>% 
-  #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
                                        ar_lags_sum = fm_apply(ar_lags_sum, length(regs_list_sum)), 
                                        fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                        regs_list_sum = regs_list_sum), 
                              .f = tidyout_sum) %>% 
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>% 
+    split(f = .$term)
   
-  
-  out <- list(ar1 = out_ar1,
-              ark_sum = out_ark_sum)
+  # out is a list of lists of lists
+  # every tbl has same names tho
+  out <- list(ar1 = bind_rows(out_ar1),
+              ark_sum = bind_rows(out_ark_sum))
   
   return(out)
   
@@ -1007,6 +908,8 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   # bar plot/save for the AR1 models on chunks of data
   # can be used also for rolling windows and increasing windows
   # but DOES require lm object - hence need adaptation for autosum fct
+  
+  suppressWarnings(require(dplyr))
   
   # part 1: bar plot for AR1 on each chunk
   
@@ -1025,10 +928,10 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   jj <- name %>% 
     noms() %>% 
     paste0('_ar1_chunks.pdf')
-  
+
   # make plot, filtering out intercept
   plt <- chunk_regs_obj$ar1 %>% 
-    filter(term != '(Intercept)') %>% 
+    filter(term != 'intercept') %>% 
     ggplot(aes(x = chunk, 
                y = estimate, 
                group = chunk))+
@@ -1043,8 +946,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
           plot.title = element_text(hjust = 0.5),
           axis.text.x = element_text(angle = 0,
                                      size = rel(.65)))
-  
-  
+
   
   ggsave(plot = plt, 
          filename = file.path(graphs_dir., 
@@ -1053,6 +955,7 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
          units = 'in', 
          width = 8, 
          height = 9*8/16)
+  
   
   
   # Part 2: barplot for each chunk, sum of coefficients
@@ -1068,13 +971,15 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   jj <- name %>% 
     noms() %>% 
     paste0('_ark_sum_chunks.pdf')
+ 
   
   
   plt_sum <- chunk_regs_obj$ark_sum %>% 
-    ggplot(aes(x = chunk, y = ar_sum, group = chunk)) + 
+    filter(term != 'intercept') %>% 
+    ggplot(aes(x = chunk, y = estimate, group = chunk)) + 
     geom_col(alpha = .5) + theme_minimal() + ylab(labely) + xlab('Time periods') + 
     ggtitle(tt) + 
-    geom_errorbar(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), width = .2)+
+    geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
     theme(axis.text = element_text(size = rel(1.5)), 
           legend.text = element_text(size = rel(1.5)), 
           title = element_text(size = rel(1.5)),
@@ -1089,9 +994,80 @@ plot_chunkregs_bar <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
          units = 'in', 
          width = 8, 
          height = 9*8/16)
+
   
-  plt_list <- list(ar1 = plt, 
+  plt_list <- list(ar1 = plt,
                    ark_sum = plt_sum)
+  
+  if ('intercept' %in% chunk_regs_obj$ar1$term){
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ar1_trend_chunks.pdf')
+    
+    plt_trnd <- chunk_regs_obj$ar1 %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = chunk, 
+                 y = estimate, 
+                 group = chunk))+
+      geom_col(alpha = .5) +
+      geom_errorbar(aes(ymin = (estimate - std.error), 
+                        ymax = (estimate + std.error)), 
+                    width = .2)+
+      ggtitle(tt) + theme_minimal() + 
+      ylab('AR(1) - Trend') + 
+      xlab('Time periods') + 
+      theme(axis.text = element_text(size = rel(1.5)), 
+            legend.text = element_text(size = rel(1.5)), 
+            title = element_text(size = rel(1.5)),
+            plot.title = element_text(hjust = 0.5),
+            axis.text.x = element_text(angle = 0,
+                                       size = rel(.65)))
+    
+    ggsave(plot = plt_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ar1_trend <- plt_trnd
+  }
+  
+  if ('intercept' %in% chunk_regs_obj$ark_sum$term){
+    
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ark_sum_trend_chunks.pdf')
+    
+    labelyt <- chunk_regs_obj$ark_sum %>% 
+      select(k_lags) %>% 
+      unique() %>% 
+      paste0('AR(', ., ') - Trend')
+    
+    plt_sum_trnd <- chunk_regs_obj$ark_sum %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = chunk, y = estimate, group = chunk)) + 
+      geom_col(alpha = .5) + theme_minimal() + ylab(labelyt) + xlab('Time periods') + 
+      ggtitle(tt) + 
+      geom_errorbar(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), width = .2)+
+      theme(axis.text = element_text(size = rel(1.5)), 
+            legend.text = element_text(size = rel(1.5)), 
+            title = element_text(size = rel(1.5)),
+            plot.title = element_text(hjust = 0.5),
+            axis.text.x = element_text(angle = 0,
+                                       size = rel(.65)))
+    
+    ggsave(plot = plt_sum_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ark_sum_trend <- plt_sum_trnd
+  }
   
   
   return(plt_list)
@@ -1172,7 +1148,8 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
 chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
-  invisible(require(magrittr))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(broom))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -1189,16 +1166,20 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
     # extract coefficients, add enddate, turn in time format
     out <- broom::tidy(onereg) %>% 
       tibble::add_column(enddate = end) %>% 
-      tibbletime::as_tbl_time(index = enddate)
+      tibbletime::as_tbl_time(index = enddate) %>% 
+      dplyr::mutate(term = case_when(term == '(Intercept)' ~ 'intercept',
+                                     term == 'value.1' ~ 'ar1_coef'))
     
     return(out)
   }
   
   # apply extractor to all regressions
-  tidycoefs <- lapply(X = regs_list, FUN = tidyout, fore_horiz)
-  
-  # rowbind all different results
-  out_ar1 <- tidycoefs %>% dplyr::bind_rows()
+  out_ar1 <- lapply(X = regs_list, 
+                    FUN = tidyout, 
+                    fore_horiz) %>% 
+    dplyr::bind_rows() %>% 
+    arrange(term, enddate)
+
   
   ### For the ark rolling window results
   tidyout_sum <- function(ar1, regs_list_sum, ar_lags_sum, fore_horiz){
@@ -1212,29 +1193,36 @@ chunk_rolling <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
       head(1) %>% 
       as.Date()
     
-    out <- tibble::tibble(ar_sum = regs_list_sum[,1],
-                          ar_sum_se = regs_list_sum[,2],
-                          enddate = end,
-                          k_lags = ar_lags_sum) %>% 
+    out <- list()
+    
+    out$coefficients <- tibble::tibble(term = 'coef_sum',
+                                       estimate = regs_list_sum$coef_sum$coef_sum,
+                                       std.error = regs_list_sum$coef_sum$coef_sum_se,
+                                       enddate = end,
+                                       k_lags = ar_lags_sum) %>% 
       tibbletime::as_tbl_time(index = enddate)
     
-    return(out)
+    if (attr(terms(ar1), 'intercept')){
+      out$intercept <- tibble::tibble(term = 'intercept',
+                                      estimate = regs_list_sum$intercept$interc,
+                                      std.error = regs_list_sum$intercept$se,
+                                      enddate = end,
+                                      k_lags = ar_lags_sum) %>% 
+        tibbletime::as_tbl_time(index = enddate)
+    }
+    
+    return(bind_rows(out))
   }
   
   
-  # out_ark_sum <- furrr::future_pmap(.l = list(ar1 = regs_list, 
-  #                                             ar_lags_sum = ar_lags_sum, 
-  #                                             fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
-  #                                             regs_list_sum = regs_list_sum), 
-  #                                   .f = tidyout_sum) %>% 
-  #   dplyr::bind_rows()
   
   out_ark_sum <- purrr::pmap(.l = list(ar1 = regs_list, 
                                        ar_lags_sum = ar_lags_sum, 
                                        fore_horiz = fm_apply(fore_horiz, length(regs_list_sum)), 
                                        regs_list_sum = regs_list_sum), 
                              .f = tidyout_sum) %>% 
-    dplyr::bind_rows()
+    dplyr::bind_rows() %>% 
+    arrange(term, enddate)
   
   out <- list(ar1_roll = out_ar1, 
               ark_sum_roll = out_ark_sum)
@@ -1264,7 +1252,7 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   # make plot, filtering out intercept
   plt <- chunk_regs_obj$ar1_roll %>% 
-    filter(term != '(Intercept)') %>% 
+    filter(term != 'intercept') %>% 
     ggplot(aes(x = enddate, y = estimate))+
     geom_line(size = .75) +
     geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25)+
@@ -1304,10 +1292,11 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   
   
   plt_sum <- chunk_regs_obj$ark_sum_roll %>% 
-    ggplot(aes(x = enddate, y = ar_sum)) + 
+    filter(term != 'intercept') %>% 
+    ggplot(aes(x = enddate, y = estimate)) + 
     geom_line(size = .75) + theme_minimal() + ylab(labely) + xlab('Sample end date') + 
     geom_hline(yintercept = 0:1, size = .25, linetype = 2, colour = 'black') +
-    geom_ribbon(aes(ymin = (ar_sum - ar_sum_se), ymax = (ar_sum + ar_sum_se)), alpha = .25) +
+    geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25) +
     theme(plot.title = element_text(hjust = 0.5,
                                     size = rel(1.5)), 
           axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
@@ -1324,15 +1313,86 @@ plot_rollregs_lines <- function(chunk_regs_obj, graphs_dir. = graphs_dir, name){
   plt_list <- list(ar1 = plt, 
                    ark_sum = plt_sum)
   
+  if ('intercept' %in% chunk_regs_obj$ar1$term){
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ar1_trend_rollwind.pdf')
+    
+    plt_trnd <- chunk_regs_obj$ar1_roll %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = enddate, y = estimate))+
+      geom_line(size = .75) +
+      geom_ribbon(aes(ymin = (estimate - std.error), 
+                      ymax = (estimate + std.error)), 
+                  alpha = .25)+
+      geom_hline(yintercept = 0, 
+                 size = .25, 
+                 linetype = 2, 
+                 colour = 'black') +
+      ggtitle(tt) + theme_minimal() + 
+      ylab('AR(1) - Trend') + xlab('Sample end date') + 
+      theme(plot.title = element_text(hjust = 0.5,
+                                      size = rel(1.5)),
+            axis.title = element_text(size = rel(1.5)),
+            axis.text = element_text(size = rel(1.5))) + 
+      geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
+    ggsave(plot = plt_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ar1_trend <- plt_trnd
+  }
+  
+  if ('intercept' %in% chunk_regs_obj$ark_sum$term){
+    
+    jjt <- name %>% 
+      noms() %>% 
+      paste0('_ark_sum_trend_chunks.pdf')
+    
+    labelyt <- chunk_regs_obj$ark_sum %>% 
+      select(k_lags) %>% 
+      unique() %>% 
+      paste0('AR(', ., ') - Trend')
+    
+    plt_sum_trnd <- chunk_regs_obj$ark_sum_roll %>% 
+      filter(term == 'intercept') %>% 
+      ggplot(aes(x = enddate, y = estimate)) + 
+      geom_line(size = .75) + theme_minimal() + ylab(labelyt) + xlab('Sample end date') + 
+      geom_hline(yintercept = 0, size = .25, linetype = 2, colour = 'black') +
+      geom_ribbon(aes(ymin = (estimate - std.error), ymax = (estimate + std.error)), alpha = .25) +
+      theme(plot.title = element_text(hjust = 0.5,
+                                      size = rel(1.5)), 
+            axis.text = element_text(size = rel(1.5))) + ggtitle(tt) + 
+      geom_smooth(method = 'loess', se = F, colour = 'blue', formula = 'y~x', size = .5)
+    
+    ggsave(plot = plt_sum_trnd, 
+           filename = file.path(graphs_dir., 
+                                jjt),
+           device = 'pdf', 
+           units = 'in', 
+           width = 8, 
+           height = 9*8/16)
+    
+    plt_list$ark_sum_trend <- plt_sum_trnd
+  }
+  
   
   return(plt_list)
 }
-
+#' *SUPERSEDED/DEPRECATED*
 chunk_increm <- function(regs_list, regs_list_sum, ar_lags_sum, fore_horiz){
   # function to extract and manipulate regressions made on rolling windows with 
   # lstm predictions
   
-  invisible(require(magrittr))
+  
+  
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(broom))
   
   ### For the ar1 rolling window results
   tidyout <- function(onereg, fore_horiz){
@@ -1645,10 +1705,10 @@ k_fullsample_1l <- function(data,
   
   
   
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1795,10 +1855,10 @@ k_fullsample_2l <- function(data,
   
   
   
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -1964,8 +2024,8 @@ k_fullsample_nl <- function(data,
     if (is.null(options$stateful)) stop('\nOptions must declare whether each layer is stateful (and in case set batch size accordingly).')
     
     
-    invisible(require(keras))
-    invisible(require(magrittr))
+    suppressWarnings(require(keras))
+    suppressWarnings(require(magrittr))
     
     model <- keras::keras_model_sequential()
     
@@ -2000,10 +2060,10 @@ k_fullsample_nl <- function(data,
   
   
   # packages required
-  invisible(require(magrittr))
-  invisible(require(keras))
-  invisible(require(tictoc))
-  invisible(require(numbers))
+  suppressWarnings(require(magrittr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(tictoc))
+  suppressWarnings(require(numbers))
   
   # data come in as a simple TS,
   # it comes then with n of observations (n_sample)
@@ -2129,12 +2189,12 @@ online_pred <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  invisible(require(keras))
-  invisible(require(dplyr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(dplyr))
   
   
   # data_train is a list from data_prepper function!
-  if (!is.list(data_train)) warning('\nProvide list from "data_prepper" function')
+  if (!is.list(data_train)) stop('\nProvide list from "data_prepper" function')
   
   # preallocate array with results
   pred <- array(NA, dim = c(horizon, 1))
@@ -2223,8 +2283,8 @@ multi_online <- function(model_fitted,
   # 'model_online'; to use other versions of the model, specify it in the model_type
   # option, eg 'model_fitted'.
   
-  invisible(require(keras))
-  invisible(require(dplyr))
+  suppressWarnings(require(keras))
+  suppressWarnings(require(dplyr))
   
   
   # data_train is a list from data_prepper function!
