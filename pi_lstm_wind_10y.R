@@ -3,6 +3,8 @@
 
 
 rolling_wind <- list()
+wind10_histories <- list()
+wind10_net_weights <- list()
 
 for (i in 1:n){
   # preallocate for results
@@ -53,8 +55,9 @@ for (i in 1:n){
                                                        n = fore_horiz+1)
     }
     
-    # checks
-    # plot(lstm_list$history)
+    # storing
+    wind10_histories[[i]][[s]] <- lstm_list$history$metrics
+    wind10_net_weights[[i]][[s]] <- lstm_list$model_weights
     
     # dump model to avoid learning spillover
     rm(lstm_list)
@@ -78,14 +81,14 @@ for (i in 1:n){
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg)
   
-# simple AR(3) - SOC
+  # simple AR(3) - SOC
   inflation$lstm$rolling_wind[[i]][['ar3']] <- 
     future_pmap(.l = list(data = rolling_wind[[i]]$predictions_xts,
                           lags = fm_apply(3, len_chunks),
                           interc = fm_apply(intercep, len_chunks)),
                 .f = auto.reg.sum)
   
-# stitch all chunks back together with forecasts
+  # stitch all chunks back together with forecasts
   inflation$lstm$rolling_wind[[i]]$predictions <- bind_rows(rolling_wind[[i]]$selected_predictions)
   
   # some patchwork for the plot

@@ -140,8 +140,8 @@ if (flag___lstm){
     fore_epochs <- 5
     fore_horiz <- 6
   } else {
-    fit_epochs <- 5000
-    fore_epochs <- 2000
+    fit_epochs <- 2500
+    fore_epochs <- 750
     fore_horiz <- 40
   }
   
