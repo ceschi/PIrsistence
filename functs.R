@@ -1818,7 +1818,7 @@ k_fullsample_1l <- function(data,
       
       if (length(primes_cand)==0 ||
           !(batch_prime %in% primes_cand) ||
-          (n_val%%batch_prime==0)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+          !(n_val%%batch_prime==0)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
       
       size_batch <- batch_prime <- tail(primes_cand, 1)
     }
@@ -1886,17 +1886,18 @@ k_fullsample_1l <- function(data,
     )
   }
   
-  clbks <- c(clbks,
-             callback_reduce_lr_on_plateau(
-               monitor = "val_loss",
-               factor = .1,
-               patience = 10,
-               verbose = 1,
-               mode = 'min',
-               min_delta = 1e-03,
-               cooldown = 0,
-               min_lr = 0)
-  )
+  ### needs reflection
+  # clbks <- c(clbks,
+  #            callback_reduce_lr_on_plateau(
+  #              monitor = "val_loss",
+  #              factor = .1,
+  #              patience = 10,
+  #              verbose = 1,
+  #              mode = 'min',
+  #              min_delta = 1e-03,
+  #              cooldown = 0,
+  #              min_lr = 0)
+  # )
   
   
   
@@ -1910,7 +1911,7 @@ k_fullsample_1l <- function(data,
                  validation_data = vld,
                  batch_size = size_batch,
                  view_metrics = view_loss,
-                 callbacks = clbk)
+                 callbacks = clbks)
   tictoc::toc()
   
   out <- list()

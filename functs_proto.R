@@ -132,7 +132,7 @@ lstm_1l <- function(data,
         
         if (length(primes_cand)==0 ||
             !(batch_prime %in% primes_cand) ||
-            (n_val%%batch_prime==0)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
+            !(n_val%%batch_prime==0)) stop('\nNo common factor in {data} and {data_val}: vary {n_steps} or activate {internal_validation = T}\n')
         
         size_batch <- batch_prime <- tail(primes_cand, 1)
       }
