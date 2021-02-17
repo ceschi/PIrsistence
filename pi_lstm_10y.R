@@ -6,6 +6,8 @@
 # way exists.
 
 chunks <- list()
+chunks_histories <- list()
+chunks_net_weights <- list()
 
 for (i in 1:n){
   # preallocate for results
@@ -47,7 +49,9 @@ for (i in 1:n){
     # store predictions
     chunks[[i]]$predictions[[s]] <- predictions
     
-    # checks
+    # storing
+    chunks_histories[[i]][[s]] <- lstm_list$history$metrics
+    chunks_net_weights[[i]][[s]] <- lstm_list$model_weights
     # plot(lstm_list$history)
     
     # dump model to avoid learning spillover
@@ -137,9 +141,10 @@ for (i in 1:n){
                                                            ar_lags_sum = 3,
                                                            fore_horiz = fore_horiz)
   # save and print plots
-  inflation$lstm$chunks[[i]][['plots_freq_stats']] <- plot_chunkregs_bar(chunk_regs_obj = inflation$lstm$chunks[[i]][['freq_stats']],
-                                                                         graphs_dir. = chunks_dir, 
-                                                                         name = inflation$names[[i]])
+  inflation$lstm$chunks[[i]][['plots_freq_stats']] <- 
+    plot_chunkregs_bar(chunk_regs_obj = inflation$lstm$chunks[[i]][['freq_stats']],
+                        graphs_dir. = chunks_dir, 
+                        name = inflation$names[[i]])
   
   # save and print tables in TeX
   chunk_stargazer(ar1 = inflation[['lstm']][['chunks']][[i]][['ar1']], 

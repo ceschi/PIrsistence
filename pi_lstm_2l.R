@@ -3,7 +3,8 @@
 # set series
 n <- 5
 
-
+l2_histories <- list()
+l2_net_weights <- list()
 
 ##### TWO layer LSTM on full sample ############################################
 tic('Full loop: 2 layers LSTM')
@@ -11,14 +12,14 @@ for (i in 1:n){
   # fit model
   inflation$lstm[['fullsample_2l']][[i]] <- 
     k_fullsample_2l(data = inflation$lstm[['data']][[i]]$train$train_norm, 
-                    n_steps = 15, 
+                    n_steps = 25, 
                     n_feat = 1, 
                     # nodes = 7,
-                    nodes = 750,
+                    nodes = 25,
                     size_batch = 'auto', 
                     epochs = fit_epochs*2, 
                     ES = F, 
-                    keepBest = T)
+                    keepBest = F)
   # save model somewhere on disk
   save_model_hdf5(object = inflation$lstm[['fullsample_2l']][[i]]$model_fitted, 
                   filepath = file.path(models_dir,
@@ -27,6 +28,8 @@ for (i in 1:n){
                   )
   )
   
+  l2_histories[[i]] <- inflation$lstm$fullsample_1l[[i]]$history$metrics
+  l2_net_weights[[i]] <- inflation$lstm$fullsample_1l[[i]]$model_weights
   
   cat('\nJust done with ', inflation$names[[i]] %>% noms_tt(),
       ' model on iteration ', i,' of two-layer LSTM.\n\n')
