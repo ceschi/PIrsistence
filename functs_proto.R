@@ -5,7 +5,7 @@ lstm_1l <- function(data,
                     nodes = 50,
                     epochs = 2000,
                     size_batch = 1,
-                    internal_validation = FALSE,
+                    internal_validation = TRUE,
                     ES = F,
                     keepBest = F,
                     view_loss = F){
