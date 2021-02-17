@@ -1889,7 +1889,7 @@ k_fullsample_1l <- function(data,
   clbks <- c(clbks,
              callback_reduce_lr_on_plateau(
                monitor = "val_loss",
-               factor = 2.1,
+               factor = .1,
                patience = 10,
                verbose = 1,
                mode = 'min',
