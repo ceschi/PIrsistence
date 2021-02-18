@@ -9,6 +9,8 @@ wind10_net_weights <- list()
 for (i in 1:n){
   # preallocate for results
   rolling_wind[[i]] <- list()
+  wind10_histories[[i]] <- list()
+  wind10_net_weights[[i]] <- list()
   
   # process data chunks all at once
   prepped_chunks <- #inflation$lstm[['increm_splits']][[i]]$splits %>% 
@@ -25,15 +27,13 @@ for (i in 1:n){
     prepped_data <- prepped_chunks[[s]]
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
-                                 n_steps = 15,                                  #inflation[['aropti']][[n]], 
-                                 nodes = 500,                                    # tune he nodes to max 75
-                                 # nodes = 3,
-                                 epochs = fore_epochs, 
-                                 ES = F,                                        # F: because there's so little data 
+                                 n_steps = 15,
+                                 nodes = 500,
+                                 epochs = fore_epochs,
+                                 ES = F,
                                  keepBest = T,
-                                 size_batch = 'auto')                           # 'auto' is also an alternative but needs testing
+                                 size_batch = 'auto')
     # make predictions: horizon small to avoid overestimates
-    # see paper and make point clear for flatlining preds
     predictions <- online_pred(model_fitted = lstm_list, 
                                model_type = 'model_online', 
                                data_train = prepped_data, 
