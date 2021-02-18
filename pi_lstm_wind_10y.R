@@ -9,6 +9,8 @@ wind10_net_weights <- list()
 for (i in 1:n){
   # preallocate for results
   rolling_wind[[i]] <- list()
+  wind10_histories[[i]] <- list()
+  wind10_net_weights[[i]] <- list()
   
   # process data chunks all at once
   prepped_chunks <- #inflation$lstm[['increm_splits']][[i]]$splits %>% 

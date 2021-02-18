@@ -12,9 +12,11 @@ chunks_net_weights <- list()
 for (i in 1:n){
   # preallocate for results
   chunks[[i]] <- list()
+  chunks_histories[[i]] <- list()
+  chunks_net_weights[[i]] <- list()
   
   # process data chunks all at once
-  prepped_chunks <- #inflation$lstm[['increm_splits']][[i]]$splits %>% 
+  prepped_chunks <-  
     inflation$lstm[['chunk_10y']][[i]]$splits %>%
     lapply(FUN = rsample::analysis) %>% 
     lapply(FUN = data_prepper)
@@ -28,15 +30,13 @@ for (i in 1:n){
     prepped_data <- prepped_chunks[[s]]
     # fit model
     lstm_list <- k_fullsample_1l(data = prepped_data$train$train_norm, 
-                                 n_steps = 15,                                  #inflation[['aropti']][[n]],  # here, 10q lags but this could vary
+                                 n_steps = 15,
                                  nodes = 500,
-                                 # nodes = 5,
-                                 epochs = fore_epochs, 
-                                 ES = F,                                        # F: because there's so little data 
+                                 epochs = fore_epochs,
+                                 ES = F,
                                  keepBest = T,
-                                 size_batch = 'auto')                           # 'auto' is also an alternative but needs testing
+                                 size_batch = 'auto')
     # make predictions: horizon small to avoid overestimates
-    # see paper and make point clear for flatlining preds
     predictions <- online_pred(model_fitted = lstm_list, 
                                model_type = 'model_online', 
                                data_train = prepped_data, 

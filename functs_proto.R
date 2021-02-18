@@ -224,7 +224,7 @@ lstm_1l <- function(data,
                  validation_data = vld,
                  batch_size = size_batch,
                  view_metrics = view_loss,
-                 callbacks = clbk)
+                 callbacks = clbks)
   tictoc::toc()
   
   out <- list()
