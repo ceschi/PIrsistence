@@ -2137,37 +2137,27 @@ k_fullsample_2l <- function(data,
     compile(optimizer = 'adam',
             loss = 'mse')
   
-  
-  tictoc::tic('\n\nModel estimation')
+  clbks <- list()
   if (ES){
-    # estimate with early stopping
-    history <- fit(object = model_compiled, 
-                   y = y_data_arr, 
-                   x = x_data_arr,
-                   verbose = 2,
-                   shuffle = F,
-                   callbacks = list(
-                     callback_early_stopping(monitor = 'val_loss',
-                                             mode = 'auto',
-                                             patience = floor(epochs*.2),
-                                             min_delta = 1e-5, 
-                                             restore_best_weights = keepBest)
-                   ),
-                   epochs = epochs,
-                   validation_split = .1,
-                   batch_size = size_batch,
-                   view_metrics = view_loss)
-  } else {
-    # estimate with given number of epochs
-    history <- fit(object = model_compiled, 
-                   y = y_data_arr, 
-                   x = x_data_arr, 
-                   epochs = epochs, 
-                   verbose = 2,
-                   shuffle = F,
-                   batch_size = size_batch,
-                   view_metrics = view_loss)
+    clbks <- c(clbks,
+               callback_early_stopping(monitor = 'val_loss',
+                                       mode = 'auto',
+                                       patience = floor(epochs*.2),
+                                       min_delta = 1e-5, 
+                                       restore_best_weights = keepBest))
   }
+  
+  tictoc::tic('\n\nModel estimation\n')
+  history <- fit(object = model_compiled, 
+                 y = y_data_arr, 
+                 x = x_data_arr, 
+                 epochs = epochs, 
+                 verbose = 2,
+                 shuffle = F,
+                 validation_data = vld,
+                 batch_size = size_batch,
+                 view_metrics = view_loss,
+                 callbacks = clbks)
   tictoc::toc()
   
   out <- list()

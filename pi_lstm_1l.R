@@ -9,16 +9,11 @@ l1_net_weights <- list()
 tic('Full Loop: 1 layer LSTM')
 for (i in 1:n){
   inflation$lstm[['fullsample_1l']][[i]] <- k_fullsample_1l(data = inflation$lstm[['data']][[i]]$train$train_norm,
-                                                            # either twice the BIC lags or 9 quarters to prevent
-                                                            # too much sample shrinking
-                                                            n_steps = 15,
+                                                            n_steps = 20,
                                                             n_feat = 1,
                                                             # baseline for one single layer
-                                                            # nodes = 2,
-                                                            nodes = 20,
-                                                            # online model with one batch, workaround needed
+                                                            nodes = 100,
                                                             size_batch = 'auto',
-                                                            # either the max epochs or patience
                                                             epochs = fit_epochs,
                                                             ES = F,
                                                             keepBest = F)
