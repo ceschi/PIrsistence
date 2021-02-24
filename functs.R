@@ -1118,6 +1118,7 @@ chunk_stargazer <- function(ar1, chunk_out, name, pathout = graphs_dir){
                                  type = 'latex', 
                                  covariate.labels = c('\\nth{1} lag', NA), 
                                  dep.var.labels = name,
+                                 dep.var.labels.include = F,
                                  no.space = T,
                                  ci = F,
                                  font.size = 'small',
