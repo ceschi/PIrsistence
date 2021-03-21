@@ -6,16 +6,18 @@ n <- length(names(pi))
 # general plot with raw data
 inflation$plots[['plot_ts']] <- ggplot(pi["1945/2020"], aes(x = index(pi["1945/2020"]))) + 
   geom_line(aes(y = rev_cpi_pch, colour = 'CPI'), alpha = .75) + 
-  geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI FE'), alpha = .75) + 
+  geom_line(aes(y = rev_cpi_fe_pch, colour = 'CPI Core'), alpha = .75) + 
   geom_line(aes(y = rev_pce_pch, colour = 'PCE'), alpha = .75) + 
-  geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE FE'), alpha = .75)+
-  geom_line(aes(y = rev_defl_pch, colour = 'Deflt.'), alpha = .75) +
+  geom_line(aes(y = rev_pce_fe_pch, colour = 'PCE Core'), alpha = .75)+
+  geom_line(aes(y = rev_defl_pch, colour = 'GDP Deflator'), alpha = .75) +
   theme_minimal() + theme(legend.title = element_blank()) +
   xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
-        axis.text.x = element_text(angle = 45),
-        plot.title = element_text(hjust = 0.5))
+        axis.text.x = element_text(angle = 0),
+        plot.title = element_text(hjust = 0.5)) +
+  scale_color_viridis_d(option = 'A', end = .8)
+  
 
 ggsave(filename = file.path(vars_dir, 'ts_plot.pdf'),
        plot = inflation$plots[['plot_ts']], 
@@ -32,7 +34,7 @@ inflation$plots[['cpis']] <- pi_long %>%
   ggtitle('CPI: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'none', 
-    axis.text.x = element_text(angle = 45),
+    axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
@@ -51,7 +53,7 @@ inflation$plots[['pces']] <- pi_long %>%
   ggtitle('PCE: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'none', 
-    axis.text.x = element_text(angle = 45),
+    axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
@@ -69,7 +71,7 @@ inflation$plots[['cpis_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
   ggtitle('CPI: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
-    axis.text.x = element_text(angle = 45),
+    axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
@@ -88,7 +90,7 @@ inflation$plots[['pces_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31'))
   ggtitle('PCE: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
-    axis.text.x = element_text(angle = 45),
+    axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
   scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
 
@@ -125,7 +127,48 @@ oil_p <- fredr_series_observations(series_id = 'DCOILWTICO',
                                     aggregation_method = 'eop') %>% 
   select(-series_id) %>% 
   tibbletime::as_tbl_time(date) %>% 
-  rename(oil=value) %>% mutate(oil_p=c(NA, 400*diff(log(oil))))
+  rename(oil=value) %>% 
+  mutate(oil_p=c(NA, 400*diff(log(oil))))
+
+# imf food indx 
+#' *WIP*
+download.file('https://api.db.nomics.world/v22/series/IMF/COMMP/M.W0.PFANDB_Index.xlsx',
+              destfile = file.path(data_dir, 'imffood.xlsx'),
+              method = 'curl')
+
+food_p <- readxl::read_excel(path = file.path(data_dir, 'imffood.xlsx'),
+                             col_names = c("date", "food"),
+                             skip = 1) %>%
+  mutate(date = lubridate::ym(date),
+         date_q = lubridate::quarter(date, with_year = T)) %>%
+  group_by(date_q) %>% 
+  mutate(food_q = last(food)) %>% 
+  select(date_q, food_q) %>% 
+  distinct() %>% 
+  ungroup() %>% 
+  mutate(food_q_g = 4*log(food_q)/lag(log(food_q)))
+
+inflation$plots[['food']] <- food_p %>% 
+  ggplot(aes(x = date_q, y = food_q)) +
+  geom_line() + theme_minimal() + 
+  ggtitle('Food Commodities Index - IMF') +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = .5))+ 
+  xlab(' ') + ylab(' ')
+
+
+inflation$plots[['food_p']] <- food_p %>% 
+  ggplot(aes(x = date_q, y = food_q_g)) +
+  geom_line() + theme_minimal() + 
+  ggtitle('Food Commodities Index Quarterly Change - IMF') +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = .5))+ 
+  xlab(' ') + ylab(' ')
+
+inflation$plots[['food_grid']] <- 
+  cowplot::plot_grid(inflation$plots[["food"]],
+                     inflation$plots[["food_p"]],
+                     nrow = 2)
 
 
 inflation$plots[['oil']] <- oil_p %>% ggplot()+
