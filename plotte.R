@@ -29,14 +29,14 @@ ggsave(filename = file.path(vars_dir, 'ts_plot.pdf'),
 ##### CPI & PCE headline vs core ##############################################
 inflation$plots[['cpis']] <- pi_long %>% 
   filter(index == 'rev_cpi_pch' | index == 'rev_cpi_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = 1, size = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'none', 
     axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
-  scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+  scale_colour_manual(labels = c("Core", "Headline"), values = c("darkblue", "red"))
 
 
 ggsave(filename = file.path(vars_dir, 'cpis_plot.pdf'),
@@ -48,14 +48,14 @@ ggsave(filename = file.path(vars_dir, 'cpis_plot.pdf'),
 
 inflation$plots[['pces']] <- pi_long %>% 
   filter(index == 'rev_pce_pch' | index == 'rev_pce_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = 1, size = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'none', 
     axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
-  scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+  scale_colour_manual(labels = c("Core", "Headline"), values = c("darkblue", "red"))
 
 ggsave(filename = file.path(vars_dir, 'pces_plot.pdf'),
        plot = inflation$plots[['pces']], 
@@ -66,14 +66,14 @@ ggsave(filename = file.path(vars_dir, 'pces_plot.pdf'),
 
 inflation$plots[['cpis_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31')) %>% 
   filter(index == 'rev_cpi_pch' | index == 'rev_cpi_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = 1, size = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('CPI: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
     axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
-  scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+  scale_colour_manual(labels = c("Core", "Headline"), values = c("darkblue", "red"))
 
 
 ggsave(filename = file.path(vars_dir, 'cpis_zoomed_plot.pdf'),
@@ -85,14 +85,14 @@ ggsave(filename = file.path(vars_dir, 'cpis_zoomed_plot.pdf'),
 
 inflation$plots[['pces_zoom']] <- pi_long %>% filter(date>as.Date('1989-12-31')) %>% 
   filter(index == 'rev_pce_pch' | index == 'rev_pce_fe_pch') %>% 
-  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = .5)+
+  ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = 1, size = .5)+
   theme_minimal() + theme(legend.title = element_blank()) + 
   ggtitle('PCE: core vs headline since 1990') + xlab(' ') + ylab(' ') +
   guides(colour=guide_legend(nrow = 1, byrow = T)) + 
   theme(legend.position = 'bottom', 
     axis.text.x = element_text(angle = 0),
     plot.title = element_text(hjust = 0.5))+ 
-  scale_colour_manual(labels = c("core", "headline"), values = c("darkblue", "red"))
+  scale_colour_manual(labels = c("Core", "Headline"), values = c("darkblue", "red"))
 
 ggsave(filename = file.path(vars_dir, 'pces_zoomed_plot.pdf'),
        plot = inflation$plots[['pces_zoom']], 
@@ -141,26 +141,26 @@ food_p <- readxl::read_excel(path = file.path(data_dir, 'imffood.xlsx'),
                              skip = 1) %>%
   mutate(date = lubridate::ym(date),
          date_q = lubridate::quarter(date, with_year = T)) %>%
-  group_by(date_q) %>% 
-  mutate(food_q = last(food)) %>% 
-  select(date_q, food_q) %>% 
-  distinct() %>% 
-  ungroup() %>% 
-  mutate(food_q_g = 4*log(food_q)/lag(log(food_q)))
+  # group_by(date_q) %>% 
+  # mutate(food_q = last(food)) %>% 
+  # select(date_q, food_q) %>%
+  # distinct() %>% 
+  # ungroup() %>% 
+  mutate(food_g = 120*log(food/lag(food)))
 
 inflation$plots[['food']] <- food_p %>% 
-  ggplot(aes(x = date_q, y = food_q)) +
+  ggplot(aes(x = date, y = food)) +
   geom_line() + theme_minimal() + 
-  ggtitle('Food Commodities Index - IMF') +
+  ggtitle('Food Commodities Index Level') +
   theme(legend.position = 'none',
         plot.title = element_text(hjust = .5))+ 
   xlab(' ') + ylab(' ')
 
 
 inflation$plots[['food_p']] <- food_p %>% 
-  ggplot(aes(x = date_q, y = food_q_g)) +
+  ggplot(aes(x = date, y = food_g)) +
   geom_line() + theme_minimal() + 
-  ggtitle('Food Commodities Index Quarterly Change - IMF') +
+  ggtitle('Food Commodities Index Monthly Change') +
   theme(legend.position = 'none',
         plot.title = element_text(hjust = .5))+ 
   xlab(' ') + ylab(' ')
@@ -169,6 +169,13 @@ inflation$plots[['food_grid']] <-
   cowplot::plot_grid(inflation$plots[["food"]],
                      inflation$plots[["food_p"]],
                      nrow = 2)
+
+ggsave(filename = file.path(vars_dir, 'food_pi_plot.pdf'),
+       plot = inflation$plots[['food_grid']], 
+       device = 'pdf',
+       width = 8,
+       units = 'in', 
+       height = 9*8/16)
 
 
 inflation$plots[['oil']] <- oil_p %>% ggplot()+
