@@ -15,7 +15,7 @@ for (i in 1:n){
                     n_steps = 25, 
                     n_feat = 1, 
                     # nodes = 7,
-                    nodes = 25,
+                    nodes = 500,
                     size_batch = 'auto', 
                     epochs = fit_epochs*2, 
                     ES = F, 

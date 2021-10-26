@@ -26,7 +26,18 @@ ggsave(filename = file.path(vars_dir, 'ts_plot.pdf'),
        units = 'in', 
        height = 9*8/16)
 
-##### CPI & PCE headline vs core ##############################################
+
+##### 1l, 2l forecasts on the same plot ########################################
+
+pmap(.l = list(.l1 = inflation$lstm[['online_pred_1l']],
+               .l2 = inflation$lstm[['online_pred_2l']],
+               .name = inflation$names[1:n],
+               .destpath = file.path(graphs_dir, 'plots_lstm')),
+     .f = plot_layers)
+
+
+
+##### CPI & PCE headline vs core ###############################################
 inflation$plots[['cpis']] <- pi_long %>% 
   filter(index == 'rev_cpi_pch' | index == 'rev_cpi_fe_pch') %>% 
   ggplot() + geom_line(aes(x = date, y = rate, colour = index), alpha = 1, size = .5)+
