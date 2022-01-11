@@ -43,8 +43,8 @@ his <- fit(mdl_tr,
            shuffle = F,
            # validation_split = .5,
            validation_data = list(yy_arr_vx, yy_arr_vy),
-           epochs = 30,
-           batch_size = batch, callbacks = uot
+           epochs = 300,
+           batch_size = batch#, callbacks = uot
            )  
 
 
@@ -80,11 +80,11 @@ llast <- nrow(in_arr)
 
 h <- 99
 # not sure it immediately converges to above .5
-# while (h>=.5){
-#   h <- predict(mdl_1,
-#                x = array(data = in_arr[llast, , ], dim = sha),
-#                batch_size = 1)
-# }
+while (h>=.5){
+  h <- predict(mdl_1,
+               x = array(data = in_arr[llast, , ], dim = sha),
+               batch_size = 1)
+}
 
 for (i in 1:100){
   
@@ -109,3 +109,9 @@ ert <- bind_rows(tibble(yy_arr_vy) %>% add_column(lab = 'real'),
                  )
 
 
+
+####### START OVER AGAIN WITH REAL DATA ########################################
+
+# a is for testing
+a <- pi$rev_cpi_pch %>% 
+  tbl2xts::xts_tbl()
