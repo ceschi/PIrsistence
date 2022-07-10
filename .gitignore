@@ -27,6 +27,7 @@ ts.xlsx
 *.eps
 *.mat
 tests/
+*.zip
 
 ### other scripts
 aaaa_lstm_deflt.R
