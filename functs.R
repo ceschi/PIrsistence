@@ -2412,11 +2412,13 @@ multi_online <- function(model_fitted,
 
 pkgs <- c(
   'ggplot2',
+  "lubridate",
   'magrittr',
   'dplyr',
   'broom',
   'devtools',
-  'furrr', 
+  'furrr',
+  "fredr",
   'future',
   'ggridges', 
   'glue',
@@ -2438,7 +2440,7 @@ pkgs <- c(
 
 instant_pkgs(pkgs)
 
-devtools::install_github('sboysel/fredr')
+# devtools::install_github('sboysel/fredr')
 devtools::install_github('ceschi/urcabis')
 # devtools::install_version("readxl", version = "1.0.0")
 # library(urcabis) # for when the package will be duly updated (pull request)
