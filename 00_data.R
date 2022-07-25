@@ -5,39 +5,47 @@
 fredr_set_key('5d4b5f1e6667727ee4ea90affbad1e6a')
 
 
-# 1 - Quarterly series EOP --------------------------------------------------------
+# 1 - Fetch and treat series ---------------------------------------------------
 
-pi_q_eop <-
-  bind_rows(
-    rev_pci = fredr_series_observations(series_id='CPIAUCSL',
-                                        frequency='q',
-                                        aggregation_method='eop') %>%
-      add_column(id = "cpi"),
+##### Get and transform GDP deflator data
 
-    rev_pci_core = fredr_series_observations(series_id='CPILFESL',
-                                        frequency='q',
-                                        aggregation_method='eop') %>%
-      add_column(id = "cpi_core"),
+defl <- fredr_series_observations(series_id='GDPDEF') %>% 
+  add_column(id = "defl") %>% 
+  select(date, value, id) %>% 
+  mutate(y_date = year(date))
 
-    rev_pce = fredr_series_observations(series_id='PCEPI',
-                                        frequency='q',
-                                        aggregation_method='eop') %>%
-      add_column(id = "pce"),
+defl_qlybase <- defl %>% 
+  select(-y_date) %>% 
+  mutate(qoq = 400*(log(value) - log(lag(value))),
+         yoy = 100*(log(value) - log(lag(value, n = 4))),
+         base = 'quarter',
+         value = NULL,
+         agg = "eop",
+         ) %>% 
+  pivot_longer(c(qoq, yoy), 
+               names_to = "freq", 
+               values_to = "vals")
 
-    rev_pce_core = fredr_series_observations(series_id='PCEPILFE',
-                                        frequency='q',
-                                        aggregation_method='eop') %>%
-      add_column(id = "pce_core"),
-
-    rev_defl = fredr_series_observations(series_id='GDPDEF',
-                                        frequency='q',
-                                        aggregation_method='eop') %>%
-      add_column(id = "defl")
-  ) %>%
-  add_column(freq = "q", agg = "eop") %>%
-  select(-starts_with('real'), -series_id)
-
-
+defl_ylybase <- defl %>% 
+  group_by(id, y_date) %>% 
+  summarise(eop = last(value),
+            avg = mean(value)) %>% 
+  mutate(yoy_eop = 100*(log(eop) - log(lag(eop))),
+         yoy_avg = 100*(log(avg) - log(lag(avg))),
+         base = "year",
+         date = as_date(paste0(y_date, "-01-01")),
+         y_date = NULL,
+         eop = NULL,
+         avg = NULL,
+         ) %>% 
+  pivot_longer(cols = starts_with("yoy_"), 
+               names_to = 'freq', 
+               values_to = "vals") %>% 
+  separate(freq, 
+           into = c("freq", "agg"), 
+           sep = "_")
+  
+##### Get and transform CPI, PCE data
 ### Series are monthly by default
 
 pi <- 
@@ -58,19 +66,24 @@ pi <-
     # rev_defl = fredr_series_observations(series_id='GDPDEF') %>% 
     #   add_column(id = "defl")
   ) %>% 
-  add_column(agg = NA) %>% 
+  add_column(agg = "eop") %>% 
   select(-starts_with('real'), -series_id) %>% 
   mutate(q_date = paste0(year(date), "-", quarter(date)) %>% yq,
          y_date = year(date))
 
-
 pi_mlybase <- pi %>% 
+  select(-q_date, -y_date) %>% 
   group_by(id) %>% 
   mutate(
     mom = 1200*(log(value) - log(lag(value))),
-    qoq = 1200*(log(value) - log(lag(value, n = 3))),
+    qoq = 400*(log(value) - log(lag(value, n = 3))),
     yoy = 100*(log(value) - log(lag(value, n = 12)))
-    )
+    ) %>% 
+  pivot_longer(c(mom, qoq, yoy), 
+               names_to = "freq", 
+               values_to = "vals") %>% 
+  mutate(base = "month", 
+         value = NULL)
 
 
 pi_qlybase <- pi %>% 
@@ -89,7 +102,8 @@ pi_qlybase <- pi %>%
            into = c("freq", "agg"), 
            sep = '_', 
            remove = T) %>% 
-  rename(date = q_date)
+  rename(date = q_date) %>% 
+  add_column(base = "quarter")
 
 pi_ylybase <- pi %>% 
   group_by(id, y_date) %>% 
@@ -108,7 +122,31 @@ pi_ylybase <- pi %>%
            sep = '_', 
            remove = T) %>% 
   mutate(date = as_date(paste0(y_date, "-01-01")),
+         base = "year",
          y_date = NULL)
 
-  
+##### Join all together
 
+allflation <- 
+  bind_rows(
+    defl_qlybase,
+    defl_ylybase,
+    pi_mlybase,
+    pi_qlybase,
+    pi_ylybase
+    )
+
+## keep only those that make sense
+inflation <- allflation %>% 
+  filter(base == "quarter" &
+           agg == "eop" &
+           date >= "1960-01-01")
+
+inflation_monthly <- allflation %>% 
+  filter(base == 'month' &
+           id %in% c("pce", "pce_core"))
+
+# N - housekeeping --------------------------------------------------------
+
+rm(defl, defl_qlybase, defl_ylybase,
+   pi, pi_mlybase, pi_qlybase, pi_ylybase)
