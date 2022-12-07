@@ -2412,6 +2412,7 @@ multi_online <- function(model_fitted,
 
 pkgs <- c(
   'ggplot2',
+  "tidyr",
   "lubridate",
   'magrittr',
   'dplyr',

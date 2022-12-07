@@ -8,12 +8,13 @@ fredr_set_key('5d4b5f1e6667727ee4ea90affbad1e6a')
 # 1 - Fetch and treat series ---------------------------------------------------
 
 ##### Get and transform GDP deflator data
-
+# get the data and parse year - it's only quarterly
 defl <- fredr_series_observations(series_id='GDPDEF') %>% 
   add_column(id = "defl") %>% 
   select(date, value, id) %>% 
   mutate(y_date = year(date))
 
+# from qtly basis compute yoy and qoq
 defl_qlybase <- defl %>% 
   select(-y_date) %>% 
   mutate(qoq = 400*(log(value) - log(lag(value))),
@@ -26,6 +27,8 @@ defl_qlybase <- defl %>%
                names_to = "freq", 
                values_to = "vals")
 
+# aggregate up to yearly two ways: eop and avg
+# for each compute the yoy
 defl_ylybase <- defl %>% 
   group_by(id, y_date) %>% 
   summarise(eop = last(value),
@@ -48,6 +51,7 @@ defl_ylybase <- defl %>%
 ##### Get and transform CPI, PCE data
 ### Series are monthly by default
 
+# first off all data at monthly freq
 pi <- 
   bind_rows(
     rev_pci = fredr_series_observations(series_id='CPIAUCSL') %>% 
@@ -68,9 +72,13 @@ pi <-
   ) %>% 
   add_column(agg = "eop") %>% 
   select(-starts_with('real'), -series_id) %>% 
+  # add quarter dates and years
   mutate(q_date = paste0(year(date), "-", quarter(date)) %>% yq,
          y_date = year(date))
 
+#' from a monthly frequency compute
+#' mom, qoq, yoy,
+#' for both avg and eop aggregations
 pi_mlybase <- pi %>% 
   select(-q_date, -y_date) %>% 
   group_by(id) %>% 
@@ -85,7 +93,9 @@ pi_mlybase <- pi %>%
   mutate(base = "month", 
          value = NULL)
 
-
+#' aggregate up the frequency to
+#' qtrly via eop and avg
+#' then compute qoq, yoy
 pi_qlybase <- pi %>% 
   group_by(id, q_date) %>% 
   summarise(eop = last(value),
@@ -105,6 +115,8 @@ pi_qlybase <- pi %>%
   rename(date = q_date) %>% 
   add_column(base = "quarter")
 
+#' last, up to yearly
+#' and compute yoy
 pi_ylybase <- pi %>% 
   group_by(id, y_date) %>% 
   summarise(
@@ -142,6 +154,7 @@ inflation <- allflation %>%
            agg == "eop" &
            date >= "1960-01-01")
 
+
 inflation_monthly <- allflation %>% 
   filter(base == 'month' &
            id %in% c("pce", "pce_core"))
@@ -150,3 +163,8 @@ inflation_monthly <- allflation %>%
 
 rm(defl, defl_qlybase, defl_ylybase,
    pi, pi_mlybase, pi_qlybase, pi_ylybase)
+
+
+# N2 - Add other series at industry level ---------------------------------
+
+
