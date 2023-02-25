@@ -15,6 +15,9 @@ matlab/*
 extra_material/
 *.rds
 plots_*/
+.DS_Store
+-DESKTOP_*
+
 
 downloaded_files/
 plots/
