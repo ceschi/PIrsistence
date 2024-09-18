@@ -12,7 +12,7 @@ invisible(require(fredr))
 
 
 
-# pick ahead to set how many quarters ahead 
+# pick ahead to set how many quarters ahead
 # to consider for SPF forecasts:
 # -1 for previous quarter estimates
 # 0 for nowcast
@@ -26,41 +26,41 @@ if (!base::exists(x = "ahead", envir = .GlobalEnv)){stop('Provide how many quart
 fredr_set_key('5d4b5f1e6667727ee4ea90affbad1e6a')
 
 
-##### Actual data fetching 
+##### Actual data fetching
 # Section to get historical, revised inflation TS
 
 rev_hist_pch <- merge(
-  
-  # Consumer Price Index for All Urban Consumers: All Items 
-  rev_pci = fredr_series_observations(series_id='CPIAUCSL', 
-                                      frequency='q', 
+
+  # Consumer Price Index for All Urban Consumers: All Items
+  rev_pci = fredr_series_observations(series_id='CPIAUCSL',
+                                      frequency='q',
                                       aggregation_method='eop',
-                                      units='cca') %>% tbl_xts(), 
-  
+                                      units='cca') %>% tbl_xts(),
+
   # Consumer Price Index for All Urban Consumers: All Items Less Food and Energy
-  rev_pci_fe  = fredr_series_observations(series_id='CPILFESL', 
-                                          frequency='q', 
+  rev_pci_fe  = fredr_series_observations(series_id='CPILFESL',
+                                          frequency='q',
                                           aggregation_method='eop',
                                           units='cca') %>% tbl_xts(),
-  
+
   # Gross Domestic Product: Implicit Price Deflator
-  rev_defl = fredr_series_observations(series_id='GDPDEF', 
-                                       frequency='q', 
+  rev_defl = fredr_series_observations(series_id='GDPDEF',
+                                       frequency='q',
                                        aggregation_method='eop',
                                        units='cca') %>% tbl_xts(),
-  
+
   # Personal Consumption Expenditures including Food and Energy
-  rev_pce  = fredr_series_observations(series_id='PCEPI', 
-                                       frequency='q', 
+  rev_pce  = fredr_series_observations(series_id='PCEPI',
+                                       frequency='q',
                                        aggregation_method='eop',
                                        units='cca') %>% tbl_xts(),
-  
+
   # Personal Consumption Expenditures Excluding Food and Energy
-  rev_pce_fe  = fredr_series_observations(series_id='PCEPILFE', 
-                                          frequency='q', 
+  rev_pce_fe  = fredr_series_observations(series_id='PCEPILFE',
+                                          frequency='q',
                                           aggregation_method='eop',
                                           units='cca') %>% tbl_xts()
-) 
+)
 
 # renames variables
 names(rev_hist_pch) <-  c('rev_cpi_pch', 'rev_cpi_fe_pch', 'rev_defl_pch',
@@ -68,34 +68,34 @@ names(rev_hist_pch) <-  c('rev_cpi_pch', 'rev_cpi_fe_pch', 'rev_defl_pch',
 
 ##### Year on Year instead of from previous quarter
 rev_hist_yoy <- merge(
-  
-  # Consumer Price Index for All Urban Consumers: All Items 
-  rev_pci = fredr_series_observations(series_id='CPIAUCSL', 
-                                      frequency='q', 
+
+  # Consumer Price Index for All Urban Consumers: All Items
+  rev_pci = fredr_series_observations(series_id='CPIAUCSL',
+                                      frequency='q',
                                       aggregation_method='eop',
-                                      units='pc1') %>% tbl_xts(), 
-  
+                                      units='pc1') %>% tbl_xts(),
+
   # Consumer Price Index for All Urban Consumers: All Items Less Food and Energy
-  rev_pci_fe  = fredr_series_observations(series_id='CPILFESL', 
-                                          frequency='q', 
+  rev_pci_fe  = fredr_series_observations(series_id='CPILFESL',
+                                          frequency='q',
                                           aggregation_method='eop',
                                           units='pc1') %>% tbl_xts(),
-  
+
   # Gross Domestic Product: Implicit Price Deflator
-  rev_defl = fredr_series_observations(series_id='GDPDEF', 
-                                       frequency='q', 
+  rev_defl = fredr_series_observations(series_id='GDPDEF',
+                                       frequency='q',
                                        aggregation_method='eop',
                                        units='pc1') %>% tbl_xts(),
-  
+
   # Personal Consumption Expenditures including Food and Energy
-  rev_pce  = fredr_series_observations(series_id='PCEPI', 
-                                       frequency='q', 
+  rev_pce  = fredr_series_observations(series_id='PCEPI',
+                                       frequency='q',
                                        aggregation_method='eop',
                                        units='pc1') %>% tbl_xts(),
-  
+
   # Personal Consumption Expenditures Excluding Food and Energy
-  rev_pce_fe  = fredr_series_observations(series_id='PCEPILFE', 
-                                          frequency='q', 
+  rev_pce_fe  = fredr_series_observations(series_id='PCEPILFE',
+                                          frequency='q',
                                           aggregation_method='eop',
                                           units='pc1') %>% tbl_xts()
 )
@@ -114,7 +114,7 @@ pi <- merge(
   rev_hist_pch$rev_pce_pch,
   rev_hist_pch$rev_pce_fe_pch,
   rev_hist_pch$rev_defl_pch,
-  
+
   #YoY
   rev_hist_yoy$rev_cpi_yoy,
   rev_hist_yoy$rev_cpi_fe_yoy,
@@ -124,16 +124,20 @@ pi <- merge(
 )
 
 # reshape data in long format
-pi_long <- pi %>% 
+pi_long <- pi %>%
   as_tibble %>%
-  add_column(date = time(pi)) %>% 
-  gather(1:(ncol(.)-1), key = 'index', value = 'rate', na.rm = T)
+  add_column(date = time(pi)) %>%
+  pivot_longer(
+    cols = -date,
+    names_to = "index",
+    values_to = "rate"
+  )
 
 # write out to disk the series
-write.zoo(x=pi, 
-          file=file.path(data_dir, 'PI_data.csv'), 
+write.zoo(x=pi,
+          file=file.path(data_dir, 'PI_data.csv'),
           sep=';',
-          row.names=F, 
+          row.names=F,
           index.name='date')
 
 write.csv(x = pi_long,

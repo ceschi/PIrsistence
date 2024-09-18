@@ -5,7 +5,7 @@ n <- length(names(pi))
 
 # runs ADF test with max llags, minimises BIC, computes pval
 inflation[['unitroot']] <- lapply(X = na.omit(pi),
-                                  FUN = urca::ur.df,
+                                  FUN = urcabis::ur.df.ol,
                                   lags = llags,
                                   type = 'drift',
                                   selectlags = 'BIC')
